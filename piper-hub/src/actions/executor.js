@@ -1,418 +1,326 @@
+// src/actions/executor.js
 import fs from "fs";
 import path from "path";
-import { exec } from "child_process";
-import { ACTIONS_DIR } from "../config/paths.js";
-import { safeResolve, ensureDirForFile } from "../utils/fsx.js";
+import crypto from "crypto";
+import { exec as execCb } from "child_process";
+import { promisify } from "util";
+import { ROOT } from "../config/paths.js";
+import {
+  safeResolve,
+  ensureDirForFile,
+  readTextIfExists,
+} from "../utils/fsx.js";
 
-function actionBackupDir(actionId) {
-  const d = path.join(ACTIONS_DIR, actionId);
-  fs.mkdirSync(d, { recursive: true });
-  return d;
+const exec = promisify(execCb);
+
+function nowId() {
+  return crypto.randomBytes(6).toString("hex") + "_" + Date.now().toString(16);
 }
 
-function makeBackup(actionId, targetPath) {
-  const d = actionBackupDir(actionId);
-  const base = path.basename(targetPath);
-  const stamp = Date.now();
-  const backupPath = path.join(d, `${base}.${stamp}.bak`);
-  fs.copyFileSync(targetPath, backupPath);
-  return backupPath;
+function backupDir() {
+  const dir = path.join(ROOT, "data", "backups");
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
-// ✅ IMPORTANT: actions.js imports this — keep it exported.
-export function restoreBackup(targetPath, backupPath) {
-  if (!fs.existsSync(backupPath)) throw new Error("Backup not found");
-  ensureDirForFile(targetPath);
-  fs.copyFileSync(backupPath, targetPath);
+function sanitizeForFilename(s) {
+  return String(s || "")
+    .replaceAll("\\", "_")
+    .replaceAll("/", "_")
+    .replaceAll(":", "_")
+    .replaceAll("..", "_");
 }
 
-/**
- * Apply a single patch edit.
- * mode: "once" | "all"
- * Returns { out, matched, changed }
- */
-function applyPatchOnce(text, find, replace, mode = "once") {
-  if (!find) return { out: text, matched: false, changed: false };
-
-  if (mode === "all") {
-    const matched = text.includes(find);
-    if (!matched) return { out: text, matched: false, changed: false };
-    const out = text.split(find).join(replace);
-    return { out, matched: true, changed: out !== text };
-  }
-
-  const idx = text.indexOf(find);
-  if (idx === -1) return { out: text, matched: false, changed: false };
-  const out = text.slice(0, idx) + replace + text.slice(idx + find.length);
-  return { out, matched: true, changed: out !== text };
+function writeBackupForTarget(relTarget, oldContent) {
+  const dir = backupDir();
+  const name = `${Date.now()}_${nowId()}_${sanitizeForFilename(relTarget)}.bak`;
+  const abs = path.join(dir, name);
+  fs.writeFileSync(abs, String(oldContent ?? ""), "utf8");
+  return abs;
 }
 
-function coerceBundleSteps(payload) {
-  if (!payload) return [];
-  if (Array.isArray(payload.steps)) return payload.steps;
-  if (Array.isArray(payload.actions)) return payload.actions;
-  return [];
-}
+function applyPatchInMemory(before, edits) {
+  let out = String(before ?? "");
+  let changedAny = false;
+  const perEdit = [];
 
-function runCmd(cmd, timeoutMs = 12000) {
-  return new Promise((resolve) => {
-    exec(
-      cmd,
-      { timeout: timeoutMs, windowsHide: true, maxBuffer: 1024 * 1024 * 10 },
-      (err, stdout, stderr) => {
-        resolve({
-          ok: !err,
-          code: err?.code ?? 0,
-          stdout: String(stdout || ""),
-          stderr: String(stderr || ""),
-        });
+  for (let i = 0; i < (edits || []).length; i++) {
+    const e = edits[i] || {};
+    const find = String(e?.find ?? "");
+    const replace = String(e?.replace ?? "");
+    const mode = e?.mode === "all" ? "all" : "once";
+
+    if (!find) {
+      perEdit.push({
+        index: i,
+        matched: false,
+        changed: false,
+        mode,
+        note: "missing find",
+      });
+      continue;
+    }
+
+    if (mode === "all") {
+      const matched = out.includes(find);
+      const next = matched ? out.split(find).join(replace) : out;
+      const changed = next !== out;
+      if (changed) changedAny = true;
+      out = next;
+      perEdit.push({ index: i, matched, changed, mode });
+    } else {
+      const idx = out.indexOf(find);
+      const matched = idx !== -1;
+      if (matched) {
+        out = out.slice(0, idx) + replace + out.slice(idx + find.length);
+        changedAny = true;
+        perEdit.push({ index: i, matched: true, changed: true, mode });
+      } else {
+        perEdit.push({ index: i, matched: false, changed: false, mode });
       }
-    );
-  });
+    }
+  }
+
+  return { out, changedAny, perEdit };
 }
 
-export async function executeAction(action, _depth = 0) {
-  const startedAt = Date.now();
-  const log = [];
-  const push = (s) => log.push(`[${new Date().toISOString()}] ${s}`);
+export function restoreBackup(backupAbsPath, targetRelPath) {
+  const backup = String(backupAbsPath || "");
+  const targetRel = String(targetRelPath || "");
+  if (!backup || !targetRel) throw new Error("restoreBackup missing args");
+  if (!fs.existsSync(backup)) throw new Error(`Backup not found: ${backup}`);
 
-  const actionId = String(action?.id || "act");
-  const type = String(action?.type || "");
-  const p = action?.payload || {};
+  const targetAbs = safeResolve(targetRel);
+  ensureDirForFile(targetAbs);
 
-  // prevent accidental infinite recursion in bundles
-  if (_depth > 10) {
-    return {
-      ok: false,
-      tookMs: Date.now() - startedAt,
-      log,
-      error: "bundle recursion limit reached",
-    };
+  const data = fs.readFileSync(backup);
+  fs.writeFileSync(targetAbs, data);
+
+  console.log(
+    `[executor] rollback restored backup -> target rel="${targetRel}" abs="${targetAbs}"`
+  );
+}
+
+async function execCommand(cmd, timeoutMs = 30000) {
+  const c = String(cmd || "").trim();
+  if (!c) throw new Error("Missing cmd");
+  const { stdout, stderr } = await exec(c, {
+    timeout: timeoutMs,
+    windowsHide: true,
+    cwd: ROOT,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  return { stdout: String(stdout || ""), stderr: String(stderr || "") };
+}
+
+function setHtmlTitleInText(html, title) {
+  const t = String(title ?? "");
+  const re = /<title>[\s\S]*?<\/title>/i;
+  if (!re.test(html)) {
+    // If no title tag exists, add one (best-effort)
+    // Insert after <head> if present, otherwise at the top.
+    if (/<head[^>]*>/i.test(html)) {
+      return html.replace(/<head[^>]*>/i, (m) => `${m}\n  <title>${t}</title>`);
+    }
+    return `<title>${t}</title>\n` + html;
   }
+  return html.replace(re, `<title>${t}</title>`);
+}
+
+export async function executeAction(action) {
+  const type = String(action?.type || "");
+  const payload = action?.payload || {};
 
   try {
-    // ---------------- run_cmd --------
-    if (type === "run_cmd") {
-      const cmd = String(p.cmd || "").trim();
-      if (!cmd) throw new Error("run_cmd requires payload.cmd");
+    console.log(`[executor] execute type="${type}" id="${action?.id || ""}"`);
 
-      const timeoutMs = Number(p.timeoutMs || 12000);
-      push(`run_cmd: ${cmd}`);
-      const r = await runCmd(cmd, timeoutMs);
+    // ---- set_html_title ----
+    if (type === "set_html_title") {
+      const rel = String(payload.path || "");
+      const abs = safeResolve(rel);
+      const desired = String(payload.title ?? "");
 
-      push(`run_cmd: ok=${r.ok} code=${r.code}`);
-      if (r.stdout) push(`stdout: ${r.stdout.slice(0, 6000)}`);
-      if (r.stderr) push(`stderr: ${r.stderr.slice(0, 6000)}`);
+      const oldText = readTextIfExists(abs, "");
+      const newText = setHtmlTitleInText(oldText, desired);
 
-      return {
-        ok: r.ok,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: r,
-      };
-    }
-
-    // ---------------- restart/shutdown (signal only) --------
-    if (type === "restart_piper") {
-      push("restart_piper: approved (signal only)");
-      return {
-        ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: { restartRequested: true },
-      };
-    }
-
-    if (type === "shutdown_piper") {
-      push("shutdown_piper: approved (signal only)");
-      return {
-        ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: { offRequested: true },
-      };
-    }
-
-    // ---------------- read_snippet --------
-    if (type === "read_snippet") {
-      const relRaw = String(p.path || "").trim();
-      const rel = relRaw.replace(/\\/g, "/");
-      if (!rel) throw new Error("read_snippet: missing payload.path");
-
-      // Allowlist: only src/** and public/**
-      const allowed = rel.startsWith("src/") || rel.startsWith("public/");
-      const denied =
-        rel === ".env" ||
-        rel.endsWith("/.env") ||
-        rel.includes("/.env.") ||
-        rel.includes("node_modules/") ||
-        rel.startsWith("data/") ||
-        rel.includes("..");
-
-      if (!allowed || denied) {
-        throw new Error(`read_snippet: path not allowed: ${relRaw}`);
+      if (newText === oldText) {
+        console.log(`[executor] set_html_title no-op rel="${rel}"`);
+        return {
+          ok: true,
+          result: { type, path: rel, abs, note: "No changes needed." },
+        };
       }
 
-      const target = safeResolve(rel);
-      if (!fs.existsSync(target)) {
-        throw new Error(`read_snippet: file not found: ${relRaw}`);
-      }
+      const backup = writeBackupForTarget(rel, oldText);
 
-      const raw = fs.readFileSync(target, "utf8");
-      const lines = raw.split(/\r?\n/);
+      ensureDirForFile(abs);
+      fs.writeFileSync(abs, newText, "utf8");
 
-      // Line addressing is 1-based in payload
-      const maxLines = Number(p.maxLines || 240);
-      const hardMaxLines = 400;
-      const capLines = Math.min(Math.max(1, maxLines), hardMaxLines);
-
-      let startLine = 1;
-      let endLine = Math.min(lines.length, capLines);
-
-      const aroundLine = p.aroundLine != null ? Number(p.aroundLine) : null;
-      const radius = p.radius != null ? Number(p.radius) : null;
-
-      if (Number.isFinite(aroundLine) && aroundLine > 0) {
-        const r =
-          Number.isFinite(radius) && radius > 0 ? Math.min(radius, 200) : 40;
-        startLine = Math.max(1, Math.floor(aroundLine - r));
-        endLine = Math.min(lines.length, Math.floor(aroundLine + r));
-        if (endLine - startLine + 1 > capLines) {
-          endLine = Math.min(lines.length, startLine + capLines - 1);
-        }
-      } else {
-        const s = p.startLine != null ? Number(p.startLine) : null;
-        const e = p.endLine != null ? Number(p.endLine) : null;
-        if (Number.isFinite(s) && s > 0) startLine = Math.floor(s);
-        if (Number.isFinite(e) && e > 0) endLine = Math.floor(e);
-        if (endLine < startLine) {
-          const tmp = startLine;
-          startLine = endLine;
-          endLine = tmp;
-        }
-        // Clamp and cap
-        startLine = Math.max(1, startLine);
-        endLine = Math.min(lines.length, endLine);
-        if (endLine - startLine + 1 > capLines) {
-          endLine = Math.min(lines.length, startLine + capLines - 1);
-        }
-      }
-
-      const slice = lines.slice(startLine - 1, endLine);
-      // Render with line numbers for grounding
-      let snippet = slice
-        .map((ln, i) => `${startLine + i}`.padStart(5, " ") + " | " + ln)
-        .join("\n");
-
-      // Hard cap characters (avoid blowing up snapshots)
-      const hardMaxChars = 32000;
-      let truncated = false;
-      if (snippet.length > hardMaxChars) {
-        snippet = snippet.slice(0, hardMaxChars) + "\n... (truncated)";
-        truncated = true;
-      }
-
-      push(
-        `read_snippet: ${relRaw} L${startLine}-L${endLine}${
-          truncated ? " (truncated)" : ""
-        }`
+      console.log(
+        `[executor] set_html_title ok rel="${rel}" abs="${abs}" title="${desired}"`
       );
-
       return {
         ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: {
-          path: rel,
-          startLine,
-          endLine,
-          totalLines: lines.length,
-          truncated,
-          snippet,
-        },
+        result: { type, path: rel, abs, backup, title: desired },
       };
     }
 
-    // ---------------- write_file --------
+    // ---- write_file ----
     if (type === "write_file") {
-      const target = safeResolve(p.path);
-      const content = String(p.content ?? "");
-      ensureDirForFile(target);
+      const rel = String(payload.path || "");
+      const abs = safeResolve(rel);
 
-      const before = fs.existsSync(target)
-        ? fs.readFileSync(target, "utf8")
-        : "";
-      if (before === content) {
-        throw new Error(
-          `write_file: no changes (content identical) for ${p.path}`
-        );
-      }
+      const oldText = readTextIfExists(abs, "");
+      const newText = String(payload.content ?? "");
 
-      let backup = null;
-      if (fs.existsSync(target)) backup = makeBackup(actionId, target);
+      const backup = writeBackupForTarget(rel, oldText);
 
-      fs.writeFileSync(target, content, "utf8");
-      push(`write_file: wrote ${p.path}`);
+      ensureDirForFile(abs);
+      fs.writeFileSync(abs, newText, "utf8");
 
+      console.log(
+        `[executor] write_file ok rel="${rel}" abs="${abs}" bytes=${Buffer.byteLength(
+          newText,
+          "utf8"
+        )}`
+      );
       return {
         ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: { path: target, backup, changed: true },
-      };
-    }
-
-    // ---------------- apply_patch --------
-    if (type === "apply_patch") {
-      const target = safeResolve(p.path);
-      const edits = Array.isArray(p.edits) ? p.edits : [];
-      if (!edits.length)
-        throw new Error("apply_patch requires payload.edits[]");
-
-      const before = fs.existsSync(target)
-        ? fs.readFileSync(target, "utf8")
-        : "";
-      if (!before)
-        throw new Error(`apply_patch: file missing or empty: ${p.path}`);
-
-      const backup = makeBackup(actionId, target);
-      let text = before;
-
-      const perEdit = [];
-      let anyMatched = false;
-      let anyChanged = false;
-
-      for (let i = 0; i < edits.length; i++) {
-        const e = edits[i] || {};
-        const find = String(e.find ?? "");
-        const replace = String(e.replace ?? "");
-        const mode = String(e.mode || "once");
-
-        const r = applyPatchOnce(text, find, replace, mode);
-        perEdit.push({
-          index: i,
-          mode,
-          matched: r.matched,
-          changed: r.changed,
-          findLen: find.length,
-          replaceLen: replace.length,
-        });
-
-        if (r.matched) anyMatched = true;
-        if (r.changed) anyChanged = true;
-        text = r.out;
-      }
-
-      // Enforce no silent success
-      if (!anyMatched) {
-        restoreBackup(target, backup);
-        throw new Error(`apply_patch: no matches in ${p.path}`);
-      }
-      if (!anyChanged || text === before) {
-        restoreBackup(target, backup);
-        throw new Error(`apply_patch: no effective change in ${p.path}`);
-      }
-
-      fs.writeFileSync(target, text, "utf8");
-      push(`apply_patch: wrote ${p.path}`);
-
-      const summary = {
-        path: p.path,
-        edits: perEdit.length,
-        anyMatched,
-        anyChanged,
-        bytesBefore: before.length,
-        bytesAfter: text.length,
-      };
-
-      return {
-        ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
         result: {
-          path: target,
+          type,
+          path: rel,
+          abs,
           backup,
-          changed: true,
-          perEdit,
-          summary,
+          bytes: Buffer.byteLength(newText, "utf8"),
         },
       };
     }
 
-    // ---------------- bundle ----------------
-    if (type === "bundle") {
-      const steps = coerceBundleSteps(p);
-      if (!steps.length)
-        throw new Error(
-          "bundle requires payload.steps[] (or payload.actions[])"
+    // ---- apply_patch ----
+    if (type === "apply_patch") {
+      const rel = String(payload.path || "");
+      const abs = safeResolve(rel);
+
+      const oldText = readTextIfExists(abs, "");
+      const edits = Array.isArray(payload.edits) ? payload.edits : [];
+
+      const mem = applyPatchInMemory(oldText, edits);
+      const newText = mem.out;
+
+      const anyUnmatched = (mem.perEdit || []).some((e) => e.matched === false);
+      if (!mem.changedAny || anyUnmatched) {
+        console.log(
+          `[executor] apply_patch FAILED rel="${rel}" changedAny=${mem.changedAny} anyUnmatched=${anyUnmatched}`
         );
+        return {
+          ok: false,
+          result: {
+            type,
+            path: rel,
+            abs,
+            changedAny: mem.changedAny,
+            anyUnmatched,
+            perEdit: mem.perEdit,
+            error:
+              "Patch did not fully apply. One or more 'find' anchors failed to match.",
+          },
+        };
+      }
+
+      const backup = writeBackupForTarget(rel, oldText);
+
+      ensureDirForFile(abs);
+      fs.writeFileSync(abs, newText, "utf8");
+
+      console.log(
+        `[executor] apply_patch ok rel="${rel}" abs="${abs}" edits=${edits.length}`
+      );
+      return {
+        ok: true,
+        result: {
+          type,
+          path: rel,
+          abs,
+          backup,
+          edits: edits.length,
+          perEdit: mem.perEdit,
+        },
+      };
+    }
+
+    // ---- mkdir ----
+    if (type === "mkdir") {
+      const rel = String(payload.path || "");
+      const abs = safeResolve(rel);
+
+      fs.mkdirSync(abs, { recursive: true });
+
+      console.log(`[executor] mkdir ok rel="${rel}" abs="${abs}"`);
+      return { ok: true, result: { type, path: rel, abs } };
+    }
+
+    // ---- run_cmd ----
+    if (type === "run_cmd") {
+      const cmd = String(payload.cmd || "");
+      const timeoutMs = Number(payload.timeoutMs || 30000);
+
+      const out = await execCommand(cmd, timeoutMs);
+      console.log(`[executor] run_cmd ok cmd="${cmd.slice(0, 120)}"`);
+      return { ok: true, result: { type, cmd, ok: true, ...out } };
+    }
+
+    // ---- restart / shutdown ----
+    if (type === "restart_piper") {
+      console.log(`[executor] restart requested`);
+      return { ok: true, result: { type, restartRequested: true } };
+    }
+    if (type === "shutdown_piper") {
+      console.log(`[executor] shutdown requested`);
+      return { ok: true, result: { type, offRequested: true } };
+    }
+
+    // ---- bundle ----
+    if (type === "bundle") {
+      const steps = Array.isArray(payload.steps)
+        ? payload.steps
+        : Array.isArray(payload.actions)
+        ? payload.actions
+        : [];
 
       const results = [];
       let restartRequested = false;
       let offRequested = false;
 
-      push(`bundle: ${steps.length} step(s)`);
+      for (const step of steps) {
+        const sub = {
+          id: action?.id,
+          type: step?.type,
+          payload: step?.payload || {},
+        };
+        const r = await executeAction(sub);
+        results.push({ step: sub.type, ok: r.ok, result: r.result });
 
-      for (let i = 0; i < steps.length; i++) {
-        const sub = steps[i] || {};
-        const subType = String(sub.type || "");
-        const subPayload = sub.payload || {};
-
-        if (!subType) throw new Error(`bundle: step[${i}] missing type`);
-
-        push(`bundle: step[${i}] type=${subType}`);
-
-        const r = await executeAction(
-          {
-            id: `${actionId}_step_${i}`,
-            type: subType,
-            payload: subPayload,
-          },
-          _depth + 1
-        );
-
-        results.push({
-          index: i,
-          type: subType,
-          ok: r.ok,
-          tookMs: r.tookMs,
-          log: r.log,
-          result: r.result,
-          error: r.error,
-        });
-
-        if (subType === "restart_piper" && r.ok) restartRequested = true;
-        if (subType === "shutdown_piper" && r.ok) offRequested = true;
-
-        // If a step fails, stop the bundle.
         if (!r.ok) {
-          throw Object.assign(new Error(`bundle: step[${i}] failed`), {
-            result: results,
-          });
+          console.log(`[executor] bundle failed at step type="${sub.type}"`);
+          return { ok: false, result: { type, results } };
         }
+
+        if (r?.result?.restartRequested) restartRequested = true;
+        if (r?.result?.offRequested) offRequested = true;
       }
 
       return {
         ok: true,
-        tookMs: Date.now() - startedAt,
-        log,
-        result: { results, restartRequested, offRequested },
+        result: { type, results, restartRequested, offRequested },
       };
     }
 
-    throw new Error(`Unknown action type: ${type}`);
-  } catch (e) {
-    const msg = String(e?.message || e);
-    push(`Error: ${msg}`);
-
-    const extra = e?.result ? { commandResult: e.result } : undefined;
-
     return {
       ok: false,
-      tookMs: Date.now() - startedAt,
-      log,
-      error: msg,
-      ...(extra || {}),
+      result: { type, error: `Unknown action type: ${type}` },
     };
+  } catch (e) {
+    console.log(`[executor] error type="${type}": ${String(e)}`);
+    return { ok: false, result: { type, error: String(e) } };
   }
 }

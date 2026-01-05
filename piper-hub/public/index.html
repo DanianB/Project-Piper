@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Piper</title>
+  <title>Piper Hub</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -152,7 +152,10 @@ function renderPending(pending){
 
     const payloadPretty = JSON.stringify(a.payload || {}, null, 2);
     const reason = a.reason ? a.reason : "";
-    const canPreview = ["apply_patch","write_file","bundle"].includes(a.type);
+
+    // ✅ include set_html_title so title edits can show preview
+    const canPreview = ["apply_patch","write_file","mkdir","bundle","set_html_title"].includes(a.type);
+
     const previewHref = "/action/preview/" + a.id;
 
     d.innerHTML = `
@@ -268,7 +271,10 @@ function renderHistory(list){
     const canRollback =
       ["write_file","apply_patch"].includes(a.type) &&
       ["done","failed"].includes(a.status);
-    const canPreview = ["apply_patch","write_file","bundle"].includes(a.type);
+
+    // ✅ include set_html_title so title edits can show preview in history too
+    const canPreview = ["apply_patch","write_file","mkdir","bundle","set_html_title"].includes(a.type);
+
     const previewHref = "/action/preview/" + a.id;
 
     d.innerHTML = `
