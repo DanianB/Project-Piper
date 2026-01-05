@@ -1,0 +1,4281 @@
+{
+  "version": 1,
+  "generatedAt": "2026-01-05T01:57:49.498Z",
+  "root": "D:\\AI\\piper-hub",
+  "html": {
+    "elements": [
+      {
+        "file": "public/index.html",
+        "tag": "html",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "head",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "meta",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "meta",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "title",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "link",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "body",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "wrap"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "topbar"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "h1",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "sub"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "a",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "pills"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "readOnly",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "talk",
+        "classes": [
+          "btn-primary"
+        ],
+        "text": "🎤 Talk"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "off",
+        "classes": [
+          "btn-danger"
+        ],
+        "text": "🛑 Off"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "panel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "log",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "form",
+        "id": "f",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "t",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": null,
+        "classes": [
+          "btn-primary"
+        ],
+        "text": "Send"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "actionsWrap",
+        "classes": [
+          "section",
+          "panel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "sectionHeader"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "h3",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "hint"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "actionsList",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "history",
+        "classes": [
+          "section",
+          "panel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "details",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "summary",
+        "id": null,
+        "classes": [
+          "sectionSummary"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [
+          "hint"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "historyList",
+        "classes": [],
+        "text": null
+      }
+    ]
+  },
+  "css": {
+    "selectors": [
+      {
+        "file": "public/styles.css",
+        "selector": ":root",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "--bg",
+          "--border",
+          "--text",
+          "--muted",
+          "--muted2",
+          "--accent",
+          "--good",
+          "--warn",
+          "--bad",
+          "--shadow"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "*",
+        "specificity": [
+          0,
+          0,
+          0
+        ],
+        "properties": [
+          "box-sizing"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "html",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "height"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "body",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "height"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "body",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "display",
+          "margin",
+          "font-family",
+          "background",
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".wrap",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "max-width",
+          "margin",
+          "padding",
+          "display",
+          "grid-template-columns",
+          "gap",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".topbar",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "justify-content",
+          "align-items",
+          "gap",
+          "margin-bottom",
+          "grid-column"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "h1",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "font-size",
+          "margin",
+          "letter-spacing"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sub",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "font-size",
+          "color",
+          "display",
+          "gap",
+          "flex-wrap",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sub a",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "color",
+          "text-decoration"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sub a:hover",
+        "specificity": [
+          0,
+          2,
+          1
+        ],
+        "properties": [
+          "text-decoration"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "code",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "font-family",
+          "font-size",
+          "border",
+          "padding",
+          "border-radius",
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".pills",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "flex-wrap",
+          "justify-content",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".pill",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "align-items",
+          "gap",
+          "padding",
+          "border-radius",
+          "border",
+          "color",
+          "font-size",
+          "user-select"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".panel",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "width",
+          "border",
+          "border-radius",
+          "box-shadow",
+          "grid-column"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#log",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "height",
+          "overflow",
+          "padding"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".msg",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "margin",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".who",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "flex",
+          "font-weight",
+          "font-size",
+          "color",
+          "margin-top"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".bubble",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "flex",
+          "padding",
+          "border-radius",
+          "border",
+          "line-height",
+          "font-size",
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".msg.me .bubble",
+        "specificity": [
+          0,
+          3,
+          0
+        ],
+        "properties": [
+          "background",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".metaLine",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "color",
+          "font-size",
+          "margin-top"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "form",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "padding",
+          "margin-top",
+          "flex-wrap",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "input[type=\"text\"]",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "flex",
+          "min-width",
+          "padding",
+          "border-radius",
+          "border",
+          "background",
+          "color",
+          "outline",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "input[type=\"text\"]::placeholder",
+        "specificity": [
+          0,
+          1,
+          2
+        ],
+        "properties": [
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "input[type=\"text\"]:focus",
+        "specificity": [
+          0,
+          2,
+          1
+        ],
+        "properties": [
+          "border-color",
+          "box-shadow"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "button",
+        "specificity": [
+          0,
+          0,
+          1
+        ],
+        "properties": [
+          "padding",
+          "border-radius",
+          "border",
+          "color",
+          "cursor",
+          "transition"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "button:hover",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "button:active",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "transform"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "button:disabled",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "opacity",
+          "cursor"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-primary",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "border-color",
+          "background-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-primary:hover",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "background",
+          "border-color",
+          "background-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-secondary",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "border-color",
+          "background-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-secondary:hover",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "border-color",
+          "background-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-danger",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "background",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-danger:hover",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "background",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sectionHeader",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "align-items",
+          "justify-content",
+          "gap",
+          "margin-bottom"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".section h3",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "margin",
+          "font-size",
+          "color",
+          "letter-spacing"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".hint",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "font-size",
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#actionsList",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "display",
+          "flex-direction",
+          "gap"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#historyList",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "display",
+          "flex-direction",
+          "gap"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".card",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "border",
+          "border-radius",
+          "padding",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".card.subtle",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".card h4",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "margin",
+          "font-size",
+          "display",
+          "align-items",
+          "justify-content",
+          "gap"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".kv",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "flex-wrap",
+          "gap",
+          "color",
+          "font-size"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "details summary",
+        "specificity": [
+          0,
+          0,
+          2
+        ],
+        "properties": [
+          "cursor",
+          "color",
+          "margin-top",
+          "user-select"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "details pre",
+        "specificity": [
+          0,
+          0,
+          2
+        ],
+        "properties": [
+          "white-space",
+          "border",
+          "border-radius",
+          "padding",
+          "overflow",
+          "margin-top",
+          "color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btns",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "flex-wrap",
+          "margin-top"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".previewLink",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "align-items",
+          "gap",
+          "padding",
+          "border-radius",
+          "border",
+          "color",
+          "text-decoration",
+          "cursor",
+          "transition"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".previewLink:hover",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "border-color",
+          "text-decoration"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".previewLink:active",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "transform"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".previewDisabled",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "font-size",
+          "color",
+          "padding"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "font-size",
+          "padding",
+          "border-radius",
+          "border",
+          "color",
+          "text-transform",
+          "white-space"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.pending",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.running",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.done",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.failed",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.rejected",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".badge.rolled_back",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "color",
+          "border-color"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sectionSummary",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "align-items",
+          "justify-content",
+          "cursor",
+          "user-select",
+          "padding"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#history details",
+        "specificity": [
+          1,
+          0,
+          1
+        ],
+        "properties": [
+          "border",
+          "border-radius",
+          "padding",
+          "height"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#history details[open] .sectionSummary",
+        "specificity": [
+          1,
+          2,
+          1
+        ],
+        "properties": [
+          "margin-bottom"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#historyList",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "max-height",
+          "overflow",
+          "padding-right"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#history",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "grid-column",
+          "height"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": "#actionsWrap",
+        "specificity": [
+          1,
+          0,
+          0
+        ],
+        "properties": [
+          "grid-column"
+        ]
+      }
+    ]
+  },
+  "js": {
+    "exports": [
+      {
+        "file": "src/utils/diff.js",
+        "name": "unifiedDiff",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 29,
+            "column": 1,
+            "index": 849
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "name": "safeResolve",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 94
+          },
+          "end": {
+            "line": 13,
+            "column": 1,
+            "index": 414
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "name": "ensureDirForFile",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 418
+          },
+          "end": {
+            "line": 17,
+            "column": 1,
+            "index": 525
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "name": "readTextIfExists",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 529
+          },
+          "end": {
+            "line": 25,
+            "column": 1,
+            "index": 721
+          }
+        }
+      },
+      {
+        "file": "src/services/apps.js",
+        "name": "loadApps",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 73
+          },
+          "end": {
+            "line": 12,
+            "column": 1,
+            "index": 306
+          }
+        }
+      },
+      {
+        "file": "src/services/devices.js",
+        "name": "registerDevice",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 30
+          },
+          "end": {
+            "line": 12,
+            "column": 1,
+            "index": 281
+          }
+        }
+      },
+      {
+        "file": "src/services/devices.js",
+        "name": "listDevices",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 285
+          },
+          "end": {
+            "line": 19,
+            "column": 1,
+            "index": 445
+          }
+        }
+      },
+      {
+        "file": "src/services/devices.js",
+        "name": "getDevice",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 21,
+            "column": 0,
+            "index": 449
+          },
+          "end": {
+            "line": 23,
+            "column": 1,
+            "index": 530
+          }
+        }
+      },
+      {
+        "file": "src/services/ollama.js",
+        "name": "callOllama",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 22,
+            "column": 1,
+            "index": 779
+          }
+        }
+      },
+      {
+        "file": "src/services/ollama.js",
+        "name": "safeJsonParse",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 24,
+            "column": 0,
+            "index": 783
+          },
+          "end": {
+            "line": 30,
+            "column": 1,
+            "index": 892
+          }
+        }
+      },
+      {
+        "file": "src/services/ollama.js",
+        "name": "extractFirstJsonObject",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 32,
+            "column": 0,
+            "index": 896
+          },
+          "end": {
+            "line": 40,
+            "column": 1,
+            "index": 1204
+          }
+        }
+      },
+      {
+        "file": "src/services/persona.js",
+        "name": "enforceJarvis",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 74
+          },
+          "end": {
+            "line": 13,
+            "column": 1,
+            "index": 398
+          }
+        }
+      },
+      {
+        "file": "src/services/persona.js",
+        "name": "makeSpoken",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 402
+          },
+          "end": {
+            "line": 22,
+            "column": 1,
+            "index": 630
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/stt.js",
+        "name": "transcribeAudioBuffer",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 213
+          },
+          "end": {
+            "line": 53,
+            "column": 1,
+            "index": 1547
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "speakQueued",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 64,
+            "column": 0,
+            "index": 1683
+          },
+          "end": {
+            "line": 71,
+            "column": 1,
+            "index": 1881
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "name": "actionRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 465
+          },
+          "end": {
+            "line": 169,
+            "column": 1,
+            "index": 5254
+          }
+        }
+      },
+      {
+        "file": "src/routes/blocks.js",
+        "name": "blocksRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 119
+          },
+          "end": {
+            "line": 33,
+            "column": 1,
+            "index": 853
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "name": "chatRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 43,
+            "column": 0,
+            "index": 1424
+          },
+          "end": {
+            "line": 231,
+            "column": 1,
+            "index": 7508
+          }
+        }
+      },
+      {
+        "file": "src/routes/devices.js",
+        "name": "deviceRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 108
+          },
+          "end": {
+            "line": 22,
+            "column": 1,
+            "index": 623
+          }
+        }
+      },
+      {
+        "file": "src/routes/system.js",
+        "name": "systemRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 37
+          },
+          "end": {
+            "line": 14,
+            "column": 1,
+            "index": 272
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "name": "voiceRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 308
+          },
+          "end": {
+            "line": 36,
+            "column": 1,
+            "index": 1095
+          }
+        }
+      },
+      {
+        "file": "src/planner/chunker.js",
+        "name": "buildCssBlocks",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 47,
+            "column": 0,
+            "index": 1085
+          },
+          "end": {
+            "line": 92,
+            "column": 1,
+            "index": 2149
+          }
+        }
+      },
+      {
+        "file": "src/planner/chunker.js",
+        "name": "buildLineBlocks",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 94,
+            "column": 0,
+            "index": 2153
+          },
+          "end": {
+            "line": 128,
+            "column": 1,
+            "index": 2976
+          }
+        }
+      },
+      {
+        "file": "src/planner/chunker.js",
+        "name": "buildFileBlocks",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 296,
+            "column": 0,
+            "index": 8056
+          },
+          "end": {
+            "line": 318,
+            "column": 1,
+            "index": 8888
+          }
+        }
+      },
+      {
+        "file": "src/planner/compiler.js",
+        "name": "compilePlanToActions",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 309,
+            "column": 0,
+            "index": 8240
+          },
+          "end": {
+            "line": 406,
+            "column": 1,
+            "index": 11044
+          }
+        }
+      },
+      {
+        "file": "src/planner/intent.js",
+        "name": "extractIntent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 359
+          },
+          "end": {
+            "line": 42,
+            "column": 1,
+            "index": 1682
+          }
+        }
+      },
+      {
+        "file": "src/planner/planner.js",
+        "name": "llmRespondAndPlan",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 106
+          },
+          "end": {
+            "line": 92,
+            "column": 1,
+            "index": 3997
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "name": "buildSnapshot",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 20,
+            "column": 0,
+            "index": 600
+          },
+          "end": {
+            "line": 96,
+            "column": 1,
+            "index": 2717
+          }
+        }
+      },
+      {
+        "file": "src/planner/triage.js",
+        "name": "triageNeedsPlanner",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 241
+          },
+          "end": {
+            "line": 65,
+            "column": 1,
+            "index": 2306
+          }
+        }
+      },
+      {
+        "file": "src/planner/uimapper.js",
+        "name": "normalizeWs",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 5,
+            "column": 1,
+            "index": 102
+          }
+        }
+      },
+      {
+        "file": "src/planner/uimapper.js",
+        "name": "parseButtonsFromHtml",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 106
+          },
+          "end": {
+            "line": 31,
+            "column": 1,
+            "index": 894
+          }
+        }
+      },
+      {
+        "file": "src/planner/uimapper.js",
+        "name": "parseCssBlocks",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 33,
+            "column": 0,
+            "index": 898
+          },
+          "end": {
+            "line": 65,
+            "column": 1,
+            "index": 1728
+          }
+        }
+      },
+      {
+        "file": "src/planner/uimapper.js",
+        "name": "findCssBlock",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 67,
+            "column": 0,
+            "index": 1732
+          },
+          "end": {
+            "line": 70,
+            "column": 1,
+            "index": 1888
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "name": "buildCodebaseIndex",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 243,
+            "column": 0,
+            "index": 6251
+          },
+          "end": {
+            "line": 295,
+            "column": 1,
+            "index": 7856
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "name": "loadIndex",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 297,
+            "column": 0,
+            "index": 7860
+          },
+          "end": {
+            "line": 306,
+            "column": 1,
+            "index": 8103
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "name": "makeIndexQuery",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 308,
+            "column": 0,
+            "index": 8107
+          },
+          "end": {
+            "line": 345,
+            "column": 1,
+            "index": 9128
+          }
+        }
+      },
+      {
+        "file": "src/config/constants.js",
+        "name": "DEFAULT_PORT",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 61,
+            "index": 61
+          }
+        }
+      },
+      {
+        "file": "src/config/constants.js",
+        "name": "OFF_EXIT_CODE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 63
+          },
+          "end": {
+            "line": 2,
+            "column": 32,
+            "index": 95
+          }
+        }
+      },
+      {
+        "file": "src/config/constants.js",
+        "name": "LIMITS",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 99
+          },
+          "end": {
+            "line": 8,
+            "column": 2,
+            "index": 206
+          }
+        }
+      },
+      {
+        "file": "src/config/constants.js",
+        "name": "ALLOWLIST_SNAPSHOT_FILES",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 210
+          },
+          "end": {
+            "line": 19,
+            "column": 2,
+            "index": 456
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "ROOT",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 50
+          },
+          "end": {
+            "line": 4,
+            "column": 34,
+            "index": 84
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "DATA_DIR",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 88
+          },
+          "end": {
+            "line": 6,
+            "column": 48,
+            "index": 136
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "TMP_DIR",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 138
+          },
+          "end": {
+            "line": 7,
+            "column": 46,
+            "index": 184
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "ACTIONS_DIR",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 186
+          },
+          "end": {
+            "line": 8,
+            "column": 54,
+            "index": 240
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "ACTIONS_FILE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 244
+          },
+          "end": {
+            "line": 10,
+            "column": 64,
+            "index": 308
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "APPS_FILE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 310
+          },
+          "end": {
+            "line": 11,
+            "column": 58,
+            "index": 368
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "OFF_FLAG_PATH",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 370
+          },
+          "end": {
+            "line": 12,
+            "column": 61,
+            "index": 431
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "FFMPEG_EXE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 478
+          },
+          "end": {
+            "line": 16,
+            "column": 160,
+            "index": 665
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_EXE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 669
+          },
+          "end": {
+            "line": 18,
+            "column": 62,
+            "index": 731
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_MODEL",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 733
+          },
+          "end": {
+            "line": 19,
+            "column": 73,
+            "index": 806
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_THREADS",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 20,
+            "column": 0,
+            "index": 808
+          },
+          "end": {
+            "line": 20,
+            "column": 33,
+            "index": 841
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "PIPER_EXE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 22,
+            "column": 0,
+            "index": 845
+          },
+          "end": {
+            "line": 22,
+            "column": 56,
+            "index": 901
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "PIPER_VOICE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 23,
+            "column": 0,
+            "index": 903
+          },
+          "end": {
+            "line": 23,
+            "column": 78,
+            "index": 981
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "TMP_PIPER_TEXT",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 25,
+            "column": 0,
+            "index": 985
+          },
+          "end": {
+            "line": 25,
+            "column": 67,
+            "index": 1052
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "TMP_PIPER_WAV",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 26,
+            "column": 0,
+            "index": 1054
+          },
+          "end": {
+            "line": 26,
+            "column": 65,
+            "index": 1119
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "name": "restoreBackup",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 23,
+            "column": 0,
+            "index": 699
+          },
+          "end": {
+            "line": 27,
+            "column": 1,
+            "index": 906
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "name": "executeAction",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 74,
+            "column": 0,
+            "index": 2270
+          },
+          "end": {
+            "line": 418,
+            "column": 1,
+            "index": 12481
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "name": "isPreviewableType",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 50,
+            "column": 0,
+            "index": 1408
+          },
+          "end": {
+            "line": 52,
+            "column": 1,
+            "index": 1532
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "name": "computePreviewFilesForAction",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 60,
+            "column": 0,
+            "index": 1718
+          },
+          "end": {
+            "line": 130,
+            "column": 1,
+            "index": 3749
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "name": "htmlPreviewPage",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 199,
+            "column": 0,
+            "index": 5483
+          },
+          "end": {
+            "line": 501,
+            "column": 1,
+            "index": 16681
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "loadActions",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 209
+          },
+          "end": {
+            "line": 37,
+            "column": 1,
+            "index": 828
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "saveActions",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 39,
+            "column": 0,
+            "index": 832
+          },
+          "end": {
+            "line": 41,
+            "column": 1,
+            "index": 943
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "listActions",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 43,
+            "column": 0,
+            "index": 947
+          },
+          "end": {
+            "line": 46,
+            "column": 1,
+            "index": 1018
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "addAction",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 48,
+            "column": 0,
+            "index": 1022
+          },
+          "end": {
+            "line": 60,
+            "column": 1,
+            "index": 1364
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "updateAction",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 62,
+            "column": 0,
+            "index": 1368
+          },
+          "end": {
+            "line": 82,
+            "column": 1,
+            "index": 1903
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "name": "getActionById",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 84,
+            "column": 0,
+            "index": 1907
+          },
+          "end": {
+            "line": 87,
+            "column": 1,
+            "index": 2015
+          }
+        }
+      }
+    ],
+    "routes": [
+      {
+        "file": "src/server.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/shutdown",
+        "loc": {
+          "start": {
+            "line": 31,
+            "column": 0,
+            "index": 1060
+          },
+          "end": {
+            "line": 55,
+            "column": 2,
+            "index": 1597
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "GET",
+        "path": "/ping",
+        "loc": {
+          "start": {
+            "line": 894,
+            "column": 0,
+            "index": 28887
+          },
+          "end": {
+            "line": 896,
+            "column": 1,
+            "index": 28992
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "GET",
+        "path": "/actions",
+        "loc": {
+          "start": {
+            "line": 898,
+            "column": 0,
+            "index": 28997
+          },
+          "end": {
+            "line": 901,
+            "column": 2,
+            "index": 29090
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/action/reject",
+        "loc": {
+          "start": {
+            "line": 903,
+            "column": 0,
+            "index": 29095
+          },
+          "end": {
+            "line": 914,
+            "column": 2,
+            "index": 29467
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/action/rollback",
+        "loc": {
+          "start": {
+            "line": 916,
+            "column": 0,
+            "index": 29472
+          },
+          "end": {
+            "line": 940,
+            "column": 2,
+            "index": 30240
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/action/approve",
+        "loc": {
+          "start": {
+            "line": 942,
+            "column": 0,
+            "index": 30245
+          },
+          "end": {
+            "line": 992,
+            "column": 2,
+            "index": 31758
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/device/register",
+        "loc": {
+          "start": {
+            "line": 995,
+            "column": 0,
+            "index": 31826
+          },
+          "end": {
+            "line": 1009,
+            "column": 2,
+            "index": 32268
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "GET",
+        "path": "/devices",
+        "loc": {
+          "start": {
+            "line": 1010,
+            "column": 0,
+            "index": 32271
+          },
+          "end": {
+            "line": 1018,
+            "column": 2,
+            "index": 32482
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/device/run",
+        "loc": {
+          "start": {
+            "line": 1019,
+            "column": 0,
+            "index": 32485
+          },
+          "end": {
+            "line": 1036,
+            "column": 2,
+            "index": 33170
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/voice/transcribe",
+        "loc": {
+          "start": {
+            "line": 1039,
+            "column": 0,
+            "index": 33239
+          },
+          "end": {
+            "line": 1106,
+            "column": 2,
+            "index": 35695
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/voice/speak",
+        "loc": {
+          "start": {
+            "line": 1165,
+            "column": 0,
+            "index": 37571
+          },
+          "end": {
+            "line": 1183,
+            "column": 2,
+            "index": 38101
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/chat",
+        "loc": {
+          "start": {
+            "line": 1186,
+            "column": 0,
+            "index": 38157
+          },
+          "end": {
+            "line": 1419,
+            "column": 2,
+            "index": 45703
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "object": "app",
+        "method": "POST",
+        "path": "/shutdown",
+        "loc": {
+          "start": {
+            "line": 1439,
+            "column": 0,
+            "index": 46111
+          },
+          "end": {
+            "line": 1446,
+            "column": 2,
+            "index": 46425
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/actions",
+        "loc": {
+          "start": {
+            "line": 21,
+            "column": 2,
+            "index": 526
+          },
+          "end": {
+            "line": 23,
+            "column": 3,
+            "index": 614
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/action/preview/:id.json",
+        "loc": {
+          "start": {
+            "line": 25,
+            "column": 2,
+            "index": 621
+          },
+          "end": {
+            "line": 37,
+            "column": 4,
+            "index": 1150
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/action/preview/:id",
+        "loc": {
+          "start": {
+            "line": 39,
+            "column": 2,
+            "index": 1157
+          },
+          "end": {
+            "line": 57,
+            "column": 4,
+            "index": 1935
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/action/reject",
+        "loc": {
+          "start": {
+            "line": 59,
+            "column": 2,
+            "index": 1942
+          },
+          "end": {
+            "line": 69,
+            "column": 4,
+            "index": 2301
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/action/rollback",
+        "loc": {
+          "start": {
+            "line": 71,
+            "column": 2,
+            "index": 2308
+          },
+          "end": {
+            "line": 96,
+            "column": 4,
+            "index": 3125
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/action/approve",
+        "loc": {
+          "start": {
+            "line": 98,
+            "column": 2,
+            "index": 3132
+          },
+          "end": {
+            "line": 146,
+            "column": 4,
+            "index": 4613
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/action/add",
+        "loc": {
+          "start": {
+            "line": 149,
+            "column": 2,
+            "index": 4662
+          },
+          "end": {
+            "line": 166,
+            "column": 4,
+            "index": 5235
+          }
+        }
+      },
+      {
+        "file": "src/routes/blocks.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/blocks",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 2,
+            "index": 273
+          },
+          "end": {
+            "line": 30,
+            "column": 4,
+            "index": 834
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/chat",
+        "loc": {
+          "start": {
+            "line": 46,
+            "column": 2,
+            "index": 1483
+          },
+          "end": {
+            "line": 228,
+            "column": 4,
+            "index": 7489
+          }
+        }
+      },
+      {
+        "file": "src/routes/devices.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/device/register",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 2,
+            "index": 169
+          },
+          "end": {
+            "line": 15,
+            "column": 4,
+            "index": 509
+          }
+        }
+      },
+      {
+        "file": "src/routes/devices.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/devices",
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 2,
+            "index": 516
+          },
+          "end": {
+            "line": 19,
+            "column": 3,
+            "index": 604
+          }
+        }
+      },
+      {
+        "file": "src/routes/system.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/ping",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 2,
+            "index": 104
+          },
+          "end": {
+            "line": 12,
+            "column": 3,
+            "index": 255
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/voice/transcribe",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 2,
+            "index": 368
+          },
+          "end": {
+            "line": 26,
+            "column": 4,
+            "index": 858
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/voice/speak",
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 2,
+            "index": 865
+          },
+          "end": {
+            "line": 33,
+            "column": 4,
+            "index": 1076
+          }
+        }
+      }
+    ],
+    "imports": [
+      {
+        "file": "src/server.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 30,
+            "index": 30
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 32
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 56
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./config/constants.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 58
+          },
+          "end": {
+            "line": 3,
+            "column": 76,
+            "index": 134
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./config/paths.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 136
+          },
+          "end": {
+            "line": 4,
+            "column": 41,
+            "index": 177
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/system.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 179
+          },
+          "end": {
+            "line": 5,
+            "column": 50,
+            "index": 229
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/chat.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 231
+          },
+          "end": {
+            "line": 6,
+            "column": 46,
+            "index": 277
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/voice.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 279
+          },
+          "end": {
+            "line": 7,
+            "column": 48,
+            "index": 327
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/actions.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 329
+          },
+          "end": {
+            "line": 8,
+            "column": 51,
+            "index": 380
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/devices.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 382
+          },
+          "end": {
+            "line": 9,
+            "column": 51,
+            "index": 433
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/blocks.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 435
+          },
+          "end": {
+            "line": 10,
+            "column": 50,
+            "index": 485
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 487
+          },
+          "end": {
+            "line": 11,
+            "column": 20,
+            "index": 507
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./config/paths.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 509
+          },
+          "end": {
+            "line": 12,
+            "column": 50,
+            "index": 559
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./indexer/indexer.js",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 561
+          },
+          "end": {
+            "line": 13,
+            "column": 58,
+            "index": 619
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 636
+          },
+          "end": {
+            "line": 15,
+            "column": 30,
+            "index": 666
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 16,
+            "column": 0,
+            "index": 668
+          },
+          "end": {
+            "line": 16,
+            "column": 20,
+            "index": 688
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 0,
+            "index": 690
+          },
+          "end": {
+            "line": 17,
+            "column": 24,
+            "index": 714
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 716
+          },
+          "end": {
+            "line": 18,
+            "column": 28,
+            "index": 744
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "multer",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 746
+          },
+          "end": {
+            "line": 19,
+            "column": 28,
+            "index": 774
+          }
+        }
+      },
+      {
+        "file": "src/server.old.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 20,
+            "column": 0,
+            "index": 776
+          },
+          "end": {
+            "line": 20,
+            "column": 44,
+            "index": 820
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 46
+          }
+        }
+      },
+      {
+        "file": "src/utils/fsx.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 48
+          },
+          "end": {
+            "line": 3,
+            "column": 42,
+            "index": 90
+          }
+        }
+      },
+      {
+        "file": "src/services/apps.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/services/apps.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 47,
+            "index": 69
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/stt.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/stt.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 46
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/stt.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 48
+          },
+          "end": {
+            "line": 3,
+            "column": 37,
+            "index": 85
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/stt.js",
+        "source": "../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 87
+          },
+          "end": {
+            "line": 10,
+            "column": 31,
+            "index": 209
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 44,
+            "index": 66
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 68
+          },
+          "end": {
+            "line": 8,
+            "column": 31,
+            "index": 176
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 33,
+            "index": 33
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 35
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 55
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "../config/constants.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 57
+          },
+          "end": {
+            "line": 3,
+            "column": 55,
+            "index": 112
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 114
+          },
+          "end": {
+            "line": 4,
+            "column": 51,
+            "index": 165
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 167
+          },
+          "end": {
+            "line": 10,
+            "column": 29,
+            "index": 271
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "../actions/executor.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 273
+          },
+          "end": {
+            "line": 11,
+            "column": 70,
+            "index": 343
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
+        "source": "../actions/preview.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 345
+          },
+          "end": {
+            "line": 16,
+            "column": 31,
+            "index": 461
+          }
+        }
+      },
+      {
+        "file": "src/routes/blocks.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 25
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 58
+          }
+        }
+      },
+      {
+        "file": "src/routes/blocks.js",
+        "source": "../planner/snapshot.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 60
+          },
+          "end": {
+            "line": 3,
+            "column": 55,
+            "index": 115
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 23
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 56
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 58
+          },
+          "end": {
+            "line": 3,
+            "column": 55,
+            "index": 113
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 115
+          },
+          "end": {
+            "line": 4,
+            "column": 51,
+            "index": 166
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/intent.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 168
+          },
+          "end": {
+            "line": 5,
+            "column": 53,
+            "index": 221
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/triage.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 225
+          },
+          "end": {
+            "line": 7,
+            "column": 58,
+            "index": 283
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/snapshot.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 285
+          },
+          "end": {
+            "line": 8,
+            "column": 55,
+            "index": 340
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/planner.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 342
+          },
+          "end": {
+            "line": 9,
+            "column": 58,
+            "index": 400
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/compiler.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 402
+          },
+          "end": {
+            "line": 10,
+            "column": 62,
+            "index": 464
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 468
+          },
+          "end": {
+            "line": 12,
+            "column": 48,
+            "index": 516
+          }
+        }
+      },
+      {
+        "file": "src/routes/devices.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 33,
+            "index": 33
+          }
+        }
+      },
+      {
+        "file": "src/routes/devices.js",
+        "source": "../services/devices.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 35
+          },
+          "end": {
+            "line": 2,
+            "column": 69,
+            "index": 104
+          }
+        }
+      },
+      {
+        "file": "src/routes/system.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 33,
+            "index": 33
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 33,
+            "index": 33
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "multer",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 35
+          },
+          "end": {
+            "line": 2,
+            "column": 28,
+            "index": 63
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "../services/voice/stt.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 65
+          },
+          "end": {
+            "line": 3,
+            "column": 65,
+            "index": 130
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "../services/voice/tts.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 132
+          },
+          "end": {
+            "line": 4,
+            "column": 55,
+            "index": 187
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 189
+          },
+          "end": {
+            "line": 5,
+            "column": 52,
+            "index": 241
+          }
+        }
+      },
+      {
+        "file": "src/planner/chunker.js",
+        "source": "./uimapper.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 27
+          },
+          "end": {
+            "line": 2,
+            "column": 44,
+            "index": 71
+          }
+        }
+      },
+      {
+        "file": "src/planner/compiler.js",
+        "source": "./uimapper.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 28
+          },
+          "end": {
+            "line": 2,
+            "column": 58,
+            "index": 86
+          }
+        }
+      },
+      {
+        "file": "src/planner/intent.js",
+        "source": "../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 26
+          },
+          "end": {
+            "line": 2,
+            "column": 75,
+            "index": 101
+          }
+        }
+      },
+      {
+        "file": "src/planner/planner.js",
+        "source": "../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 27
+          },
+          "end": {
+            "line": 2,
+            "column": 75,
+            "index": 102
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 28
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 52
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 54
+          },
+          "end": {
+            "line": 3,
+            "column": 42,
+            "index": 96
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "../config/constants.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 98
+          },
+          "end": {
+            "line": 4,
+            "column": 74,
+            "index": 172
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "../utils/fsx.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 174
+          },
+          "end": {
+            "line": 5,
+            "column": 51,
+            "index": 225
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "./uimapper.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 227
+          },
+          "end": {
+            "line": 6,
+            "column": 69,
+            "index": 296
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "./chunker.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 298
+          },
+          "end": {
+            "line": 7,
+            "column": 47,
+            "index": 345
+          }
+        }
+      },
+      {
+        "file": "src/planner/snapshot.js",
+        "source": "../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 347
+          },
+          "end": {
+            "line": 8,
+            "column": 50,
+            "index": 397
+          }
+        }
+      },
+      {
+        "file": "src/planner/triage.js",
+        "source": "../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 26
+          },
+          "end": {
+            "line": 2,
+            "column": 75,
+            "index": 101
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 27
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 47
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 49
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 73
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "@babel/parser",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 75
+          },
+          "end": {
+            "line": 4,
+            "column": 52,
+            "index": 127
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "@babel/traverse",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 129
+          },
+          "end": {
+            "line": 5,
+            "column": 45,
+            "index": 174
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "htmlparser2",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 236
+          },
+          "end": {
+            "line": 7,
+            "column": 44,
+            "index": 280
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "postcss",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 282
+          },
+          "end": {
+            "line": 8,
+            "column": 30,
+            "index": 312
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "postcss-selector-parser",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 314
+          },
+          "end": {
+            "line": 9,
+            "column": 53,
+            "index": 367
+          }
+        }
+      },
+      {
+        "file": "src/indexer/indexer.js",
+        "source": "fuse.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 369
+          },
+          "end": {
+            "line": 10,
+            "column": 27,
+            "index": 396
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 24,
+            "index": 24
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 26
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 46
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 46
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 48
+          },
+          "end": {
+            "line": 3,
+            "column": 37,
+            "index": 85
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 87
+          },
+          "end": {
+            "line": 4,
+            "column": 49,
+            "index": 136
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "../utils/fsx.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 138
+          },
+          "end": {
+            "line": 5,
+            "column": 64,
+            "index": 202
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "source": "../utils/fsx.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 46,
+            "index": 68
+          }
+        }
+      },
+      {
+        "file": "src/actions/preview.js",
+        "source": "../utils/diff.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 70
+          },
+          "end": {
+            "line": 3,
+            "column": 47,
+            "index": 117
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/actions/store.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 50,
+            "index": 72
+          }
+        }
+      }
+    ]
+  }
+}
