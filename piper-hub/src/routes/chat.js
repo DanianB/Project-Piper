@@ -17,18 +17,60 @@ function newId() {
   return `act_${Math.random().toString(16).slice(2)}${Date.now().toString(16)}`;
 }
 
+function looksLikeCodeNav(msg) {
+  const lower = String(msg || "").toLowerCase();
+  const hints = [
+    "where is",
+    "where are",
+    "location of",
+    "located",
+    "identify the location",
+    "what file",
+    "which file",
+    "what module",
+    "which module",
+    "in the code",
+    "in code",
+    "implementation",
+    "implemented",
+    "function",
+    "functions",
+    "voice",
+    "routes",
+    "route",
+    "export",
+    "import",
+    "src/",
+    "public/",
+    ".js",
+    ".css",
+    ".html",
+  ];
+  if (hints.some((k) => lower.includes(k))) return true;
+  if (/(?:src\/|public\/|\.js\b|\.css\b|\.html\b)/i.test(msg)) return true;
+  if (
+    lower.startsWith("find ") ||
+    lower.startsWith("locate ") ||
+    lower.startsWith("inspect ") ||
+    lower.startsWith("search ")
+  )
+    return true;
+  return false;
+}
+
 /**
  * Fast chat mode (no actions). Must not claim changes were executed.
  */
 async function fastChatReply(msg) {
   const sys =
     "You are Piper — calm, confident, concise Jarvis-style assistant.\n" +
-    "Never bubbly. No tool/platform talk. No emoji spam.\n" +
+    "Never bubbly. No emoji spam.\n" +
     "Use 'sir' occasionally, not every sentence.\n" +
     "Keep replies to 1–2 sentences unless asked for more.\n\n" +
     "CRITICAL TRUTH RULE:\n" +
-    "- In this mode you cannot run commands or change files/UI.\n" +
-    "- Never claim something was changed or completed.\n";
+    "- In chat mode you do not run commands or change files.\n" +
+    "- Never claim a change was made.\n" +
+    "- If asked about code locations/implementation, do NOT invent details. Say you can inspect and queue an approval action.\n";
 
   const out = await callOllama(
     [
@@ -52,13 +94,16 @@ export function chatRoutes() {
       const sid = String(sessionId || "default");
       const s = sessions.get(sid) || { turns: 0, lastIntent: "chat" };
 
-      // TRIAGE (with light context)
       const triage = await triageNeedsPlanner({
         message: msg,
         lastIntent: s.lastIntent || "chat",
       });
 
+      // HARD OVERRIDE: code-navigation questions must plan
+      const forcePlan = looksLikeCodeNav(msg);
+
       const mode =
+        forcePlan ||
         triage.mode === "plan" ||
         (s.lastIntent === "plan" && triage.confidence < 0.95)
           ? "plan"
@@ -70,7 +115,6 @@ export function chatRoutes() {
         } conf=${triage.confidence.toFixed(2)}) msg="${msg.slice(0, 80)}"`
       );
 
-      // FAST CHAT
       if (mode === "chat") {
         s.lastIntent = "chat";
         const reply = await fastChatReply(msg);
@@ -79,7 +123,6 @@ export function chatRoutes() {
         return res.json({ reply, proposed: [] });
       }
 
-      // PLAN
       s.lastIntent = "plan";
 
       if (Boolean(readOnly)) {
@@ -93,30 +136,27 @@ export function chatRoutes() {
         });
       }
 
-      // Snapshot for planner/compiler
       const snapshot = await buildSnapshot();
 
-      // Call planner
       let plan = await llmRespondAndPlan({ message: msg, snapshot });
       let ops = Array.isArray(plan.ops) ? plan.ops : [];
       let hasOps = ops.length > 0;
 
-      // One-shot retry if model didn't emit actionable ops
-      if (!plan.requiresApproval || !hasOps) {
-        const retryMsg =
-          msg +
-          "\n\nSYSTEM NOTE: This request requires approval-gated action(s). " +
-          "You MUST output JSON with requiresApproval=true and at least one actionable op. " +
-          "For simple UI changes, do not ask preference questions. Queue the minimal safe change.";
-        plan = await llmRespondAndPlan({ message: retryMsg, snapshot });
+      // Retry once if it didn't emit ops for a plan-worthy request
+      if ((forcePlan || plan.requiresApproval) && !hasOps) {
+        plan = await llmRespondAndPlan({
+          message:
+            msg +
+            "\n\nSYSTEM NOTE: You MUST queue at least one actionable op for approval (run_cmd and/or read_snippet if needed).",
+          snapshot,
+        });
         ops = Array.isArray(plan.ops) ? plan.ops : [];
         hasOps = ops.length > 0;
       }
 
-      // ---------- Fallback intent extraction ----------
+      // Fallback intent extraction (legacy ui_change)
       if (!hasOps && triage.action === "change") {
         const intent = await extractIntent(msg);
-
         if (intent.kind === "ui_change" && intent.changeKind) {
           plan = {
             reply: "Queued for approval, sir.",
@@ -130,21 +170,19 @@ export function chatRoutes() {
               },
             ],
           };
+          ops = plan.ops;
+          hasOps = true;
         }
       }
 
-      // ---------- Extract read_snippet ops (handled directly here) ----------
-      // This avoids needing compiler support and keeps the milestone scoped.
+      // Handle read_snippet ops directly here (keeps compiler changes minimal)
       const readOps = (Array.isArray(plan.ops) ? plan.ops : []).filter(
         (o) => o && typeof o === "object" && o.op === "read_snippet"
       );
 
       const readActions = readOps.map((o) => {
         const rel = String(o.path || o.file || "").trim();
-        const title = `Read snippet: ${rel || "file"}`;
-        const payload = {
-          path: rel,
-        };
+        const payload = { path: rel };
 
         if (o.aroundLine != null) payload.aroundLine = Number(o.aroundLine);
         if (o.radius != null) payload.radius = Number(o.radius);
@@ -154,7 +192,7 @@ export function chatRoutes() {
 
         return {
           type: "read_snippet",
-          title,
+          title: `Read snippet: ${rel || "file"}`,
           reason: String(
             o.why || "Inspect a portion of a file to ground a safe change."
           ),
@@ -162,7 +200,6 @@ export function chatRoutes() {
         };
       });
 
-      // Remove read_snippet ops before compiling the rest
       if (readOps.length) {
         plan = {
           ...plan,
@@ -180,12 +217,17 @@ export function chatRoutes() {
 
       console.log(`[chat] compiled actions=${(compiled.actions || []).length}`);
 
-      const allActions = [...(readActions || []), ...(compiled.actions || [])];
+      const allActions = [...readActions, ...(compiled.actions || [])];
 
       if (!allActions.length) {
         s.turns += 1;
         sessions.set(sid, s);
-        return res.json({ reply: enforceJarvis(compiled.reply), proposed: [] });
+        return res.json({
+          reply: enforceJarvis(
+            "Sir, I can locate that in the code, but I’ll need to run a quick inspection first."
+          ),
+          proposed: [],
+        });
       }
 
       const proposed = [];
@@ -208,15 +250,8 @@ export function chatRoutes() {
       s.turns += 1;
       sessions.set(sid, s);
 
-      const finalReply =
-        allActions.length &&
-        typeof compiled.reply === "string" &&
-        /couldn['’]t|cannot|unable/i.test(compiled.reply)
-          ? "Queued for approval, sir."
-          : String(compiled.reply || "Queued for approval, sir.");
-
       return res.json({
-        reply: enforceJarvis(finalReply),
+        reply: enforceJarvis("Queued for approval, sir."),
         proposed,
       });
     } catch (e) {
