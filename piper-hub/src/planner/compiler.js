@@ -1,12 +1,22 @@
 // src/planner/compiler.js
 import fs from "fs";
 import path from "path";
-import { findCssBlock, normalizeWs } from "./uimapper.js";
 import { safeResolve } from "../utils/fsx.js";
+
+/**
+ * Compile planner JSON ops into executable actions.
+ * HARD RULE: return at most ONE approval action (bundle if needed).
+ */
 
 function ensureEndsWithNewline(s) {
   s = String(s || "");
   return s.endsWith("\n") ? s : s + "\n";
+}
+
+function normalizeWs(s) {
+  return String(s || "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function escapeRegExp(s) {
@@ -39,62 +49,178 @@ function setDecl(body, prop, value) {
   return b;
 }
 
-function buildCssApplyPatch({ uiMap, selector, title, reason, editFn }) {
-  const block = findCssBlock(uiMap.cssBlocks, selector);
-  if (!block) return null;
+function readFileText(relPath) {
+  const abs = safeResolve(relPath);
+  try {
+    return fs.readFileSync(abs, "utf8");
+  } catch {
+    return "";
+  }
+}
 
-  const full = String(block.full || "");
-  const body = String(block.body || "");
+/**
+ * Find a selector block in CSS using snapshot.uiMap.cssBlocks if possible,
+ * otherwise by a simple regex search on the file.
+ *
+ * Returns { full, body } or null.
+ */
+function findCssBlockFromSnapshot(snapshot, selector) {
+  const sel = String(selector || "").trim();
+  const blocks = snapshot?.uiMap?.cssBlocks;
+  if (Array.isArray(blocks)) {
+    const b = blocks.find((x) => String(x?.selector || "").trim() === sel);
+    if (b && typeof b.full === "string" && typeof b.body === "string") {
+      return { full: b.full, body: b.body };
+    }
+  }
+  return null;
+}
 
-  const newBody = editFn(body);
-  if (normalizeWs(newBody) === normalizeWs(body)) return null;
+function findCssBlockByRegex(cssText, selector) {
+  const sel = String(selector || "").trim();
+  if (!sel) return null;
 
-  const open = full.indexOf("{");
-  const close = full.lastIndexOf("}");
-  if (open === -1 || close === -1 || close <= open) return null;
+  // Very simple: match `selector { ... }` non-greedily.
+  // Works for normal blocks (not nested preprocessor).
+  const re = new RegExp(
+    `(^|\\n)\\s*${escapeRegExp(sel)}\\s*\\{([\\s\\S]*?)\\}\\s*`,
+    "m"
+  );
 
-  const prefix = full.slice(0, open + 1);
-  const suffix = full.slice(close);
+  const m = cssText.match(re);
+  if (!m) return null;
 
-  const nextFull = prefix + "\n" + newBody + suffix;
+  const full = m[0].startsWith("\n") ? m[0].slice(1) : m[0];
+  const body = m[2] || "";
+  return { full, body };
+}
+
+function buildCssApplyPatch({
+  cssText,
+  selector,
+  title,
+  reason,
+  set,
+  unset,
+  snapshot,
+}) {
+  // 1) Try snapshot blocks first (best chance for exact find string)
+  let block = findCssBlockFromSnapshot(snapshot, selector);
+
+  // 2) Fallback to regex parse from file
+  if (!block) block = findCssBlockByRegex(cssText, selector);
+
+  // If we found a block, try to edit it
+  if (block) {
+    const full = String(block.full || "");
+    const body = String(block.body || "");
+
+    let nextBody = String(body);
+    for (const prop of Array.isArray(unset) ? unset : [])
+      nextBody = stripDecl(nextBody, prop);
+    for (const [k, v] of Object.entries(set || {}))
+      nextBody = setDecl(nextBody, k, v);
+
+    if (normalizeWs(nextBody) === normalizeWs(body)) return null;
+
+    const open = full.indexOf("{");
+    const close = full.lastIndexOf("}");
+    if (open === -1 || close === -1 || close <= open) return null;
+
+    const prefix = full.slice(0, open + 1);
+    const suffix = full.slice(close);
+
+    const nextFull = `${prefix}\n${ensureEndsWithNewline(nextBody)}${suffix}`;
+
+    // Use exact substring replace (deterministic)
+    return {
+      type: "apply_patch",
+      title,
+      reason,
+      payload: {
+        path: "public/styles.css",
+        edits: [{ find: full, replace: nextFull, mode: "once" }],
+      },
+    };
+  }
+
+  // If we can't find a block deterministically, append a safe override block.
+  // This is still grounded (we are only adding a new block with the selector).
+  const lines = [];
+  for (const [k, v] of Object.entries(set || {})) {
+    const prop = String(k).trim();
+    const val = String(v ?? "").trim();
+    if (prop && val) lines.push(`  ${prop}: ${val};`);
+  }
+  if (!lines.length) return null;
+
+  const appended =
+    `\n\n/* Piper auto-override (approval-gated) */\n${selector} {\n` +
+    lines.join("\n") +
+    `\n}\n`;
 
   return {
     type: "apply_patch",
-    title,
-    reason,
+    title: `CSS override: ${selector}`,
+    reason:
+      reason ||
+      "Could not locate an exact CSS block; appending a minimal override block instead.",
     payload: {
-      path: uiMap.cssFile,
-      edits: [{ find: full, replace: nextFull, mode: "once" }],
+      path: "public/styles.css",
+      edits: [{ find: "", replace: appended, mode: "append" }],
     },
+    meta: { allowAppend: true },
   };
 }
 
 function compileCssPatch({ snapshot, op }) {
-  const uiMap = snapshot?.uiMap;
-  if (!uiMap) return null;
-
   const selectors = Array.isArray(op.selectors) ? op.selectors : [];
-  const set = op.set && typeof op.set === "object" ? op.set : {};
-  const unset = Array.isArray(op.unset) ? op.unset : [];
-
   const selector = String(selectors[0] || "").trim();
   if (!selector) return null;
 
-  const title = `CSS patch: ${selector}`;
-  const reason = String(op.why || "CSS update").trim();
+  const set = op.set && typeof op.set === "object" ? op.set : {};
+  const unset = Array.isArray(op.unset) ? op.unset : [];
+  const why = String(op.why || "CSS update").trim();
 
-  return buildCssApplyPatch({
-    uiMap,
+  const cssText =
+    (snapshot?.rawFiles && snapshot.rawFiles["public/styles.css"]) ||
+    readFileText("public/styles.css");
+
+  const action = buildCssApplyPatch({
+    cssText,
     selector,
-    title,
-    reason,
-    editFn: (body) => {
-      let out = String(body || "");
-      for (const prop of unset) out = stripDecl(out, prop);
-      for (const [k, v] of Object.entries(set)) out = setDecl(out, k, v);
-      return out;
-    },
+    title: `CSS patch: ${selector}`,
+    reason: why,
+    set,
+    unset,
+    snapshot,
   });
+
+  if (action) {
+    console.log(
+      `[compiler] compile css_patch selector="${selector}" -> ${action.type}`
+    );
+  } else {
+    console.log(
+      `[compiler] compile css_patch selector="${selector}" -> (no-op)`
+    );
+  }
+
+  return action;
+}
+
+function compileApplyPatchOp({ op }) {
+  const p = String(op?.path || "").trim();
+  const edits = Array.isArray(op?.edits) ? op.edits : [];
+  const why = String(op?.why || "Apply patch").trim();
+  if (!p || !edits.length) return null;
+
+  return {
+    type: "apply_patch",
+    title: `Patch: ${p}`,
+    reason: why,
+    payload: { path: p, edits },
+  };
 }
 
 function compileWriteFileOp({ op }) {
@@ -102,30 +228,6 @@ function compileWriteFileOp({ op }) {
   const content = String(op?.content ?? "");
   const why = String(op?.why || "Write file").trim();
   if (!p) return null;
-
-  // ✅ Heuristic: if path is "folder/file.txt" and that folder exists in Downloads,
-  // automatically map it to known:downloads/folder/file.txt
-  // This makes: "put it in the piper-tests folder" work after you created it in Downloads.
-  if (!p.startsWith("known:") && !path.isAbsolute(p)) {
-    const firstSeg = p.split(/[\\/]/).filter(Boolean)[0];
-    if (firstSeg) {
-      try {
-        const downloadsFolderAbs = safeResolve(`known:downloads/${firstSeg}`);
-        if (
-          fs.existsSync(downloadsFolderAbs) &&
-          fs.statSync(downloadsFolderAbs).isDirectory()
-        ) {
-          const mapped = `known:downloads/${p.replaceAll("\\", "/")}`;
-          console.log(
-            `[compiler] write_file mapped to downloads: "${p}" -> "${mapped}"`
-          );
-          p = mapped;
-        }
-      } catch {
-        // ignore mapping failures
-      }
-    }
-  }
 
   console.log(
     `[compiler] compile write_file path="${p}" bytes=${content.length}`
@@ -157,6 +259,7 @@ function compileMkdirOp({ op }) {
 function compileRunCmdOp({ op }) {
   const cmd = String(op?.cmd || "").trim();
   if (!cmd) return null;
+
   const timeoutMs =
     typeof op?.timeoutMs === "number" ? Math.max(1000, op.timeoutMs) : 12000;
   const why = String(op?.why || "Run command").trim();
@@ -169,15 +272,35 @@ function compileRunCmdOp({ op }) {
   };
 }
 
-function forceSingleApproval(actions, reply) {
+function compileReadSnippetOp({ op }) {
+  const p = String(op?.path || "").trim();
+  if (!p) return null;
+
+  return {
+    type: "read_snippet",
+    title: `Read snippet: ${p}`,
+    reason: String(op?.why || "Inspect file region").trim(),
+    payload: {
+      path: p,
+      ...(op.aroundLine != null ? { aroundLine: Number(op.aroundLine) } : {}),
+      ...(op.radius != null ? { radius: Number(op.radius) } : {}),
+      ...(op.startLine != null ? { startLine: Number(op.startLine) } : {}),
+      ...(op.endLine != null ? { endLine: Number(op.endLine) } : {}),
+      maxLines: Number(op.maxLines || 240),
+    },
+  };
+}
+
+function forceSingleApproval(actions) {
   const list = Array.isArray(actions) ? actions.filter(Boolean) : [];
   if (list.length <= 1) return list;
 
   return [
     {
       type: "bundle",
-      title: "Bundle: multiple steps",
-      reason: String(reply || "Multiple steps required.").trim(),
+      title: "Queued changes (bundle)",
+      reason:
+        "Multiple safe edits are required; bundling into a single approval item.",
       payload: { steps: list },
     },
   ];
@@ -204,6 +327,12 @@ export function compilePlanToActions({ plan, snapshot, readOnly }) {
       continue;
     }
 
+    if (op.op === "apply_patch") {
+      const a = compileApplyPatchOp({ op });
+      if (a) actions.push(a);
+      continue;
+    }
+
     if (op.op === "write_file") {
       const a = compileWriteFileOp({ op });
       if (a) actions.push(a);
@@ -221,9 +350,15 @@ export function compilePlanToActions({ plan, snapshot, readOnly }) {
       if (a) actions.push(a);
       continue;
     }
+
+    if (op.op === "read_snippet") {
+      const a = compileReadSnippetOp({ op });
+      if (a) actions.push(a);
+      continue;
+    }
   }
 
-  actions = forceSingleApproval(actions, plan?.reply);
+  actions = forceSingleApproval(actions);
 
   return {
     reply: String(plan?.reply || "Queued for approval, sir."),

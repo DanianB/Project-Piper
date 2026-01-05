@@ -1,96 +1,133 @@
 // src/planner/snapshot.js
+import fs from "fs";
 import path from "path";
-import { ROOT } from "../config/paths.js";
-import { LIMITS, ALLOWLIST_SNAPSHOT_FILES } from "../config/constants.js";
-import { readTextIfExists } from "../utils/fsx.js";
-import { parseButtonsFromHtml, parseCssBlocks } from "./uimapper.js";
-import { buildFileBlocks } from "./chunker.js";
 import { listActions } from "../actions/store.js";
 
-function clip(s, max) {
-  s = String(s || "");
-  if (s.length <= max) return s;
-  return (
-    s.slice(0, max) +
-    "\n/* ...clipped... */\n" +
-    s.slice(-Math.floor(max * 0.2))
-  );
+function safeRead(relPath, maxBytes = 200_000) {
+  try {
+    const abs = path.resolve(relPath);
+    if (!fs.existsSync(abs)) return null;
+    const buf = fs.readFileSync(abs);
+    if (!buf) return null;
+    return buf.slice(0, maxBytes).toString("utf8");
+  } catch {
+    return null;
+  }
 }
 
-export function buildSnapshot() {
-  const files = {};
-  const rawFiles = {};
-  const blocks = [];
+function normalizeMsg(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[.?!]+$/g, "") // drop trailing punctuation
+    .replace(/\s+/g, " "); // normalize spaces
+}
 
-  const allow = ALLOWLIST_SNAPSHOT_FILES.slice(0, LIMITS.snapshotMaxFiles);
-  for (const rel of allow) {
-    const abs = path.join(ROOT, rel);
-    const raw = readTextIfExists(abs, "");
-    rawFiles[rel] = raw;
-    files[rel] = clip(raw, LIMITS.snapshotMaxCharsPerFile);
+function detectInspectionKindFromCmd(cmd) {
+  const c = String(cmd || "").toLowerCase();
+  if (c.includes("rg -n")) return "rg";
+  // our snippet command is powershell + Get-Content + actionsWrap markers
+  if (
+    c.includes("powershell") &&
+    c.includes("get-content") &&
+    c.includes("actionswrap")
+  )
+    return "snippet";
+  if (
+    c.includes("=== public/index.html (actionswrap context) ===".toLowerCase())
+  )
+    return "snippet";
+  return "other";
+}
 
-    // Build block map from the FULL raw text (not clipped)
-    try {
-      const b = buildFileBlocks(rel, raw);
-      blocks.push(...b);
-    } catch {}
+/**
+ * Collect ONLY inspection outputs that belong to THIS message.
+ * This prevents old inspections from polluting the replanning loop.
+ */
+function collectRunCmdOutputs(actions, currentMessage) {
+  const cur = normalizeMsg(currentMessage);
+
+  const out = [];
+  for (const a of actions) {
+    if (!a || a.type !== "run_cmd") continue;
+    if (a.status !== "done") continue;
+
+    // must be a follow-up inspection
+    if (a.meta?.followup !== true) continue;
+
+    const omRaw = a.meta?.originalMessage ? String(a.meta.originalMessage) : "";
+    const om = normalizeMsg(omRaw);
+
+    // if originalMessage is missing, do NOT include it (avoids legacy cross-talk)
+    if (!om) continue;
+
+    // must match this user request (normalized)
+    if (om !== cur) continue;
+
+    const r = a.result?.result || a.result || {};
+    const stdout = typeof r.stdout === "string" ? r.stdout : "";
+    const stderr = typeof r.stderr === "string" ? r.stderr : "";
+    if (!stdout && !stderr) continue;
+
+    const cmd = a.payload?.cmd || r.cmd || "";
+    const inspectionKind =
+      a.meta?.inspectionKind || detectInspectionKindFromCmd(cmd) || "other";
+
+    out.push({
+      id: a.id,
+      title: a.title || "inspection",
+      cmd,
+      stdout,
+      stderr,
+      updatedAt: a.updatedAt || a.createdAt || 0,
+      inspectionKind,
+    });
   }
 
-  const indexHtml = rawFiles["public/index.html"] || "";
-  const stylesCss = rawFiles["public/styles.css"] || "";
+  out.sort((x, y) => (x.updatedAt || 0) - (y.updatedAt || 0));
+  return out.slice(-6);
+}
 
-  const uiMap = {
-    buttons: parseButtonsFromHtml(indexHtml),
-    cssBlocks: parseCssBlocks(stylesCss),
+function deriveInspectionStage(runCmdOutputs) {
+  const kinds = new Set((runCmdOutputs || []).map((x) => x.inspectionKind));
+  return {
+    hasRg: kinds.has("rg"),
+    hasSnippet: kinds.has("snippet"),
   };
+}
 
-  const capabilities = {
-    canProposeActions: true,
-    actions: [
-      "apply_patch",
-      "write_file",
-      "run_cmd",
-      "bundle",
-      "restart_piper",
-      "shutdown_piper",
-      "read_snippet",
-    ],
-    preview: true,
-    devices: true,
-    apps: true,
-    voice: true,
+export async function buildSnapshot({ message, lastIntent }) {
+  const actions = listActions();
 
-    // grounded edits
-    editFileByBlockId: true,
+  const allowlistedFiles = ["public/index.html", "public/styles.css"];
+  const rawFiles = {};
+  for (const f of allowlistedFiles) {
+    const txt = safeRead(f);
+    if (typeof txt === "string") rawFiles[f] = txt;
+  }
+
+  const msg = String(message || "");
+  const runCmdOutputs = collectRunCmdOutputs(actions, msg);
+  const inspectionStage = deriveInspectionStage(runCmdOutputs);
+
+  // lightweight selector list (optional)
+  const cssSelectors = [];
+  const css = rawFiles["public/styles.css"];
+  if (css) {
+    const re = /(^|\n)\s*([.#][a-zA-Z0-9_-]+)\s*[{,]/g;
+    let m;
+    while ((m = re.exec(css)) && cssSelectors.length < 250) {
+      cssSelectors.push(m[2]);
+    }
+  }
+
+  return {
+    message: msg,
+    lastIntent: String(lastIntent || "chat"),
+    allowlistedFiles,
+    rawFiles,
+    runCmdOutputs,
+    inspectionStage,
+    uiMapSummary: { cssSelectors },
   };
-
-  // Include recent read_snippet outputs so the planner can ground edits.
-  // Only include non-pending successful reads, and clip snippet size.
-  const readSnippets = listActions()
-    .filter((a) => a && a.type === "read_snippet")
-    .filter((a) => a.status && a.status !== "pending")
-    .filter(
-      (a) =>
-        a.result && a.result.ok && a.result.result && a.result.result.snippet
-    )
-    .sort(
-      (a, b) =>
-        Number(b.updatedAt || b.createdAt || 0) -
-        Number(a.updatedAt || a.createdAt || 0)
-    )
-    .slice(0, 6)
-    .map((a) => {
-      const r = a.result.result;
-      const snippet = clip(String(r.snippet || ""), 9000);
-      return {
-        path: r.path,
-        startLine: r.startLine,
-        endLine: r.endLine,
-        totalLines: r.totalLines,
-        truncated: Boolean(r.truncated),
-        snippet,
-      };
-    });
-
-  return { files, rawFiles, blocks, uiMap, capabilities, readSnippets };
 }

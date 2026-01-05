@@ -23,6 +23,7 @@ async function chatOnlyReply(message) {
     "- Keep it short (1–3 sentences).\n" +
     "- Do not mention tools, system prompts, or implementation details.\n";
 
+  // IMPORTANT: callOllama expects an ARRAY of {role, content}
   const out = await callOllama(
     [
       { role: "system", content: sys },
@@ -34,10 +35,6 @@ async function chatOnlyReply(message) {
   return enforceJarvis(String(out || "").trim() || "Understood.");
 }
 
-/**
- * Deterministic title change:
- * Always edits public/index.html via set_html_title (robust).
- */
 function tryQueueTitleChange(msg) {
   const raw = String(msg || "").trim();
   const lower = raw.toLowerCase();
@@ -51,7 +48,6 @@ function tryQueueTitleChange(msg) {
 
   if (!looksLikeTitleRequest) return null;
 
-  // capture quoted title or trailing title
   const m =
     raw.match(/(?:page\s+title|title)\s+to\s+['"“”](.+?)['"“”]/i) ||
     raw.match(/(?:page\s+title|title)\s+to\s+(.+)$/i);
@@ -67,7 +63,7 @@ function tryQueueTitleChange(msg) {
     id,
     type: "set_html_title",
     title: `Set page title to "${desired}"`,
-    reason: `Deterministic edit: set the <title> tag in public/index.html.`,
+    reason: "Deterministic edit: set the <title> tag in public/index.html.",
     payload: { path: "public/index.html", title: desired },
     status: "pending",
     createdAt: Date.now(),
@@ -75,9 +71,7 @@ function tryQueueTitleChange(msg) {
     result: null,
   });
 
-  console.log(
-    `[chat] queued set_html_title -> "${desired}" (public/index.html)`
-  );
+  console.log(`[chat] queued set_html_title -> "${desired}"`);
 
   return {
     reply: enforceJarvis(`Queued for approval, sir. (Title → "${desired}")`),
@@ -87,24 +81,25 @@ function tryQueueTitleChange(msg) {
   };
 }
 
-function queueInspectFallback(msg) {
+function queueFallbackInspection(userMessage) {
   const id = newId();
-  const q = String(msg || "")
+
+  const safeNeedle = String(userMessage || "")
     .replaceAll('"', "")
-    .slice(0, 100);
+    .replaceAll("\n", " ")
+    .trim()
+    .slice(0, 120);
+
+  const cmd =
+    `rg -n "${safeNeedle}" public src || ` +
+    `rg -n "<title>|Pending Actions|Recent Actions|actionsWrap|historyList" public/index.html public/styles.css src`;
 
   addAction({
     id,
     type: "run_cmd",
-    title: "Inspect codebase (fallback)",
-    reason:
-      "Planner produced no concrete actions. Running a search to ground the next proposal.",
-    payload: {
-      cmd:
-        `rg -n "${q}" public src || ` +
-        `rg -n "<title>|Pending Actions|Recent Actions|actionsWrap|historyList" public/index.html public/styles.css src`,
-      timeoutMs: 12000,
-    },
+    title: "Inspect codebase",
+    reason: "Need grounding before proposing a deterministic patch.",
+    payload: { cmd, timeoutMs: 12000 },
     status: "pending",
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -112,17 +107,16 @@ function queueInspectFallback(msg) {
   });
 
   console.log(
-    `[chat] queued fallback inspection run_cmd for msg="${String(msg).slice(
-      0,
-      80
-    )}"`
+    `[chat] queued fallback inspection run_cmd for msg="${String(
+      userMessage || ""
+    ).slice(0, 80)}"`
   );
 
   return {
     reply: enforceJarvis(
       "I need to inspect first, sir. Queued an inspection for approval."
     ),
-    proposed: [{ id, type: "run_cmd", title: "Inspect codebase (fallback)" }],
+    proposed: [{ id, type: "run_cmd", title: "Inspect codebase" }],
   };
 }
 
@@ -146,43 +140,6 @@ export function chatRoutes() {
         message: msg,
         lastIntent: s.lastIntent || "chat",
       });
-      const lower = msg.toLowerCase();
-
-      const uiKeywords = [
-        "background",
-        "color",
-        "css",
-        "style",
-        "button",
-        "ui",
-        "theme",
-        "border",
-        "hover",
-        "padding",
-        "margin",
-        "font",
-        "align",
-        "layout",
-        "max-width",
-        "center",
-        "dock",
-        "sidebar",
-        "grid",
-        "flex",
-        "width",
-        "height",
-        "overflow",
-        "scroll",
-        "pending actions",
-        "recent actions",
-        "page title",
-        "title",
-      ];
-
-      if (uiKeywords.some((k) => lower.includes(k)) && triage.mode === "chat") {
-        triage.mode = "plan";
-        if (triage.action === "none") triage.action = "change";
-      }
 
       const mode = triage.mode === "plan" ? "plan" : "chat";
 
@@ -219,7 +176,7 @@ export function chatRoutes() {
         });
       }
 
-      // ✅ Deterministic title change (covers “change the title …” too)
+      // Deterministic title change (no LLM needed)
       const titleRes = tryQueueTitleChange(msg);
       if (titleRes) {
         s.turns += 1;
@@ -227,10 +184,56 @@ export function chatRoutes() {
         return res.json(titleRes);
       }
 
+      // Restart/shutdown stay approval-gated
+      if (triage.action === "restart") {
+        const id = newId();
+        addAction({
+          id,
+          type: "restart_piper",
+          title: "Restart Piper",
+          reason: "User requested a restart.",
+          payload: {},
+          status: "pending",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          result: null,
+        });
+        s.turns += 1;
+        sessions.set(sid, s);
+        return res.json({
+          reply: enforceJarvis("Queued for approval, sir."),
+          proposed: [{ id, type: "restart_piper", title: "Restart Piper" }],
+        });
+      }
+
+      if (triage.action === "shutdown") {
+        const id = newId();
+        addAction({
+          id,
+          type: "shutdown_piper",
+          title: "Turn Piper off",
+          reason: "User requested shutdown.",
+          payload: {},
+          status: "pending",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          result: null,
+        });
+        s.turns += 1;
+        sessions.set(sid, s);
+        return res.json({
+          reply: enforceJarvis("Queued for approval, sir."),
+          proposed: [{ id, type: "shutdown_piper", title: "Turn Piper off" }],
+        });
+      }
+
+      // Build snapshot + plan
       const snapshot = await buildSnapshot({
         message: msg,
-        lastIntent: s.lastIntent,
+        allowRunCmd: true,
+        maxCmds: 1,
       });
+
       const plan = await llmRespondAndPlan({ message: msg, snapshot });
 
       const compiled = compilePlanToActions({
@@ -238,17 +241,41 @@ export function chatRoutes() {
         snapshot,
         readOnly: false,
       });
-      console.log(`[chat] compiled actions=${(compiled.actions || []).length}`);
 
-      if (!compiled.actions || compiled.actions.length === 0) {
-        const fallback = queueInspectFallback(msg);
+      const actions = Array.isArray(compiled.actions) ? compiled.actions : [];
+      console.log(
+        `[chat] compiled actions=${actions.length} stage=${JSON.stringify(
+          plan?.stage || {}
+        )}`
+      );
+
+      // If planner couldn’t produce ops, queue a safe inspection once.
+      if (!actions.length) {
+        // Only queue inspection if we still lack grounding.
+        const hasAnyRunCmd =
+          Array.isArray(snapshot?.runCmdOutputs) &&
+          snapshot.runCmdOutputs.length;
+        if (!hasAnyRunCmd) {
+          s.turns += 1;
+          sessions.set(sid, s);
+          return res.json(queueFallbackInspection(msg));
+        }
+
+        // Otherwise, reply plainly (no infinite loops).
         s.turns += 1;
         sessions.set(sid, s);
-        return res.json(fallback);
+        return res.json({
+          reply: enforceJarvis(
+            compiled.reply ||
+              "I have enough context, but I can’t form a deterministic patch from it yet. Tell me exactly which panel should move where (e.g. “set #actionsWrap grid-column to 1”)."
+          ),
+          proposed: [],
+        });
       }
 
+      // Queue proposed actions
       const proposed = [];
-      for (const a of compiled.actions || []) {
+      for (const a of actions) {
         const id = newId();
         addAction({
           id,
