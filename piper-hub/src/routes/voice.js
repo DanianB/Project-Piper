@@ -7,6 +7,7 @@ import {
   setVoiceConfig,
   listVoices,
   ensureChatterboxRunning,
+  getChatterboxStatus,
 } from "../services/voice/tts.js";
 import { makeSpoken } from "../services/persona.js";
 
@@ -66,6 +67,16 @@ export function voiceRoutes() {
     try {
       await ensureChatterboxRunning();
       res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: String(e?.message || e) });
+    }
+  });
+
+  // ---- New: chatterbox status (device/cuda check) ----
+  r.get("/voice/chatterbox/status", async (_req, res) => {
+    try {
+      const status = await getChatterboxStatus();
+      res.json({ ok: true, status });
     } catch (e) {
       res.status(500).json({ ok: false, error: String(e?.message || e) });
     }

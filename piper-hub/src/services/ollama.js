@@ -15,25 +15,41 @@ export function extractFirstJsonObject(s) {
   const direct = safeJsonParse(s);
   if (direct) return direct;
 
+  // Try to find a JSON object anywhere in the string
   const start = s.indexOf("{");
-  const end = s.lastIndexOf("}");
-  if (start >= 0 && end > start) return safeJsonParse(s.slice(start, end + 1));
+  if (start < 0) return null;
+
+  for (let i = start; i < s.length; i++) {
+    if (s[i] !== "{") continue;
+    let depth = 0;
+    for (let j = i; j < s.length; j++) {
+      const c = s[j];
+      if (c === "{") depth++;
+      if (c === "}") depth--;
+      if (depth === 0) {
+        const cand = s.slice(i, j + 1);
+        const parsed = safeJsonParse(cand);
+        if (parsed) return parsed;
+        break;
+      }
+    }
+  }
   return null;
 }
 
-// ---- Ollama model discovery + caching ----
-const OLLAMA_BASE_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
+
 let cachedModelName = null;
 let lastTagsFetchAt = 0;
 
-function readTimeoutMs(fallbackMs) {
+function readTimeoutMs(defaultMs) {
   const raw = process.env.OLLAMA_TIMEOUT_MS;
-  if (!raw) return fallbackMs;
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 1000 ? n : fallbackMs;
+  const n = raw ? Number(raw) : NaN;
+  if (Number.isFinite(n) && n > 0) return n;
+  return defaultMs;
 }
 
-async function fetchTags() {
+async function fetchInstalledModels() {
   const r = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
     method: "GET",
     headers: { Accept: "application/json" },
@@ -54,11 +70,11 @@ async function fetchTags() {
 
 async function pickInstalledModel(preferred) {
   const now = Date.now();
-  const shouldRefresh = !cachedModelName || now - lastTagsFetchAt > 10_000;
+  const age = now - lastTagsFetchAt;
 
-  if (shouldRefresh) {
-    const names = await fetchTags();
+  if (!cachedModelName || age > 30_000) {
     lastTagsFetchAt = now;
+    const names = await fetchInstalledModels();
 
     if (!names.length) {
       throw new Error(
@@ -92,10 +108,10 @@ function isAbortError(e) {
  * Call Ollama /api/chat
  * - Auto-falls back to installed model if requested model is missing
  * - Timeout is configurable via OLLAMA_TIMEOUT_MS (default 180s)
+ * - Keeps model warm via keep_alive (default 10m; set OLLAMA_KEEP_ALIVE)
  */
 export async function callOllama(messages, opts = {}) {
   const {
-    // Planner calls can be slow; default to 180s. Override via OLLAMA_TIMEOUT_MS.
     timeoutMs = readTimeoutMs(180_000),
     model = process.env.OLLAMA_MODEL || null,
     format = null, // "json"
@@ -115,9 +131,11 @@ export async function callOllama(messages, opts = {}) {
   let chosenModel = preferred || (cachedModelName ? cachedModelName : null);
   if (!chosenModel) chosenModel = await pickInstalledModel(preferred);
 
-  async function doCall(modelName) {
+  async function tryOnce(modelName) {
     const body = {
       model: modelName,
+      // BIG latency win if you were paying cold starts:
+      keep_alive: process.env.OLLAMA_KEEP_ALIVE || "10m",
       messages,
       stream: false,
       options: { temperature },
@@ -150,43 +168,30 @@ export async function callOllama(messages, opts = {}) {
         })`
       );
     }
-
-    cachedModelName = modelName;
     return content;
   }
 
   try {
-    try {
-      return await doCall(chosenModel);
-    } catch (e) {
-      // Clean timeout error instead of raw AbortError noise
-      if (isAbortError(e)) {
-        throw new Error(
-          `Ollama request timed out after ${Math.round(timeoutMs / 1000)}s. ` +
-            `Increase OLLAMA_TIMEOUT_MS or use a faster model.`
-        );
-      }
-
-      // If model missing, refresh and retry once using installed model.
-      const status = e?.status;
-      const bodyText = e?.bodyText;
-
-      if (looksLikeModelNotFound(status, bodyText)) {
-        cachedModelName = null;
-        lastTagsFetchAt = 0;
-
-        const fallback = await pickInstalledModel(preferred);
-        console.warn(
-          `[ollama] model not found: "${e?.modelName}". Falling back to installed model: "${fallback}".`
-        );
-        return await doCall(fallback);
-      }
-
-      throw e;
-    }
+    return await tryOnce(chosenModel);
   } catch (e) {
-    // Avoid printing scary stack traces for timeouts unless you want them
-    console.error("[ollama] call failed:", e?.message || e);
+    if (isAbortError(e)) {
+      throw new Error(`Ollama timed out after ${timeoutMs}ms`);
+    }
+
+    const status = e?.status;
+    const bodyText = e?.bodyText;
+
+    if (looksLikeModelNotFound(status, bodyText)) {
+      cachedModelName = null;
+      lastTagsFetchAt = 0;
+
+      const fallback = await pickInstalledModel(preferred);
+      console.warn(
+        `[ollama] model not found: "${e?.modelName}". Falling back to installed model: "${fallback}".`
+      );
+      return await tryOnce(fallback);
+    }
+
     throw e;
   } finally {
     clearTimeout(timer);
