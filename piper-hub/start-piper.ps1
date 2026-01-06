@@ -3,6 +3,16 @@
 # - Auto restarts on exit code 0 (RESET)
 # - Exits supervisor on exit code 99 (OFF)
 # - Keeps window open if startup fails so you can read errors
+# ---- Chatterbox auto-start configuration ----
+$env:CHATTERBOX_AUTOSTART = "true"
+$env:CHATTERBOX_CONDA_ENV = "chatterbox"
+$env:CHATTERBOX_HOST = "127.0.0.1"
+$env:CHATTERBOX_PORT = "4123"
+$env:CHATTERBOX_PROMPT_WAV = "D:\AI\piper-tts\voices\Piper-Default-Voice.wav"
+
+
+# If conda is NOT on PATH, uncomment and adjust this line:
+# $env:CHATTERBOX_START_CMD = "C:\Users\Danian\Documents\miniconda\Scripts\conda.exe run -n chatterbox python tools\chatterbox_server.py"
 
 $ErrorActionPreference = 'Continue'
 

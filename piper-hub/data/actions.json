@@ -1,5 +1,39 @@
 [
   {
+    "id": "5b3bd996-3779-4b4b-96e3-3ab29b42e937",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested restart",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767709693322,
+    "updatedAt": 1767709697004,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
+    "id": "288f62d0-59f5-44b4-8eee-6bd5a0d21364",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested restart",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767702570060,
+    "updatedAt": 1767702579944,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
     "id": "79ea1de7175c419b922a89bd",
     "type": "bundle",
     "title": "Bundle",

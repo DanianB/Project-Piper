@@ -10,6 +10,17 @@ function deterministicTriage(message) {
   const m = String(message || "").trim();
   const lower = m.toLowerCase();
 
+  // If the user is explicitly asking for an opinion/feelings, treat as chat.
+  // This prevents accidental "plan" classification for phrases like "neon green UI".
+  if (
+    lower.includes("how do you feel about") ||
+    lower.includes("what do you think about") ||
+    lower.includes("your opinion on") ||
+    /^do you (?:like|love|hate)\b/.test(lower)
+  ) {
+    return { mode: "chat", action: "none", confidence: 1.0 };
+  }
+
   // hard commands
   if (/^(restart)\b/.test(lower)) {
     return { mode: "plan", action: "restart", confidence: 1.0 };
@@ -92,6 +103,20 @@ function sysPrompt() {
 }
 
 export async function triageNeedsPlanner({ message, lastIntent }) {
+  const lower = String(message || "").trim().toLowerCase();
+
+  // If we were just chatting and the user is continuing a discussion/argument,
+  // keep it in chat mode even if they mention UI/CSS/theme.
+  // Examples: "but it's the primary color of your UI", "because...", "I don't like it".
+  if (
+    String(lastIntent || "chat") === "chat" &&
+    /^(but|because|actually|however|i\s(?:think|feel|dont\b|don't\b|like\b|love\b|hate\b)|that'?s|its|it\s(is|'s))\b/.test(
+      lower
+    )
+  ) {
+    return { mode: "chat", action: "none", confidence: 1.0 };
+  }
+
   // ✅ deterministic override first
   const det = deterministicTriage(message);
   if (det) return { ...det, confidence: det.confidence ?? 1.0 };

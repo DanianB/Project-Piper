@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-06T09:02:00.082Z",
-  "root": "D:\\AI\\piper-hub",
+  "generatedAt": "2026-01-06T14:28:18.449Z",
+  "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
       {
@@ -130,6 +130,29 @@
         "file": "public/index.html",
         "tag": "input",
         "id": "readOnly",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "debugEmotion",
         "classes": [],
         "text": null
       },
@@ -1622,6 +1645,57 @@
         }
       },
       {
+        "file": "src/services/chatterbox_manager.js",
+        "name": "ensureChatterboxProcess",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 58,
+            "column": 0,
+            "index": 1616
+          },
+          "end": {
+            "line": 98,
+            "column": 1,
+            "index": 2840
+          }
+        }
+      },
+      {
+        "file": "src/services/chatterbox_manager.js",
+        "name": "startChatterboxProcess",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 103,
+            "column": 0,
+            "index": 2887
+          },
+          "end": {
+            "line": 105,
+            "column": 1,
+            "index": 2973
+          }
+        }
+      },
+      {
+        "file": "src/services/chatterbox_manager.js",
+        "name": "stopChatterboxProcess",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 122,
+            "column": 0,
+            "index": 3502
+          },
+          "end": {
+            "line": 135,
+            "column": 1,
+            "index": 3939
+          }
+        }
+      },
+      {
         "file": "src/services/devices.js",
         "name": "registerDevice",
         "kind": "function",
@@ -1673,6 +1747,295 @@
         }
       },
       {
+        "file": "src/services/mind.js",
+        "name": "getMind",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 108,
+            "column": 0,
+            "index": 2703
+          },
+          "end": {
+            "line": 111,
+            "column": 1,
+            "index": 2774
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getSessionState",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 113,
+            "column": 0,
+            "index": 2776
+          },
+          "end": {
+            "line": 136,
+            "column": 1,
+            "index": 3467
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "bumpTurn",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 139,
+            "column": 0,
+            "index": 3470
+          },
+          "end": {
+            "line": 143,
+            "column": 1,
+            "index": 3583
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "setLastIntent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 145,
+            "column": 0,
+            "index": 3585
+          },
+          "end": {
+            "line": 149,
+            "column": 1,
+            "index": 3758
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "pushConversationTurn",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 153,
+            "column": 0,
+            "index": 3826
+          },
+          "end": {
+            "line": 165,
+            "column": 1,
+            "index": 4365
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getConversationMessages",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 167,
+            "column": 0,
+            "index": 4367
+          },
+          "end": {
+            "line": 170,
+            "column": 1,
+            "index": 4517
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "setLastOpinionKey",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 172,
+            "column": 0,
+            "index": 4519
+          },
+          "end": {
+            "line": 175,
+            "column": 1,
+            "index": 4659
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getLastOpinionKey",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 177,
+            "column": 0,
+            "index": 4661
+          },
+          "end": {
+            "line": 180,
+            "column": 1,
+            "index": 4810
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "adjustOpinionTowardUser",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 189,
+            "column": 0,
+            "index": 5103
+          },
+          "end": {
+            "line": 235,
+            "column": 1,
+            "index": 6477
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "recordEvent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 243,
+            "column": 0,
+            "index": 6613
+          },
+          "end": {
+            "line": 292,
+            "column": 1,
+            "index": 8718
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getOrCreateOpinion",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 370,
+            "column": 0,
+            "index": 10778
+          },
+          "end": {
+            "line": 394,
+            "column": 1,
+            "index": 11377
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getOpinionIfAny",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 396,
+            "column": 0,
+            "index": 11379
+          },
+          "end": {
+            "line": 403,
+            "column": 1,
+            "index": 11616
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "setOpinion",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 405,
+            "column": 0,
+            "index": 11618
+          },
+          "end": {
+            "line": 421,
+            "column": 1,
+            "index": 12093
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "shouldSelfReportExplicitly",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 423,
+            "column": 0,
+            "index": 12095
+          },
+          "end": {
+            "line": 427,
+            "column": 1,
+            "index": 12252
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "markSelfReportUsed",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 429,
+            "column": 0,
+            "index": 12254
+          },
+          "end": {
+            "line": 433,
+            "column": 1,
+            "index": 12367
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "getAffectSnapshot",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 435,
+            "column": 0,
+            "index": 12369
+          },
+          "end": {
+            "line": 456,
+            "column": 1,
+            "index": 12967
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "name": "pruneMind",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 458,
+            "column": 0,
+            "index": 12969
+          },
+          "end": {
+            "line": 468,
+            "column": 1,
+            "index": 13332
+          }
+        }
+      },
+      {
         "file": "src/services/ollama.js",
         "name": "extractFirstJsonObject",
         "kind": "function",
@@ -1683,9 +2046,9 @@
             "index": 191
           },
           "end": {
-            "line": 38,
+            "line": 22,
             "column": 1,
-            "index": 857
+            "index": 492
           }
         }
       },
@@ -1695,14 +2058,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 113,
+            "line": 96,
             "column": 0,
-            "index": 2902
+            "index": 2514
           },
           "end": {
-            "line": 199,
+            "line": 194,
             "column": 1,
-            "index": 5384
+            "index": 5458
           }
         }
       },
@@ -1712,14 +2075,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 21,
+            "line": 25,
             "column": 0,
-            "index": 433
+            "index": 441
           },
           "end": {
-            "line": 27,
+            "line": 29,
             "column": 1,
-            "index": 610
+            "index": 602
           }
         }
       },
@@ -1729,14 +2092,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 29,
+            "line": 31,
             "column": 0,
-            "index": 614
+            "index": 604
           },
           "end": {
-            "line": 35,
+            "line": 37,
             "column": 1,
-            "index": 770
+            "index": 754
           }
         }
       },
@@ -1746,14 +2109,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 37,
+            "line": 39,
             "column": 0,
-            "index": 774
+            "index": 756
           },
           "end": {
-            "line": 50,
+            "line": 49,
             "column": 1,
-            "index": 1516
+            "index": 1366
           }
         }
       },
@@ -1763,14 +2126,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 55,
+            "line": 51,
             "column": 0,
-            "index": 1608
+            "index": 1368
           },
           "end": {
-            "line": 67,
+            "line": 62,
             "column": 1,
-            "index": 1950
+            "index": 1686
           }
         }
       },
@@ -1780,14 +2143,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 77,
+            "line": 68,
             "column": 0,
-            "index": 2255
+            "index": 1790
           },
           "end": {
-            "line": 146,
+            "line": 138,
             "column": 1,
-            "index": 4136
+            "index": 3542
           }
         }
       },
@@ -1797,14 +2160,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 154,
+            "line": 140,
             "column": 0,
-            "index": 4267
+            "index": 3544
           },
           "end": {
-            "line": 175,
+            "line": 157,
             "column": 1,
-            "index": 4878
+            "index": 4017
           }
         }
       },
@@ -1831,14 +2194,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 42,
+            "line": 41,
             "column": 0,
-            "index": 1260
+            "index": 1104
           },
           "end": {
-            "line": 57,
+            "line": 56,
             "column": 1,
-            "index": 1681
+            "index": 1525
           }
         }
       },
@@ -1848,14 +2211,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 59,
+            "line": 58,
             "column": 0,
-            "index": 1683
+            "index": 1527
           },
           "end": {
-            "line": 91,
+            "line": 86,
             "column": 1,
-            "index": 2599
+            "index": 2351
           }
         }
       },
@@ -1865,14 +2228,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 331,
+            "line": 247,
             "column": 0,
-            "index": 9186
+            "index": 7225
           },
           "end": {
-            "line": 369,
+            "line": 282,
             "column": 1,
-            "index": 10125
+            "index": 8156
           }
         }
       },
@@ -1882,14 +2245,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 371,
+            "line": 284,
             "column": 0,
-            "index": 10127
+            "index": 8158
           },
           "end": {
-            "line": 384,
+            "line": 292,
             "column": 1,
-            "index": 10582
+            "index": 8473
           }
         }
       },
@@ -1899,14 +2262,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 449,
+            "line": 469,
             "column": 0,
-            "index": 12427
+            "index": 13350
           },
           "end": {
-            "line": 456,
+            "line": 479,
             "column": 1,
-            "index": 12687
+            "index": 13668
           }
         }
       },
@@ -1916,14 +2279,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 460,
+            "line": 483,
             "column": 0,
-            "index": 12724
+            "index": 13705
           },
           "end": {
-            "line": 476,
+            "line": 526,
             "column": 1,
-            "index": 13154
+            "index": 14828
           }
         }
       },
@@ -1967,14 +2330,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 113,
+            "line": 323,
             "column": 0,
-            "index": 3213
+            "index": 10768
           },
           "end": {
-            "line": 229,
+            "line": 718,
             "column": 1,
-            "index": 6341
+            "index": 26011
           }
         }
       },
@@ -2020,12 +2383,12 @@
           "start": {
             "line": 17,
             "column": 0,
-            "index": 442
+            "index": 477
           },
           "end": {
-            "line": 90,
+            "line": 99,
             "column": 1,
-            "index": 2597
+            "index": 3187
           }
         }
       },
@@ -2137,14 +2500,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 99,
+            "line": 101,
             "column": 0,
-            "index": 2702
+            "index": 2833
           },
           "end": {
-            "line": 133,
+            "line": 135,
             "column": 1,
-            "index": 3670
+            "index": 3806
           }
         }
       },
@@ -2154,14 +2517,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 94,
+            "line": 105,
             "column": 0,
-            "index": 2208
+            "index": 2636
           },
           "end": {
-            "line": 128,
+            "line": 153,
             "column": 1,
-            "index": 3252
+            "index": 4240
           }
         }
       },
@@ -2922,14 +3285,14 @@
         "path": "/shutdown",
         "loc": {
           "start": {
-            "line": 31,
+            "line": 71,
             "column": 0,
-            "index": 1060
+            "index": 1982
           },
           "end": {
-            "line": 55,
+            "line": 77,
             "column": 2,
-            "index": 1597
+            "index": 2190
           }
         }
       },
@@ -3300,14 +3663,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 116,
+            "line": 326,
             "column": 2,
-            "index": 3269
+            "index": 10824
           },
           "end": {
-            "line": 226,
+            "line": 715,
             "column": 4,
-            "index": 6325
+            "index": 25995
           }
         }
       },
@@ -3374,12 +3737,12 @@
           "start": {
             "line": 21,
             "column": 2,
-            "index": 522
+            "index": 553
           },
           "end": {
             "line": 31,
             "column": 4,
-            "index": 951
+            "index": 972
           }
         }
       },
@@ -3392,12 +3755,12 @@
           "start": {
             "line": 34,
             "column": 2,
-            "index": 991
+            "index": 1005
           },
           "end": {
-            "line": 36,
-            "column": 4,
-            "index": 1069
+            "line": 34,
+            "column": 67,
+            "index": 1070
           }
         }
       },
@@ -3408,14 +3771,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 39,
+            "line": 36,
             "column": 2,
-            "index": 1109
+            "index": 1075
           },
           "end": {
-            "line": 46,
+            "line": 43,
             "column": 4,
-            "index": 1364
+            "index": 1323
           }
         }
       },
@@ -3426,14 +3789,14 @@
         "path": "/voice/voices",
         "loc": {
           "start": {
-            "line": 49,
+            "line": 45,
             "column": 2,
-            "index": 1399
+            "index": 1328
           },
           "end": {
-            "line": 51,
-            "column": 4,
-            "index": 1473
+            "line": 45,
+            "column": 63,
+            "index": 1389
           }
         }
       },
@@ -3444,14 +3807,14 @@
         "path": "/voice/speak",
         "loc": {
           "start": {
-            "line": 54,
+            "line": 48,
             "column": 2,
-            "index": 1502
+            "index": 1415
           },
           "end": {
-            "line": 67,
+            "line": 76,
             "column": 4,
-            "index": 1974
+            "index": 2576
           }
         }
       },
@@ -3462,14 +3825,14 @@
         "path": "/voice/chatterbox/start",
         "loc": {
           "start": {
-            "line": 70,
+            "line": 79,
             "column": 2,
-            "index": 2026
+            "index": 2615
           },
           "end": {
-            "line": 77,
+            "line": 87,
             "column": 4,
-            "index": 2272
+            "index": 2908
           }
         }
       },
@@ -3480,14 +3843,14 @@
         "path": "/voice/chatterbox/status",
         "loc": {
           "start": {
-            "line": 80,
+            "line": 89,
             "column": 2,
-            "index": 2313
+            "index": 2913
           },
           "end": {
-            "line": 87,
+            "line": 96,
             "column": 4,
-            "index": 2578
+            "index": 3171
           }
         }
       }
@@ -3516,140 +3879,12 @@
           "start": {
             "line": 2,
             "column": 0,
-            "index": 32
+            "index": 31
           },
           "end": {
             "line": 2,
             "column": 24,
-            "index": 56
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./config/constants.js",
-        "loc": {
-          "start": {
-            "line": 3,
-            "column": 0,
-            "index": 58
-          },
-          "end": {
-            "line": 3,
-            "column": 76,
-            "index": 134
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./config/paths.js",
-        "loc": {
-          "start": {
-            "line": 4,
-            "column": 0,
-            "index": 136
-          },
-          "end": {
-            "line": 4,
-            "column": 41,
-            "index": 177
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/system.js",
-        "loc": {
-          "start": {
-            "line": 5,
-            "column": 0,
-            "index": 179
-          },
-          "end": {
-            "line": 5,
-            "column": 50,
-            "index": 229
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/chat.js",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 231
-          },
-          "end": {
-            "line": 6,
-            "column": 46,
-            "index": 277
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/voice.js",
-        "loc": {
-          "start": {
-            "line": 7,
-            "column": 0,
-            "index": 279
-          },
-          "end": {
-            "line": 7,
-            "column": 48,
-            "index": 327
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/actions.js",
-        "loc": {
-          "start": {
-            "line": 8,
-            "column": 0,
-            "index": 329
-          },
-          "end": {
-            "line": 8,
-            "column": 51,
-            "index": 380
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/devices.js",
-        "loc": {
-          "start": {
-            "line": 9,
-            "column": 0,
-            "index": 382
-          },
-          "end": {
-            "line": 9,
-            "column": 51,
-            "index": 433
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./routes/blocks.js",
-        "loc": {
-          "start": {
-            "line": 10,
-            "column": 0,
-            "index": 435
-          },
-          "end": {
-            "line": 10,
-            "column": 50,
-            "index": 485
+            "index": 55
           }
         }
       },
@@ -3658,14 +3893,30 @@
         "source": "fs",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 3,
             "column": 0,
-            "index": 487
+            "index": 56
           },
           "end": {
-            "line": 11,
+            "line": 3,
             "column": 20,
-            "index": 507
+            "index": 76
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./config/constants.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 77
+          },
+          "end": {
+            "line": 4,
+            "column": 76,
+            "index": 153
           }
         }
       },
@@ -3674,14 +3925,110 @@
         "source": "./config/paths.js",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 5,
             "column": 0,
-            "index": 509
+            "index": 154
           },
           "end": {
-            "line": 12,
+            "line": 5,
+            "column": 56,
+            "index": 210
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/system.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 211
+          },
+          "end": {
+            "line": 6,
             "column": 50,
-            "index": 559
+            "index": 261
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/chat.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 262
+          },
+          "end": {
+            "line": 7,
+            "column": 46,
+            "index": 308
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/voice.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 309
+          },
+          "end": {
+            "line": 8,
+            "column": 48,
+            "index": 357
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/actions.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 358
+          },
+          "end": {
+            "line": 9,
+            "column": 51,
+            "index": 409
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/devices.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 410
+          },
+          "end": {
+            "line": 10,
+            "column": 51,
+            "index": 461
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/blocks.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 462
+          },
+          "end": {
+            "line": 11,
+            "column": 50,
+            "index": 512
           }
         }
       },
@@ -3690,14 +4037,30 @@
         "source": "./indexer/indexer.js",
         "loc": {
           "start": {
+            "line": 12,
+            "column": 0,
+            "index": 513
+          },
+          "end": {
+            "line": 12,
+            "column": 58,
+            "index": 571
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./services/chatterbox_manager.js",
+        "loc": {
+          "start": {
             "line": 13,
             "column": 0,
-            "index": 561
+            "index": 572
           },
           "end": {
             "line": 13,
-            "column": 58,
-            "index": 619
+            "column": 97,
+            "index": 669
           }
         }
       },
@@ -3894,6 +4257,102 @@
         }
       },
       {
+        "file": "src/services/chatterbox_manager.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 38,
+            "index": 38
+          }
+        }
+      },
+      {
+        "file": "src/services/chatterbox_manager.js",
+        "source": "http",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 39
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 63
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 377
+          },
+          "end": {
+            "line": 11,
+            "column": 20,
+            "index": 397
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 398
+          },
+          "end": {
+            "line": 12,
+            "column": 24,
+            "index": 422
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 423
+          },
+          "end": {
+            "line": 13,
+            "column": 28,
+            "index": 451
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 452
+          },
+          "end": {
+            "line": 14,
+            "column": 44,
+            "index": 496
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "source": "fs",
         "loc": {
@@ -4034,6 +4493,22 @@
             "line": 6,
             "column": 47,
             "index": 192
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "../persona.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 193
+          },
+          "end": {
+            "line": 7,
+            "column": 70,
+            "index": 263
           }
         }
       },
@@ -4247,7 +4722,7 @@
       },
       {
         "file": "src/routes/chat.js",
-        "source": "../services/ollama.js",
+        "source": "crypto",
         "loc": {
           "start": {
             "line": 3,
@@ -4256,8 +4731,24 @@
           },
           "end": {
             "line": 3,
-            "column": 75,
-            "index": 131
+            "column": 28,
+            "index": 84
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 85
+          },
+          "end": {
+            "line": 4,
+            "column": 51,
+            "index": 136
           }
         }
       },
@@ -4266,14 +4757,14 @@
         "source": "../services/persona.js",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 5,
             "column": 0,
-            "index": 132
+            "index": 137
           },
           "end": {
-            "line": 4,
+            "line": 5,
             "column": 73,
-            "index": 205
+            "index": 210
           }
         }
       },
@@ -4282,14 +4773,14 @@
         "source": "../planner/triage.js",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 7,
             "column": 0,
-            "index": 207
+            "index": 212
           },
           "end": {
-            "line": 6,
+            "line": 7,
             "column": 58,
-            "index": 265
+            "index": 270
           }
         }
       },
@@ -4298,14 +4789,14 @@
         "source": "../planner/snapshot.js",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 8,
             "column": 0,
-            "index": 266
+            "index": 271
           },
           "end": {
-            "line": 7,
+            "line": 8,
             "column": 55,
-            "index": 321
+            "index": 326
           }
         }
       },
@@ -4314,14 +4805,14 @@
         "source": "../planner/planner.js",
         "loc": {
           "start": {
-            "line": 8,
+            "line": 9,
             "column": 0,
-            "index": 322
+            "index": 327
           },
           "end": {
-            "line": 8,
+            "line": 9,
             "column": 58,
-            "index": 380
+            "index": 385
           }
         }
       },
@@ -4330,14 +4821,14 @@
         "source": "../planner/compiler.js",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 10,
             "column": 0,
-            "index": 381
+            "index": 386
           },
           "end": {
-            "line": 9,
+            "line": 10,
             "column": 62,
-            "index": 443
+            "index": 448
           }
         }
       },
@@ -4346,14 +4837,30 @@
         "source": "../actions/store.js",
         "loc": {
           "start": {
-            "line": 10,
+            "line": 11,
             "column": 0,
-            "index": 444
+            "index": 449
           },
           "end": {
-            "line": 10,
+            "line": 11,
             "column": 48,
-            "index": 492
+            "index": 497
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/mind.js",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 499
+          },
+          "end": {
+            "line": 26,
+            "column": 29,
+            "index": 796
           }
         }
       },
@@ -4410,14 +4917,30 @@
         "source": "express",
         "loc": {
           "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 33,
+            "index": 33
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "../services/chatterbox_manager.js",
+        "loc": {
+          "start": {
             "line": 2,
             "column": 0,
-            "index": 24
+            "index": 34
           },
           "end": {
             "line": 2,
-            "column": 33,
-            "index": 57
+            "column": 75,
+            "index": 109
           }
         }
       },
@@ -4428,12 +4951,12 @@
           "start": {
             "line": 3,
             "column": 0,
-            "index": 59
+            "index": 110
           },
           "end": {
             "line": 3,
             "column": 28,
-            "index": 87
+            "index": 138
           }
         }
       },
@@ -4444,12 +4967,12 @@
           "start": {
             "line": 4,
             "column": 0,
-            "index": 89
+            "index": 139
           },
           "end": {
             "line": 4,
             "column": 65,
-            "index": 154
+            "index": 204
           }
         }
       },
@@ -4460,28 +4983,28 @@
           "start": {
             "line": 5,
             "column": 0,
-            "index": 156
+            "index": 205
           },
           "end": {
             "line": 12,
             "column": 34,
-            "index": 321
+            "index": 363
           }
         }
       },
       {
         "file": "src/routes/voice.js",
-        "source": "../services/persona.js",
+        "source": "../services/mind.js",
         "loc": {
           "start": {
             "line": 13,
             "column": 0,
-            "index": 323
+            "index": 364
           },
           "end": {
             "line": 13,
-            "column": 52,
-            "index": 375
+            "column": 50,
+            "index": 414
           }
         }
       },

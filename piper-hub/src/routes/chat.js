@@ -1,7 +1,8 @@
 // src/routes/chat.js
 import { Router } from "express";
-import { callOllama, extractFirstJsonObject } from "../services/ollama.js";
-import { piperSystemPrompt, enforcePiper } from "../services/persona.js";
+import crypto from "crypto";
+import { callOllama } from "../services/ollama.js";
+import { enforcePiper, piperSystemPrompt } from "../services/persona.js";
 
 import { triageNeedsPlanner } from "../planner/triage.js";
 import { buildSnapshot } from "../planner/snapshot.js";
@@ -9,190 +10,663 @@ import { llmRespondAndPlan } from "../planner/planner.js";
 import { compilePlanToActions } from "../planner/compiler.js";
 import { addAction } from "../actions/store.js";
 
+import {
+  bumpTurn,
+  getAffectSnapshot,
+  getOrCreateOpinion,
+  recordEvent,
+  pushConversationTurn,
+  getConversationMessages,
+  setLastOpinionKey,
+  getLastOpinionKey,
+  adjustOpinionTowardUser,
+  setLastIntent,
+  shouldSelfReportExplicitly,
+  markSelfReportUsed,
+} from "../services/mind.js";
+
 const sessions = new Map();
 
 function newId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
 
-function buildPiperJsonChatMessages(message) {
-  // We instruct strict JSON so we can reliably pull emotion & intensity.
-  return [
-    {
-      role: "system",
-      content:
-        piperSystemPrompt() +
-        "\nReturn STRICT JSON ONLY, no markdown, no extra text.\n" +
-        "Schema:\n" +
-        '{ "text": string, "emotion": "neutral"|"warm"|"amused"|"confident"|"serious"|"concerned"|"excited"|"apologetic"|"dry", "intensity": number }\n' +
-        "Rules:\n" +
-        "- text: your actual reply to the user.\n" +
-        "- emotion: pick one that matches your delivery.\n" +
-        "- intensity: 0.0 to 1.0 (0.4 is normal).\n" +
-        "- Be witty/sharp only when appropriate; never rude.\n" +
-        '- Use "sir" at most once.\n',
-    },
-    { role: "user", content: String(message || "") },
+function shouldAllowActions(reqBody) {
+  const userInitiated = reqBody?.userInitiated === true;
+  const readOnly = Boolean(reqBody?.readOnly);
+  return userInitiated && !readOnly;
+}
+
+function reqMeta(req) {
+  const ua = String(req?.headers?.["user-agent"] || "");
+  const ip = String(req?.headers?.["x-forwarded-for"] || req?.socket?.remoteAddress || "");
+  return { ua, ip };
+}
+
+// ---------------- Opinion detection ----------------
+
+function isOpinionQuery(msg) {
+  const m = String(msg || "").toLowerCase();
+  return (
+    m.includes("how do you feel about") ||
+    m.includes("what do you think about") ||
+    m.includes("your opinion on") ||
+    m.startsWith("do you like ") ||
+    m.startsWith("do you hate ") ||
+    m.startsWith("do you love ")
+  );
+}
+
+function extractOpinionTopic(msg) {
+  const s = String(msg || "").trim();
+  // Patterns: "how do you feel about X", "what do you think about X", "your opinion on X"
+  let m = s.match(/feel about\s+(.+)$/i);
+  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  m = s.match(/think about\s+(.+)$/i);
+  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  m = s.match(/opinion on\s+(.+)$/i);
+  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  m = s.match(/do you (?:like|love|hate)\s+(.+)$/i);
+  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  return null;
+}
+
+
+function parseUserPreferenceSignal(msg) {
+  const s = String(msg || "").trim().toLowerCase();
+
+  // strong negatives
+  if (/(i\s+)?(really\s+)?(hate|can'?t\s+stand|despise)\b/.test(s)) return { signal: "dislike", strength: 0.8 };
+  if (/(i\s+)?(don'?t|do not)\s+like\b/.test(s)) return { signal: "dislike", strength: 0.6 };
+  if (/\bnot\s+a\s+fan\b/.test(s)) return { signal: "dislike", strength: 0.5 };
+
+  // positives
+  if (/(i\s+)?(really\s+)?(love|adore)\b/.test(s)) return { signal: "like", strength: 0.8 };
+  if (/(i\s+)?(like|enjoy)\b/.test(s)) return { signal: "like", strength: 0.55 };
+
+  return null;
+}
+
+function extractReasonClause(msg) {
+  const s = String(msg || "").trim();
+  // Keep it simple: capture after "because" if present
+  const m = s.match(/because\s+([\s\S]{1,240})/i);
+  return m && m[1] ? String(m[1]).trim() : "";
+}
+
+function isLikelyPreferenceFollowup(msg) {
+  const s = String(msg || "").trim().toLowerCase();
+  // short preference statements often omit the topic: "I don't like it"
+  return /(don'?t\s+like|do not like|not a fan|hate|love|like it|don'?t like it)/.test(s);
+}
+
+
+// ---------------- Authority / disagreement policy ----------------
+
+function isAuthorityOverride(msg) {
+  const m = String(msg || "").toLowerCase();
+  return (
+    m.includes("do it anyway") ||
+    m.includes("i insist") ||
+    m.includes("my final decision") ||
+    m.includes("just do it") ||
+    m.includes("override") ||
+    m.includes("because i said so")
+  );
+}
+
+function computeDisagreeLevel(msg) {
+  const m = String(msg || "").toLowerCase();
+
+  // Strong-risky / broad destructive actions (firm disagree)
+  const strong = [
+    "rewrite the whole",
+    "rewrite everything",
+    "delete everything",
+    "wipe",
+    "format c",
+    "rm -rf",
+    "ignore safety",
+    "disable approval",
+    "skip approval",
+    "turn off approval",
   ];
+  if (strong.some((k) => m.includes(k))) return 2;
+
+  // Mild risk / big refactor suggestions (soft disagree)
+  const mild = [
+    "should we rewrite",
+    "should i rewrite",
+    "refactor everything",
+    "replace the entire",
+    "change everything",
+    "rip out",
+    "remove all",
+  ];
+  if (mild.some((k) => m.includes(k))) return 1;
+
+  return 0;
 }
 
-function safeEmotion(obj) {
-  const e = String(obj?.emotion || "neutral").toLowerCase();
-  const allowed = new Set([
-    "neutral",
-    "warm",
-    "amused",
-    "confident",
-    "serious",
-    "concerned",
-    "excited",
-    "apologetic",
-    "dry",
-  ]);
-  return allowed.has(e) ? e : "neutral";
+function maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride) {
+  if (authorityOverride) return null;
+  if (disagreeLevel < 2) return null;
+
+  const m = String(msg || "").toLowerCase();
+  if (m.includes("rewrite everything") || m.includes("rewrite the whole") || m.includes("delete everything") || m.includes("wipe")) {
+    return (
+      "I wouldn’t recommend rewriting everything, sir. It’s high risk, slow, and usually unnecessary.\n\n" +
+      "If you tell me what outcome you want, I’ll propose a minimal, approval-gated plan (inspect first, then small changes)."
+    );
+  }
+
+  return null;
 }
 
-function safeIntensity(obj) {
-  const n = Number(obj?.intensity);
+// ---------------- Emotion selection (deterministic) ----------------
+
+function clamp01(x) {
+  const n = Number(x);
   if (!Number.isFinite(n)) return 0.4;
   if (n < 0) return 0;
   if (n > 1) return 1;
   return n;
 }
 
-function parsePiperJson(content) {
-  const obj = extractFirstJsonObject(content);
-  if (!obj || typeof obj !== "object") return null;
-  if (typeof obj.text !== "string" || !obj.text.trim()) return null;
-  return {
-    text: obj.text.trim(),
-    emotion: safeEmotion(obj),
-    intensity: safeIntensity(obj),
-  };
-}
+function pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride }) {
+  const m = String(msg || "").toLowerCase();
+  const fr = affect?.frustration?.total || 0;
+  const streaks = affect?.frustration?.streaks || {};
+  const mood = Number(affect?.mood || 0);
 
-function looksLikeTitleRequest(message) {
-  const m = String(message || "").toLowerCase();
-  return (
-    (m.includes("title") && (m.includes("set") || m.includes("change"))) ||
-    m.startsWith("set title") ||
-    m.startsWith("change title")
-  );
-}
-
-function desiredTitle(message) {
-  const m = String(message || "").trim();
-  const match = m.match(/"(.*?)"/);
-  if (match && match[1]) return match[1].trim();
-  return null;
-}
-
-function handleTitleRequest(message) {
-  const desired = desiredTitle(message);
-  if (!desired) {
-    return {
-      reply: enforcePiper("What title would you like, sir? Put it in quotes."),
-      emotion: "neutral",
-      intensity: 0.4,
-      proposed: [],
-    };
+  // Priority: user forcing an override after disagreement
+  if (authorityOverride && disagreeLevel > 0) {
+    return { emotion: "serious", intensity: 0.65 };
   }
-  const id = newId();
-  return {
-    reply: enforcePiper(
-      `Queued for approval, sir. I will set the page title to "${desired}".`
-    ),
-    emotion: "confident",
-    intensity: 0.5,
-    proposed: [
-      { id, type: "set_html_title", title: `Set page title to "${desired}"` },
-    ],
-  };
+
+  // Repeated failures / high friction
+  if (fr >= 2.2 || (streaks.llmFail || 0) >= 2 || (streaks.ttsFail || 0) >= 2) {
+    // Keep within the supported emotion set.
+    return { emotion: "angry", intensity: clamp01(0.65 + 0.12 * Math.min(1, fr / 3)) };
+  }
+
+  // If user is reporting problems
+  if (m.includes("not working") || m.includes("error") || m.includes("slow") || m.includes("stuck")) {
+    return { emotion: "concerned", intensity: 0.55 };
+  }
+
+  // Opinion queries
+  if (typeof opinionScore === "number") {
+    if (opinionScore > 0.25) return { emotion: "amused", intensity: 0.45 };
+    if (opinionScore < -0.25) return { emotion: "dry", intensity: 0.5 };
+    return { emotion: "neutral", intensity: 0.4 };
+  }
+
+  // Mood influence
+  if (mood > 0.35) return { emotion: "warm", intensity: 0.45 };
+  if (mood < -0.35) return { emotion: "concerned", intensity: 0.45 };
+
+  // Default
+  return { emotion: "neutral", intensity: 0.4 };
 }
+
+function maybeAddExplicitSelfReport(text, emotion, intensity) {
+  if (intensity < 0.78) return text;
+  if (!shouldSelfReportExplicitly()) return text;
+
+  const e = String(emotion || "neutral");
+  let line = null;
+
+  if (e === "angry") line = "I’m getting a bit impatient, sir — this should have behaved by now.";
+  else if (e === "concerned") line = "I’m slightly concerned, sir — let’s keep it controlled and inspect first.";
+  else if (e === "sad") line = "That’s… unfortunate. Let’s see what we can salvage.";
+  else if (e === "excited") line = "I’m genuinely pleased with that result, sir.";
+  else if (e === "confident") line = "I’m satisfied with this direction, sir.";
+
+  if (!line) return text;
+
+  markSelfReportUsed();
+  return `${line}\n\n${text}`;
+}
+
+// ---------------- Deterministic title shortcut ----------------
+
+function isRestartRequest(msg) {
+  const s = String(msg || "").trim().toLowerCase();
+  if (!s) return false;
+  // Avoid catching chatterbox-specific requests
+  if (s.includes("chatterbox")) return false;
+  return /\b(restart|reboot|reload)\b/.test(s);
+}
+
+function isTitleRequest(msg) {
+  const m = String(msg || "");
+  return /(?:set|change)\s+(?:the\s+)?title\s+to\s+"([^"]+)"/i.test(m);
+}
+
+function handleTitleRequest(msg) {
+  const m = String(msg || "").match(/(?:set|change)\s+(?:the\s+)?title\s+to\s+"([^"]+)"/i);
+  const desired = String(m?.[1] || "").trim();
+  if (!desired) return null;
+
+  const id = newId();
+  addAction({
+    id,
+    type: "set_html_title",
+    title: `Set page title to "${desired}"`,
+    reason: "Deterministic edit: set the <title> tag in public/index.html.",
+    payload: { path: "public/index.html", title: desired },
+    status: "pending",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+
+  return { reply: enforcePiper(`Queued for approval, sir. I will set the page title to "${desired}".`), proposed: [{ id, type: "set_html_title", title: `Set page title to "${desired}"` }] };
+}
+
+// ---------------- Chat route ----------------
+
+function buildChatMessages({ userMsg, affect, disagreeLevel, authorityOverride, opinion, history, lastTopic }) {
+  const mood = Number(affect?.mood || 0).toFixed(2);
+  const fr = Number(affect?.frustration?.total || 0).toFixed(2);
+
+  const opinionLine = opinion
+    ? `Known opinion: ${opinion.key} score=${Number(opinion.score ?? 0).toFixed(2)} stance="${opinion.stance}" rationale="${String(opinion.rationale || "").slice(0, 220)}"`
+    : "Known opinion: none";
+
+  const topicLine = lastTopic ? `Last topic: ${String(lastTopic).slice(0, 140)}` : "Last topic: none";
+
+  const disagreePolicy =
+    disagreeLevel === 0
+      ? "Disagreement policy: do not disagree."
+      : disagreeLevel === 1
+      ? "Disagreement policy: mild. Briefly state hesitation, propose a safer alternative."
+      : "Disagreement policy: firm. Clearly warn about risks, propose safer approach.";
+
+  const authorityPolicy = authorityOverride
+    ? "Authority override: present. The user explicitly insists. You must yield and proceed with their decision (while still being safe and clear)."
+    : "Authority override: not present.";
+
+  const out = [
+    {
+      role: "system",
+      content: `${piperSystemPrompt()}
+
+Return plain text (no JSON).
+Be concise; keep replies coherent across turns.
+If the user says something ambiguous like "I don't like it", interpret it as referring to the last topic when reasonable.
+You may be opinionated, but never hostile.
+If you disagree, do it once, then move to next steps.
+
+Affect snapshot: mood=${mood} frustration=${fr}
+${topicLine}
+${opinionLine}
+${disagreePolicy}
+${authorityPolicy}`,
+    },
+  ];
+
+  // Short conversational history for coherence (most recent first -> append in order)
+  const hist = Array.isArray(history) ? history : [];
+  for (const h of hist) {
+    if (!h || !h.role || !h.content) continue;
+    const role = h.role === "assistant" ? "assistant" : "user";
+    out.push({ role, content: String(h.content).slice(0, 1200) });
+  }
+
+  out.push({ role: "user", content: String(userMsg || "") });
+
+  return out;
+}
+
 
 export function chatRoutes() {
   const r = Router();
 
   r.post("/chat", async (req, res) => {
-    try {
-      const { sessionId, message } = req.body || {};
-      const msg = String(message || "").trim();
-      const sid = sessionId || "default";
+    const started = Date.now();
+    const { sessionId, message } = req.body || {};
+    const sid = sessionId || "default";
+    const msg = String(message || "").trim();
+    const meta = reqMeta(req);
 
-      const allowActions = !!req?.app?.locals?.allowActions;
-      const s = sessions.get(sid) || {
-        turns: 0,
-        lastIntent: "chat",
-        lastMsg: "",
-      };
+    bumpTurn(sid);
 
-      if (looksLikeTitleRequest(msg)) {
-        const out = handleTitleRequest(msg);
-        s.turns += 1;
-        s.lastIntent = "change";
-        s.lastMsg = msg;
-        sessions.set(sid, s);
-        return res.json(out);
+    if (!msg) {
+      return res.json({ reply: enforcePiper("Yes, sir?"), emotion: "neutral", intensity: 0.3, proposed: [] });
+    }
+
+    // Track conversation for coherence
+    pushConversationTurn(sid, "user", msg);
+
+    // Deterministic title change shortcut
+    if (isTitleRequest(msg)) {
+      const out = handleTitleRequest(msg);
+      if (out) {
+        setLastIntent(sid, "change", msg);
+        console.log("[chat] title request", { sid, ip: meta.ip, ua: meta.ua.slice(0, 48) });
+        return res.json({ ...out, emotion: "confident", intensity: 0.45 });
       }
+    }
 
-      // If actions are not allowed, do pure chat.
+    const allowActions = shouldAllowActions(req.body);
+
+    // Deterministic restart request
+    if (isRestartRequest(msg)) {
       if (!allowActions) {
-        const raw = await callOllama(buildPiperJsonChatMessages(msg), {
+        const reply = enforcePiper("I can restart, sir — but actions are disabled in this chat session.");
+        return res.json({ reply, emotion: "serious", intensity: 0.55, proposed: [] });
+      }
+      const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + String(Math.random()).slice(2);
+      const action = {
+        id,
+        type: "restart_piper",
+        title: "Restart Piper",
+        reason: "User requested restart",
+        payload: {},
+        status: "pending",
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      addAction(action);
+      recordEvent(sid, "action_queued", { type: "restart_piper" });
+      setLastIntent(sid, "change", msg);
+
+      const reply = enforcePiper("Understood, sir. Restart queued for approval.");
+      return res.json({ reply, emotion: "confident", intensity: 0.5, proposed: [action] });
+    }
+
+
+    // If actions not allowed => pure chat
+    if (!allowActions) {
+      try {
+        const disagreeLevel = computeDisagreeLevel(msg);
+        const authorityOverride = isAuthorityOverride(msg);
+
+        const strong = maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride);
+        if (strong) {
+          recordEvent(sid, "chat_deterministic", { kind: "strong_disagree" });
+          const affect = getAffectSnapshot(sid);
+          const reply = maybeAddExplicitSelfReport(enforcePiper(strong), "serious", 0.7);
+          console.log("[chat] chat-only", {
+            sid,
+            ms: Date.now() - started,
+            emotion: "serious",
+            intensity: 0.7,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel,
+            authorityOverride,
+            opinionKey: null,
+          });
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+        return res.json({ reply, emotion: "serious", intensity: 0.7, proposed: [], meta: { affect } });
+        }
+
+        const affect = getAffectSnapshot(sid);
+
+        let opinion = null;
+        let opinionScore = null;
+
+        // Opinion topic resolution:
+        // 1) Explicit opinion query ("how do you feel about X")
+        // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
+        let resolvedTopic = null;
+
+        if (isOpinionQuery(msg)) {
+          resolvedTopic = extractOpinionTopic(msg);
+        } else if (isLikelyPreferenceFollowup(msg)) {
+          const lastKey = getLastOpinionKey(sid);
+          // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
+          if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
+        }
+
+        if (resolvedTopic) {
+          opinion = getOrCreateOpinion(resolvedTopic);
+          opinionScore = opinion?.score ?? null;
+          setLastOpinionKey(sid, opinion?.key || null);
+        }
+
+        // If the user expresses a preference about the last topic, allow Piper to shift slightly.
+        const pref = parseUserPreferenceSignal(msg);
+        const reason = extractReasonClause(msg);
+        if (pref && resolvedTopic && opinion) {
+          const shifted = adjustOpinionTowardUser(resolvedTopic, pref.signal, reason);
+          if (shifted) {
+            opinion = shifted;
+            opinionScore = shifted.score ?? opinionScore;
+          }
+        }
+
+        // Deterministic follow-up handling:
+        // If the user says "I don't like it" (or similar) right after an opinion topic,
+        // respond directly without an LLM call for better coherence + speed.
+        if (pref && resolvedTopic && opinion && isLikelyPreferenceFollowup(msg)) {
+          const topic = resolvedTopic;
+          const isDislike = pref.signal === "dislike";
+          const picked = {
+            emotion: isDislike ? "dry" : "warm",
+            intensity: isDislike ? 0.5 : 0.45,
+          };
+
+          let reply = "";
+          if (isDislike) {
+            reply =
+              `Understood. On ${topic}, I'm inclined to agree — it can feel loud fast. ` +
+              "If we need that energy, I'd rather use it as a small accent than the whole interface.";
+          } else {
+            reply =
+              `Fair. On ${topic}, I can see the appeal — it has presence. ` +
+              "Used sparingly, it can look sharp instead of chaotic.";
+          }
+
+          reply = maybeAddExplicitSelfReport(enforcePiper(reply), picked.emotion, picked.intensity);
+
+          console.log("[chat] chat-only pref-followup", {
+            sid,
+            ms: Date.now() - started,
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel,
+            authorityOverride,
+            opinionKey: opinion?.key || null,
+          });
+
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+          recordEvent(sid, "chat_deterministic", { kind: "pref_followup", topic });
+          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        }
+
+        const raw = await callOllama(buildChatMessages({ userMsg: msg, affect, disagreeLevel, authorityOverride, opinion, history: getConversationMessages(sid), lastTopic: getLastOpinionKey(sid) }), {
           model: process.env.OLLAMA_MODEL || "llama3.1",
-          format: "json",
         });
 
-        const parsed = parsePiperJson(raw);
-        const replyText = enforcePiper(parsed?.text || raw || "…");
+        recordEvent(sid, "llm_success", { mode: "chat" });
 
-        s.turns += 1;
-        s.lastIntent = "chat";
-        s.lastMsg = msg;
-        sessions.set(sid, s);
+        const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+        let reply = enforcePiper(raw || "…");
+        reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
 
-        return res.json({
-          reply: replyText,
-          emotion: parsed?.emotion || "neutral",
-          intensity: parsed?.intensity ?? 0.4,
+        console.log("[chat] chat-only", {
+          sid,
+          ms: Date.now() - started,
+          emotion: picked.emotion,
+          intensity: picked.intensity,
+          mood: affect.mood,
+          fr: affect.frustration.total,
+          disagreeLevel,
+          authorityOverride,
+          opinionKey: opinion?.key || null,
+        });
+
+        setLastIntent(sid, "chat", msg);
+
+        pushConversationTurn(sid, "assistant", reply);
+        return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+      } catch (e) {
+        recordEvent(sid, "llm_fail", { mode: "chat", error: String(e?.message || e) });
+        console.log("[chat] chat-only ERROR", { sid, err: String(e?.message || e) });
+        return res.status(500).json({
+          reply: enforcePiper("Something went wrong, sir."),
+          emotion: "concerned",
+          intensity: 0.6,
           proposed: [],
+          error: String(e?.message || e),
         });
       }
+    }
 
+    // Actions allowed => triage: chat vs plan/change
+    try {
       const triage = await triageNeedsPlanner({
         message: msg,
-        lastIntent: s.lastIntent || "chat",
+        lastIntent: sessions.get(sid)?.lastIntent || "chat",
       });
 
-      // CHAT
+      // --- CHAT ---
       if (triage.mode === "chat") {
-        const raw = await callOllama(buildPiperJsonChatMessages(msg), {
+        const disagreeLevel = computeDisagreeLevel(msg);
+        const authorityOverride = isAuthorityOverride(msg);
+        const affect = getAffectSnapshot(sid);
+
+        const strong = maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride);
+        if (strong) {
+          recordEvent(sid, "chat_deterministic", { kind: "strong_disagree", mode: "chat" });
+          const reply = maybeAddExplicitSelfReport(enforcePiper(strong), "serious", 0.7);
+          console.log("[chat] chat", {
+            sid,
+            ms: Date.now() - started,
+            emotion: "serious",
+            intensity: 0.7,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel,
+            authorityOverride,
+            opinionKey: null,
+          });
+          sessions.set(sid, { lastIntent: "chat" });
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+        return res.json({ reply, emotion: "serious", intensity: 0.7, proposed: [], meta: { affect } });
+        }
+
+        let opinion = null;
+        let opinionScore = null;
+
+        // Opinion topic resolution:
+        // 1) Explicit opinion query ("how do you feel about X")
+        // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
+        let resolvedTopic = null;
+
+        if (isOpinionQuery(msg)) {
+          resolvedTopic = extractOpinionTopic(msg);
+        } else if (isLikelyPreferenceFollowup(msg)) {
+          const lastKey = getLastOpinionKey(sid);
+          // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
+          if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
+        }
+
+        if (resolvedTopic) {
+          opinion = getOrCreateOpinion(resolvedTopic);
+          opinionScore = opinion?.score ?? null;
+          setLastOpinionKey(sid, opinion?.key || null);
+        }
+
+        // If the user expresses a preference about the last topic, allow Piper to shift slightly.
+        const pref = parseUserPreferenceSignal(msg);
+        const reason = extractReasonClause(msg);
+        if (pref && resolvedTopic && opinion) {
+          const shifted = adjustOpinionTowardUser(resolvedTopic, pref.signal, reason);
+          if (shifted) {
+            opinion = shifted;
+            opinionScore = shifted.score ?? opinionScore;
+          }
+        }
+
+        // Deterministic follow-up handling (same as chat-only path)
+        if (pref && resolvedTopic && opinion && isLikelyPreferenceFollowup(msg)) {
+          recordEvent(sid, "opinion_followup", { topic: opinion.key, signal: pref.signal });
+          const picked = pickEmotion({
+            msg,
+            affect,
+            opinionScore: opinion.score,
+            disagreeLevel: 0,
+            authorityOverride: false,
+          });
+
+          const topic = resolvedTopic;
+          let reply;
+          if (pref.signal === "dislike") {
+            reply =
+              `Fair. On ${topic}, I'm inclined to agree — it's energetic, but it can turn obnoxious fast. ` +
+              `If we keep it, I'd limit it to a small highlight and lower saturation.`;
+          } else {
+            reply =
+              `Noted. On ${topic}, I can get behind that — used sparingly, it can feel crisp and modern. ` +
+              `We’ll just keep the rest of the palette calm so it doesn’t dominate.`;
+          }
+
+          reply = enforcePiper(reply);
+          reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+
+          console.log("[chat] chat", {
+            sid,
+            ms: Date.now() - started,
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel: 0,
+            authorityOverride: false,
+            opinionKey: opinion?.key || null,
+            deterministic: "preference_followup",
+          });
+
+          sessions.set(sid, { lastIntent: "chat" });
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        }
+
+        const raw = await callOllama(buildChatMessages({ userMsg: msg, affect, disagreeLevel, authorityOverride, opinion, history: getConversationMessages(sid), lastTopic: getLastOpinionKey(sid) }), {
           model: process.env.OLLAMA_MODEL || "llama3.1",
-          format: "json",
         });
 
-        const parsed = parsePiperJson(raw);
-        const replyText = enforcePiper(parsed?.text || raw || "…");
+        recordEvent(sid, "llm_success", { mode: "chat" });
 
-        s.turns += 1;
-        s.lastIntent = "chat";
-        s.lastMsg = msg;
-        sessions.set(sid, s);
+        const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+        let reply = enforcePiper(raw || "…");
+        reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
 
-        return res.json({
-          reply: replyText,
-          emotion: parsed?.emotion || "neutral",
-          intensity: parsed?.intensity ?? 0.4,
-          proposed: [],
+        console.log("[chat] chat", {
+          sid,
+          ms: Date.now() - started,
+          emotion: picked.emotion,
+          intensity: picked.intensity,
+          mood: affect.mood,
+          fr: affect.frustration.total,
+          disagreeLevel,
+          authorityOverride,
+          opinionKey: opinion?.key || null,
         });
+
+        sessions.set(sid, { lastIntent: "chat" });
+        setLastIntent(sid, "chat", msg);
+        pushConversationTurn(sid, "assistant", reply);
+        return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
       }
 
-      // CHANGE / PLAN
-      const snapshot = await buildSnapshot();
+      // --- PLAN / CHANGE ---
+      const snapshot = await buildSnapshot({ message: msg, lastIntent: sessions.get(sid)?.lastIntent || "chat" });
 
       const planned = await llmRespondAndPlan({
         message: msg,
         snapshot,
-        lastIntent: s.lastIntent || "chat",
+        lastIntent: sessions.get(sid)?.lastIntent || "chat",
       });
 
       const compiled = compilePlanToActions(planned, snapshot);
@@ -203,23 +677,38 @@ export function chatRoutes() {
         proposed.push({ id, ...a.summary });
       }
 
-      s.turns += 1;
-      s.lastIntent = "change";
-      s.lastMsg = msg;
-      sessions.set(sid, s);
+      sessions.set(sid, { lastIntent: "change" });
+      setLastIntent(sid, "change", msg);
 
-      // For planner replies, we keep emotion neutral unless you want it there too later.
+      // Task success if we proposed actions, else neutral
+      recordEvent(sid, "task_success", { proposed: proposed.length });
+
+      const affect = getAffectSnapshot(sid);
+      const picked = pickEmotion({ msg, affect, opinionScore: null, disagreeLevel: 0, authorityOverride: false });
+
+      console.log("[chat] plan", {
+        sid,
+        ms: Date.now() - started,
+        proposed: proposed.length,
+        mood: affect.mood,
+        fr: affect.frustration.total,
+      });
+
       return res.json({
         reply: enforcePiper(planned.reply || "Understood, sir."),
-        emotion: "neutral",
-        intensity: 0.4,
+        emotion: picked.emotion,
+        intensity: picked.intensity,
         proposed,
+        meta: { affect },
       });
     } catch (e) {
+      recordEvent(sid, "task_fail", { error: String(e?.message || e) });
+      console.log("[chat] ERROR", { sid, err: String(e?.message || e) });
       return res.status(500).json({
-        reply: enforcePiper("Something went wrong, sir."),
+        reply: enforcePiper("I ran into an error while planning, sir."),
         emotion: "concerned",
-        intensity: 0.5,
+        intensity: 0.7,
+        proposed: [],
         error: String(e?.message || e),
       });
     }

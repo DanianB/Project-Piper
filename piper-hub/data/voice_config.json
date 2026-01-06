@@ -1,13 +1,5 @@
 {
   "provider": "chatterbox",
   "voice": "default",
-  "autoStartChatterbox": true,
-  "chatterbox": {
-    "cfg_weight": 0.35,
-    "exaggeration": 0.5,
-    "temperature": 0.8,
-    "max_new_tokens_mode": "estimate",
-    "max_new_tokens_min": 120,
-    "max_new_tokens_max": 1200
-  }
+  "autoStartChatterbox": true
 }

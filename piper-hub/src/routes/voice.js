@@ -1,5 +1,5 @@
-// src/routes/voice.js
 import { Router } from "express";
+import { startChatterboxProcess } from "../services/chatterbox_manager.js";
 import multer from "multer";
 import { transcribeAudioBuffer } from "../services/voice/stt.js";
 import {
@@ -10,12 +10,14 @@ import {
   ensureChatterboxRunning,
   getChatterboxStatus,
 } from "../services/voice/tts.js";
+import { recordEvent } from "../services/mind.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 export function voiceRoutes() {
   const r = Router();
 
+  // ---- STT ----
   r.post("/voice/transcribe", upload.single("audio"), async (req, res) => {
     try {
       if (!req.file || !req.file.buffer) {
@@ -28,6 +30,7 @@ export function voiceRoutes() {
     }
   });
 
+  // ---- Voice config ----
   r.get("/voice/config", (_req, res) => res.json(getVoiceConfig()));
 
   r.post("/voice/config", (req, res) => {
@@ -41,23 +44,41 @@ export function voiceRoutes() {
 
   r.get("/voice/voices", (_req, res) => res.json(listVoices()));
 
+  // ---- Speak ----
   r.post("/voice/speak", async (req, res) => {
-    const text = String(req.body?.text || "").trim();
-    if (!text) return res.json({ ok: true });
-
-    const emotion = req.body?.emotion; // optional
-    const intensity = req.body?.intensity; // optional
-
     try {
-      await speakQueued(text, { emotion, intensity });
+      const { text = "", emotion = "neutral", intensity = 0.4, sessionId = null } = req.body || {};
+
+      // If using Chatterbox and autostart is enabled, ensure the process is running before speaking.
+      const cfg = getVoiceConfig();
+      const provider = cfg?.provider || "piper";
+      const autostart = Boolean(cfg?.autoStartChatterbox);
+
+      if (provider === "chatterbox") {
+        if (autostart) {
+          const r0 = await startChatterboxProcess();
+          if (!r0?.ok) {
+            return res.status(500).json({ ok: false, error: `Chatterbox failed to start: ${r0?.error || "unknown"}` });
+          }
+        }
+        // Still verify server endpoint is reachable (covers the case where port is blocked / dying).
+        await ensureChatterboxRunning();
+      }
+
+      await speakQueued(String(text || ""), { emotion, intensity });
+
+      if (sessionId) recordEvent(sessionId, "tts_success", { emotion, intensity, chars: String(text || "").length });
+
       res.json({ ok: true });
     } catch (e) {
       res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
   });
 
+  // ---- Chatterbox helpers ----
   r.post("/voice/chatterbox/start", async (_req, res) => {
     try {
+      await startChatterboxProcess({ quiet: false });
       await ensureChatterboxRunning();
       res.json({ ok: true });
     } catch (e) {

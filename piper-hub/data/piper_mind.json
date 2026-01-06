@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "createdAt": 1767697124060,
+  "updatedAt": 1767709793852,
+  "opinions": {
+    "topic:the color red": {
+      "score": -0.2549705,
+      "stance": "mixed",
+      "rationale": "It attracts the wrong kind of complexity.",
+      "createdAt": 1767697189270,
+      "updatedAt": 1767709614360
+    },
+    "topic:neon green ui": {
+      "score": 0.09033149999999995,
+      "stance": "I’m torn.",
+      "rationale": "It can be brilliant or obnoxious, depending on execution.",
+      "createdAt": 1767698145729,
+      "updatedAt": 1767698145729
+    }
+  },
+  "prefs": {},
+  "moodBaseline": 0.017,
+  "frustration": {
+    "llm": 0,
+    "tts": 0,
+    "task": 0
+  },
+  "lastExplicitAt": 0
+}

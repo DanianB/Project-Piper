@@ -96,7 +96,9 @@ function deriveInspectionStage(runCmdOutputs) {
   };
 }
 
-export async function buildSnapshot({ message, lastIntent }) {
+// Note: callers sometimes invoke buildSnapshot() with no args.
+// Provide a default parameter to avoid crashing on destructuring.
+export async function buildSnapshot({ message, lastIntent } = {}) {
   const actions = listActions();
 
   const allowlistedFiles = ["public/index.html", "public/styles.css"];
