@@ -108,7 +108,7 @@ export async function llmRespondAndPlan({ message, snapshot }) {
       { role: "system", content: sys },
       { role: "user", content: JSON.stringify(payload) },
     ],
-    { timeoutMs: 28000 }
+    { timeoutMs: 400000 }
   );
 
   const j = extractFirstJsonObject(out);

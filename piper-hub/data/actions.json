@@ -1,5 +1,111 @@
 [
   {
+    "id": "79ea1de7175c419b922a89bd",
+    "type": "bundle",
+    "title": "Bundle",
+    "reason": "Folder created, sir.",
+    "payload": {
+      "actions": [
+        {
+          "type": "mkdir",
+          "title": "Create folder: known:desktop/Worms",
+          "reason": "Creating a folder on your desktop as requested.",
+          "payload": {
+            "path": "known:desktop/Worms"
+          }
+        },
+        {
+          "type": "write_file",
+          "title": "Write file: known:desktop/Worms/worm.txt",
+          "reason": "Providing information about worms as requested.",
+          "payload": {
+            "path": "known:desktop/Worms/worm.txt",
+            "content": "A worm is a long, slender invertebrate animal that belongs to the phylum Annelida. They are often found in soil, compost, and decaying organic matter.\n\nWorms play an important role in ecosystems by helping to break down organic matter and recycle nutrients."
+          },
+          "meta": {
+            "preview": {
+              "kind": "write_file",
+              "path": "known:desktop/Worms/worm.txt"
+            }
+          }
+        }
+      ]
+    },
+    "status": "done",
+    "createdAt": 1767683819965,
+    "updatedAt": 1767683833029,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "bundle",
+        "results": [
+          {
+            "step": "mkdir",
+            "ok": true,
+            "result": {
+              "type": "mkdir",
+              "path": "known:desktop/Worms",
+              "abs": "C:\\Users\\Danian\\Desktop\\Worms"
+            }
+          },
+          {
+            "step": "write_file",
+            "ok": true,
+            "result": {
+              "type": "write_file",
+              "path": "known:desktop/Worms/worm.txt",
+              "abs": "C:\\Users\\Danian\\Desktop\\Worms\\worm.txt",
+              "backup": "D:\\AI\\piper-hub\\data\\backups\\1767683833028_306e016bb153_19b922abcc4_known_desktop_Worms_worm.txt.bak",
+              "bytes": 257
+            }
+          }
+        ],
+        "restartRequested": false,
+        "offRequested": false
+      }
+    }
+  },
+  {
+    "id": "6e54705b7cfb219b921f5b74",
+    "type": "set_html_title",
+    "title": "Set page title to \"Piper\"",
+    "reason": "Deterministic edit: set the <title> tag in public/index.html.",
+    "payload": {
+      "path": "public/index.html",
+      "title": "Piper"
+    },
+    "status": "done",
+    "createdAt": 1767683087220,
+    "updatedAt": 1767683096303,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "set_html_title",
+        "path": "public/index.html",
+        "abs": "D:\\AI\\piper-hub\\public\\index.html",
+        "backup": "D:\\AI\\piper-hub\\data\\backups\\1767683096301_71deb31dc7e4_19b921f7eee_public_index.html.bak",
+        "title": "Piper"
+      }
+    }
+  },
+  {
+    "id": "a8ff8779d1eba19b921e7f3f",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested a restart.",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767683030847,
+    "updatedAt": 1767683035444,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
     "id": "2615256a5f4c419b8deec757",
     "type": "restart_piper",
     "title": "Restart Piper",

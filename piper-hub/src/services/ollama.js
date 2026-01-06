@@ -26,6 +26,13 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 let cachedModelName = null;
 let lastTagsFetchAt = 0;
 
+function readTimeoutMs(fallbackMs) {
+  const raw = process.env.OLLAMA_TIMEOUT_MS;
+  if (!raw) return fallbackMs;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 1000 ? n : fallbackMs;
+}
+
 async function fetchTags() {
   const r = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
     method: "GET",
@@ -39,7 +46,6 @@ async function fetchTags() {
 
   const j = await r.json().catch(() => null);
   const models = Array.isArray(j?.models) ? j.models : [];
-  // Each model entry generally has .name
   const names = models
     .map((m) => m?.name)
     .filter((n) => typeof n === "string" && n.trim());
@@ -47,7 +53,6 @@ async function fetchTags() {
 }
 
 async function pickInstalledModel(preferred) {
-  // Avoid hammering /api/tags; refresh at most every 10s unless forced by error.
   const now = Date.now();
   const shouldRefresh = !cachedModelName || now - lastTagsFetchAt > 10_000;
 
@@ -61,12 +66,8 @@ async function pickInstalledModel(preferred) {
       );
     }
 
-    // If preferred is installed, use it; otherwise first available.
-    if (preferred && names.includes(preferred)) {
-      cachedModelName = preferred;
-    } else {
-      cachedModelName = names[0];
-    }
+    if (preferred && names.includes(preferred)) cachedModelName = preferred;
+    else cachedModelName = names[0];
   }
 
   return cachedModelName;
@@ -78,17 +79,26 @@ function looksLikeModelNotFound(status, bodyText) {
   return t.includes("model") && t.includes("not found");
 }
 
+function isAbortError(e) {
+  const msg = String(e?.message || "");
+  return (
+    e?.name === "AbortError" ||
+    msg.includes("aborted") ||
+    msg.includes("This operation was aborted")
+  );
+}
+
 /**
  * Call Ollama /api/chat
- * - Supports forcing JSON output via opts.format="json"
- * - Auto-falls back to an installed model if requested model is missing
- * - Does NOT silently swallow errors (logs + throws)
+ * - Auto-falls back to installed model if requested model is missing
+ * - Timeout is configurable via OLLAMA_TIMEOUT_MS (default 180s)
  */
 export async function callOllama(messages, opts = {}) {
   const {
-    timeoutMs = 60000,
+    // Planner calls can be slow; default to 180s. Override via OLLAMA_TIMEOUT_MS.
+    timeoutMs = readTimeoutMs(180_000),
     model = process.env.OLLAMA_MODEL || null,
-    format = null, // "json" to force JSON output
+    format = null, // "json"
     temperature = 0.2,
   } = opts;
 
@@ -100,16 +110,10 @@ export async function callOllama(messages, opts = {}) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   if (typeof timer.unref === "function") timer.unref();
 
-  // We'll try at most twice:
-  // 1) requested model (or cached/installed pick)
-  // 2) fallback installed model if the first was "model not found"
   const preferred = model && String(model).trim() ? String(model).trim() : null;
 
-  // If user didn't specify anything, pick an installed model.
   let chosenModel = preferred || (cachedModelName ? cachedModelName : null);
-  if (!chosenModel) {
-    chosenModel = await pickInstalledModel(preferred);
-  }
+  if (!chosenModel) chosenModel = await pickInstalledModel(preferred);
 
   async function doCall(modelName) {
     const body = {
@@ -118,8 +122,6 @@ export async function callOllama(messages, opts = {}) {
       stream: false,
       options: { temperature },
     };
-
-    // Ollama supports `format: "json"` on /api/chat for constrained JSON output
     if (format === "json") body.format = "json";
 
     const r = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -149,7 +151,6 @@ export async function callOllama(messages, opts = {}) {
       );
     }
 
-    // If successful, remember the model used.
     cachedModelName = modelName;
     return content;
   }
@@ -158,11 +159,19 @@ export async function callOllama(messages, opts = {}) {
     try {
       return await doCall(chosenModel);
     } catch (e) {
-      // If the model wasn't found, refresh tags and retry with a real installed model.
+      // Clean timeout error instead of raw AbortError noise
+      if (isAbortError(e)) {
+        throw new Error(
+          `Ollama request timed out after ${Math.round(timeoutMs / 1000)}s. ` +
+            `Increase OLLAMA_TIMEOUT_MS or use a faster model.`
+        );
+      }
+
+      // If model missing, refresh and retry once using installed model.
       const status = e?.status;
       const bodyText = e?.bodyText;
+
       if (looksLikeModelNotFound(status, bodyText)) {
-        // Force refresh installed model list
         cachedModelName = null;
         lastTagsFetchAt = 0;
 
@@ -176,6 +185,7 @@ export async function callOllama(messages, opts = {}) {
       throw e;
     }
   } catch (e) {
+    // Avoid printing scary stack traces for timeouts unless you want them
     console.error("[ollama] call failed:", e?.message || e);
     throw e;
   } finally {

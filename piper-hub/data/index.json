@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-06T06:59:17.573Z",
+  "generatedAt": "2026-01-06T07:16:20.156Z",
   "root": "D:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -1695,14 +1695,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 87,
+            "line": 96,
             "column": 0,
-            "index": 2384
+            "index": 2514
           },
           "end": {
-            "line": 184,
+            "line": 194,
             "column": 1,
-            "index": 5306
+            "index": 5458
           }
         }
       },
@@ -2042,7 +2042,7 @@
           "end": {
             "line": 129,
             "column": 1,
-            "index": 4779
+            "index": 4780
           }
         }
       },
