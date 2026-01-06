@@ -49,55 +49,28 @@ function sysPrompt() {
     "- Inspect → Ground → Act. Never invent selectors, functions, or file content.\n" +
     "- Prefer general capability over special-case hacks.\n" +
     "- Minimal, deterministic edits (avoid whole-file rewrites/formatting).\n" +
-    "- Approval is sacred: only propose ops that can be executed deterministically.\n\n" +
+    "- Approval is sacred: only propose ops that can be executed deterministically.\n" +
+    "- For user folders outside the repo (Desktop/Downloads/Documents), use paths like known:desktop/Folder/file.txt (or known:downloads, known:documents). Never use /Desktop or absolute Windows paths.\n" +
+    "- If you can determine the requested state is already true, reply 'Already done, sir.' and return requiresApproval:false with ops:[]\n\n" +
+    "Grounding:\n" +
+    "- Prefer using snapshot.inspectionFacts and snapshot.uiFacts over raw command logs.\n" +
+    "- Only use selectors that exist in snapshot.uiFacts or snapshot.inspectionFacts.selectorsFound.\n\n" +
     "Action format (JSON only):\n" +
     "{\n" +
     '  "reply": "string",\n' +
     '  "requiresApproval": true|false,\n' +
     '  "ops": [\n' +
-    '     {"op":"css_patch","file":"public/styles.css","selectors":["."],"set":{"prop":"value"},"unset":["prop"],"why":"."},\n' +
-    '     {"op":"apply_patch","path":".","edits":[{"find":"EXACT","replace":"EXACT","mode":"once"}],"why":"..."},\n' +
+    '     {"op":"css_patch","file":"public/styles.css","selectors":["."] ,"set":{"prop":"value"},"unset":["prop"],"why":"."},\n' +
+    '     {"op":"apply_patch","path":".","edits":[{"find":"EXACT","replace":"EXACT","mode":"once|all|append"}],"why":"..."},\n' +
     '     {"op":"write_file","path":".","content":".","why":"."},\n' +
     '     {"op":"mkdir","path":".","why":"."},\n' +
     '     {"op":"run_cmd","cmd":".","timeoutMs":12000,"why":"."},\n' +
+    '     {"op":"read_snippet","path":".","aroundLine":120,"radius":60,"why":"."},\n' +
     '     {"op":"restart","why":"..."},\n' +
     '     {"op":"off","why":"..."}\n' +
     "  ]\n" +
     "}\n"
   );
-}
-
-function hasSelector(snapshot, sel) {
-  const s = String(sel || "").trim();
-  if (!s) return false;
-
-  const uiSelectors = Array.isArray(snapshot?.uiMapSummary?.cssSelectors)
-    ? snapshot.uiMapSummary.cssSelectors
-    : [];
-  if (uiSelectors.includes(s)) return true;
-
-  const snippets = Array.isArray(snapshot?.readSnippets)
-    ? snapshot.readSnippets
-    : [];
-  for (const sn of snippets) {
-    const txt = String(sn?.stdout || sn?.text || "");
-    if (txt.includes(s)) return true;
-  }
-
-  const runs = Array.isArray(snapshot?.runCmdOutputs)
-    ? snapshot.runCmdOutputs
-    : [];
-  for (const r of runs) {
-    const out = String(r?.stdout || "");
-    if (out.includes(s)) return true;
-  }
-
-  const raw = snapshot?.rawFiles || {};
-  for (const k of Object.keys(raw)) {
-    if (String(raw[k] || "").includes(s)) return true;
-  }
-
-  return false;
 }
 
 export async function llmRespondAndPlan({ message, snapshot }) {
@@ -118,70 +91,18 @@ export async function llmRespondAndPlan({ message, snapshot }) {
     };
   }
 
-  const runCmdOutputs = Array.isArray(snapshot.runCmdOutputs)
-    ? snapshot.runCmdOutputs
-    : [];
-  const readSnippets = Array.isArray(snapshot.readSnippets)
-    ? snapshot.readSnippets
-    : [];
-
-  // --- Grounded deterministic fallback for docking ---
-  if (looksLikeDockPendingActions(message)) {
-    const groundedHasActionsWrap = hasSelector(snapshot, "#actionsWrap");
-    if (groundedHasActionsWrap) {
-      return {
-        reply:
-          "Understood. I found #actionsWrap and can dock Pending Actions below the chat panel by moving it to the chat column.",
-        requiresApproval: true,
-        ops: [
-          {
-            op: "css_patch",
-            file: "public/styles.css",
-            selectors: ["#actionsWrap"],
-            set: { "grid-column": "1" },
-            unset: [],
-            why: "Dock Pending Actions below the chat box by placing #actionsWrap in the chat column (column 1) instead of the right-side column.",
-          },
-        ],
-      };
-    }
-
-    return {
-      reply:
-        "I can do that, but I don’t yet have a grounded selector for the Pending Actions container. I’ll inspect the relevant HTML/CSS next.",
-      requiresApproval: true,
-      ops: [
-        {
-          op: "run_cmd",
-          cmd: 'rg -n "<title>|Pending Actions|Recent Actions|actionsWrap|historyList|actionsList|id=\\"actionsWrap\\"" public/index.html public/styles.css src',
-          timeoutMs: 12000,
-          why: "Locate grounded selectors and layout rules for the Pending Actions panel.",
-        },
-      ],
-    };
-  }
-
-  let sys = sysPrompt();
-
-  if (isChangeish(message)) {
-    sys +=
-      "\nUI/layout change detected.\n" +
-      "- Prefer css_patch on public/styles.css.\n" +
-      "- Use selectors that exist in snippets/raw files.\n" +
-      "- Avoid reformatting; only set/unset needed properties.\n" +
-      "- If unsure, request inspection with run_cmd.\n";
-  }
-
+  // --- Prefer LLM for general planning ---
+  const sys = sysPrompt();
   const payload = {
     message: String(message || ""),
     capabilities: snapshot.capabilities,
     uiMapSummary: snapshot.uiMapSummary,
-    runCmdOutputs,
-    readSnippets,
+    uiFacts: snapshot.uiFacts,
+    inspectionStage: snapshot.inspectionStage,
+    inspectionFacts: snapshot.inspectionFacts,
     allowlistedFiles: snapshot.allowlistedFiles || [],
   };
 
-  // callOllama expects ARRAY of {role, content}
   const out = await callOllama(
     [
       { role: "system", content: sys },
@@ -200,7 +121,8 @@ export async function llmRespondAndPlan({ message, snapshot }) {
   if (typeof j.requiresApproval !== "boolean") j.requiresApproval = false;
   if (!Array.isArray(j.ops)) j.ops = [];
 
-  // If user asked for change but model returned no ops, keep approval true (compiler will fallback/inspect)
+  // If user asked for change but model returned no ops, keep approval true
+  // (compiler may escalate inspection safely).
   if (isChangeish(message) && j.ops.length === 0) j.requiresApproval = true;
 
   return j;

@@ -1,16 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-05T09:51:12.918Z",
+  "generatedAt": "2026-01-06T06:18:13.948Z",
   "root": "D:\\AI\\piper-hub",
   "html": {
     "elements": [
-      {
-        "file": "index.html",
-        "tag": "title",
-        "id": null,
-        "classes": [],
-        "text": null
-      },
       {
         "file": "public/index.html",
         "tag": "html",
@@ -143,6 +136,148 @@
       {
         "file": "public/index.html",
         "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceWrap"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "voiceBtn",
+        "classes": [
+          "btn-secondary",
+          "btn-voice"
+        ],
+        "text": "🔊 Voice"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "voicePanel",
+        "classes": [
+          "voicePanel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "select",
+        "id": "voiceSelect",
+        "classes": [
+          "voiceSelect"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow",
+          "voiceRowTight"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "jarvisMode",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "voiceRefresh",
+        "classes": [
+          "btn-secondary",
+          "btn-voiceRefresh"
+        ],
+        "text": "↻"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceHint"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "code",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "code",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
         "id": null,
         "classes": [],
         "text": null
@@ -529,6 +664,7 @@
           "border",
           "border-radius",
           "box-shadow",
+          "grid-row",
           "grid-column"
         ]
       },
@@ -1240,8 +1376,160 @@
           0
         ],
         "properties": [
+          "height",
+          "padding",
+          "grid-row",
           "grid-column",
           "display"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voiceWrap",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "position",
+          "display",
+          "align-items",
+          "gap"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-voice",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "padding",
+          "border-radius"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "position",
+          "right",
+          "top",
+          "min-width",
+          "border",
+          "border-radius",
+          "background",
+          "box-shadow",
+          "padding",
+          "z-index"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel .voiceRow",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "align-items",
+          "justify-content",
+          "margin-bottom"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel .voiceRowTight",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "margin-bottom"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel .voiceLabel",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "font-size",
+          "color",
+          "font-weight"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel .voiceHint",
+        "specificity": [
+          0,
+          2,
+          0
+        ],
+        "properties": [
+          "font-size",
+          "color",
+          "margin-top"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel select",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "flex",
+          "max-width",
+          "padding",
+          "border-radius",
+          "border",
+          "background",
+          "color",
+          "outline"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".voicePanel select:focus",
+        "specificity": [
+          0,
+          2,
+          1
+        ],
+        "properties": [
+          "border-color",
+          "box-shadow"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btn-voiceRefresh",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "padding"
         ]
       }
     ]
@@ -1471,18 +1759,86 @@
       },
       {
         "file": "src/services/voice/tts.js",
+        "name": "getVoiceConfig",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 27,
+            "column": 0,
+            "index": 832
+          },
+          "end": {
+            "line": 42,
+            "column": 1,
+            "index": 1253
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "setVoiceConfig",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 44,
+            "column": 0,
+            "index": 1255
+          },
+          "end": {
+            "line": 60,
+            "column": 1,
+            "index": 1784
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "ensureChatterboxRunning",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 244,
+            "column": 0,
+            "index": 6770
+          },
+          "end": {
+            "line": 258,
+            "column": 1,
+            "index": 7209
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "listVoices",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 318,
+            "column": 0,
+            "index": 8731
+          },
+          "end": {
+            "line": 325,
+            "column": 1,
+            "index": 8991
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
         "name": "speakQueued",
         "kind": "function",
         "loc": {
           "start": {
-            "line": 64,
+            "line": 333,
             "column": 0,
-            "index": 1683
+            "index": 9146
           },
           "end": {
-            "line": 71,
+            "line": 349,
             "column": 1,
-            "index": 1881
+            "index": 9576
           }
         }
       },
@@ -1577,14 +1933,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 15,
             "column": 0,
-            "index": 308
+            "index": 394
           },
           "end": {
-            "line": 36,
+            "line": 75,
             "column": 1,
-            "index": 1095
+            "index": 2128
           }
         }
       },
@@ -1645,14 +2001,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 309,
+            "line": 585,
             "column": 0,
-            "index": 8024
+            "index": 15661
           },
           "end": {
-            "line": 367,
+            "line": 668,
             "column": 1,
-            "index": 9339
+            "index": 18120
           }
         }
       },
@@ -1679,14 +2035,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 103,
+            "line": 76,
             "column": 0,
-            "index": 3258
+            "index": 3077
           },
           "end": {
-            "line": 207,
+            "line": 129,
             "column": 1,
-            "index": 6738
+            "index": 4779
           }
         }
       },
@@ -1917,14 +2273,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 9,
             "column": 0,
-            "index": 50
+            "index": 213
           },
           "end": {
-            "line": 4,
-            "column": 34,
-            "index": 84
+            "line": 9,
+            "column": 53,
+            "index": 266
           }
         }
       },
@@ -1934,14 +2290,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 12,
             "column": 0,
-            "index": 88
+            "index": 306
           },
           "end": {
-            "line": 6,
+            "line": 12,
             "column": 48,
-            "index": 136
+            "index": 354
           }
         }
       },
@@ -1951,150 +2307,31 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 13,
             "column": 0,
-            "index": 138
+            "index": 355
           },
           "end": {
-            "line": 7,
+            "line": 13,
             "column": 46,
-            "index": 184
+            "index": 401
           }
         }
       },
       {
         "file": "src/config/paths.js",
-        "name": "ACTIONS_DIR",
+        "name": "PUBLIC_DIR",
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 8,
+            "line": 14,
             "column": 0,
-            "index": 186
+            "index": 402
           },
           "end": {
-            "line": 8,
-            "column": 54,
-            "index": 240
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "ACTIONS_FILE",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 10,
-            "column": 0,
-            "index": 244
-          },
-          "end": {
-            "line": 10,
-            "column": 64,
-            "index": 308
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "APPS_FILE",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 11,
-            "column": 0,
-            "index": 310
-          },
-          "end": {
-            "line": 11,
-            "column": 58,
-            "index": 368
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "OFF_FLAG_PATH",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 370
-          },
-          "end": {
-            "line": 12,
-            "column": 61,
-            "index": 431
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "FFMPEG_EXE",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 15,
-            "column": 0,
-            "index": 478
-          },
-          "end": {
-            "line": 16,
-            "column": 160,
-            "index": 665
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "WHISPER_EXE",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 18,
-            "column": 0,
-            "index": 669
-          },
-          "end": {
-            "line": 18,
-            "column": 62,
-            "index": 731
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "WHISPER_MODEL",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 19,
-            "column": 0,
-            "index": 733
-          },
-          "end": {
-            "line": 19,
-            "column": 73,
-            "index": 806
-          }
-        }
-      },
-      {
-        "file": "src/config/paths.js",
-        "name": "WHISPER_THREADS",
-        "kind": "variable",
-        "loc": {
-          "start": {
-            "line": 20,
-            "column": 0,
-            "index": 808
-          },
-          "end": {
-            "line": 20,
-            "column": 33,
-            "index": 841
+            "line": 14,
+            "column": 52,
+            "index": 454
           }
         }
       },
@@ -2104,14 +2341,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 22,
+            "line": 24,
             "column": 0,
-            "index": 845
+            "index": 619
           },
           "end": {
-            "line": 22,
-            "column": 56,
-            "index": 901
+            "line": 25,
+            "column": 74,
+            "index": 718
           }
         }
       },
@@ -2121,14 +2358,201 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 23,
+            "line": 27,
             "column": 0,
-            "index": 903
+            "index": 720
           },
           "end": {
-            "line": 23,
-            "column": 78,
-            "index": 981
+            "line": 28,
+            "column": 61,
+            "index": 808
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "CHATTERBOX_SERVER_PY",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 31,
+            "column": 0,
+            "index": 849
+          },
+          "end": {
+            "line": 33,
+            "column": 51,
+            "index": 974
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "CHATTERBOX_PROMPT_DIR",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 37,
+            "column": 0,
+            "index": 1128
+          },
+          "end": {
+            "line": 38,
+            "column": 67,
+            "index": 1232
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "CHATTERBOX_PROMPT_WAV",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 41,
+            "column": 0,
+            "index": 1292
+          },
+          "end": {
+            "line": 41,
+            "column": 77,
+            "index": 1369
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "FFMPEG_EXE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 44,
+            "column": 0,
+            "index": 1411
+          },
+          "end": {
+            "line": 45,
+            "column": 77,
+            "index": 1514
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_EXE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 47,
+            "column": 0,
+            "index": 1516
+          },
+          "end": {
+            "line": 48,
+            "column": 77,
+            "index": 1620
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_MODEL",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 51,
+            "column": 0,
+            "index": 1764
+          },
+          "end": {
+            "line": 51,
+            "column": 61,
+            "index": 1825
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "WHISPER_THREADS",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 54,
+            "column": 0,
+            "index": 1885
+          },
+          "end": {
+            "line": 54,
+            "column": 87,
+            "index": 1972
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "VOICE_CONFIG_PATH",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 57,
+            "column": 0,
+            "index": 2024
+          },
+          "end": {
+            "line": 57,
+            "column": 74,
+            "index": 2098
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "OFF_FLAG_PATH",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 59,
+            "column": 0,
+            "index": 2100
+          },
+          "end": {
+            "line": 59,
+            "column": 61,
+            "index": 2161
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "ACTIONS_FILE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 61,
+            "column": 0,
+            "index": 2163
+          },
+          "end": {
+            "line": 61,
+            "column": 64,
+            "index": 2227
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "APPS_FILE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 62,
+            "column": 0,
+            "index": 2228
+          },
+          "end": {
+            "line": 62,
+            "column": 58,
+            "index": 2286
           }
         }
       },
@@ -2138,14 +2562,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 25,
+            "line": 65,
             "column": 0,
-            "index": 985
+            "index": 2327
           },
           "end": {
-            "line": 25,
+            "line": 65,
             "column": 67,
-            "index": 1052
+            "index": 2394
           }
         }
       },
@@ -2155,14 +2579,65 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 26,
+            "line": 66,
             "column": 0,
-            "index": 1054
+            "index": 2395
           },
           "end": {
-            "line": 26,
+            "line": 66,
             "column": 65,
-            "index": 1119
+            "index": 2460
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "TMP_CHATTERBOX_WAV",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 67,
+            "column": 0,
+            "index": 2461
+          },
+          "end": {
+            "line": 67,
+            "column": 75,
+            "index": 2536
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "PIPER_MODEL",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 70,
+            "column": 0,
+            "index": 2590
+          },
+          "end": {
+            "line": 70,
+            "column": 39,
+            "index": 2629
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "name": "PIPER_VOICE_PATH",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 71,
+            "column": 0,
+            "index": 2630
+          },
+          "end": {
+            "line": 71,
+            "column": 44,
+            "index": 2674
           }
         }
       },
@@ -2812,14 +3287,68 @@
         "path": "/voice/transcribe",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 19,
             "column": 2,
-            "index": 368
+            "index": 474
           },
           "end": {
-            "line": 26,
+            "line": 29,
             "column": 4,
-            "index": 858
+            "index": 903
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/voice/config",
+        "loc": {
+          "start": {
+            "line": 32,
+            "column": 2,
+            "index": 943
+          },
+          "end": {
+            "line": 34,
+            "column": 4,
+            "index": 1021
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/voice/config",
+        "loc": {
+          "start": {
+            "line": 37,
+            "column": 2,
+            "index": 1061
+          },
+          "end": {
+            "line": 44,
+            "column": 4,
+            "index": 1316
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/voice/voices",
+        "loc": {
+          "start": {
+            "line": 47,
+            "column": 2,
+            "index": 1366
+          },
+          "end": {
+            "line": 49,
+            "column": 4,
+            "index": 1440
           }
         }
       },
@@ -2830,14 +3359,32 @@
         "path": "/voice/speak",
         "loc": {
           "start": {
-            "line": 28,
+            "line": 52,
             "column": 2,
-            "index": 865
+            "index": 1469
           },
           "end": {
-            "line": 33,
+            "line": 62,
             "column": 4,
-            "index": 1076
+            "index": 1811
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/voice/chatterbox/start",
+        "loc": {
+          "start": {
+            "line": 65,
+            "column": 2,
+            "index": 1863
+          },
+          "end": {
+            "line": 72,
+            "column": 4,
+            "index": 2109
           }
         }
       }
@@ -3325,17 +3872,49 @@
       },
       {
         "file": "src/services/voice/tts.js",
-        "source": "child_process",
+        "source": "path",
         "loc": {
           "start": {
             "line": 2,
             "column": 0,
-            "index": 22
+            "index": 21
           },
           "end": {
             "line": 2,
+            "column": 24,
+            "index": 45
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "http",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 46
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 70
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 71
+          },
+          "end": {
+            "line": 4,
             "column": 44,
-            "index": 66
+            "index": 115
           }
         }
       },
@@ -3344,14 +3923,14 @@
         "source": "../../config/paths.js",
         "loc": {
           "start": {
-            "line": 3,
+            "line": 5,
             "column": 0,
-            "index": 68
+            "index": 116
           },
           "end": {
-            "line": 8,
-            "column": 31,
-            "index": 176
+            "line": 5,
+            "column": 47,
+            "index": 163
           }
         }
       },
@@ -3781,9 +4360,9 @@
             "index": 132
           },
           "end": {
-            "line": 4,
-            "column": 55,
-            "index": 187
+            "line": 10,
+            "column": 34,
+            "index": 273
           }
         }
       },
@@ -3792,14 +4371,14 @@
         "source": "../services/persona.js",
         "loc": {
           "start": {
-            "line": 5,
+            "line": 11,
             "column": 0,
-            "index": 189
+            "index": 275
           },
           "end": {
-            "line": 5,
+            "line": 11,
             "column": 52,
-            "index": 241
+            "index": 327
           }
         }
       },
@@ -4114,12 +4693,28 @@
           "start": {
             "line": 2,
             "column": 0,
-            "index": 26
+            "index": 25
           },
           "end": {
             "line": 2,
             "column": 20,
+            "index": 45
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
+        "source": "url",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
             "index": 46
+          },
+          "end": {
+            "line": 3,
+            "column": 36,
+            "index": 82
           }
         }
       },

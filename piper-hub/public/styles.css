@@ -250,3 +250,42 @@
   grid-column: 1;
   display: block;
 }
+
+
+/* ---- Voice menu ---- */
+.voiceWrap{ position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.btn-voice{ padding: 10px 12px; border-radius: 12px; }
+
+.voicePanel{
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  min-width: 280px;
+  border:1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.92);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  z-index: 999;
+}
+
+.voicePanel .voiceRow{ display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom: 10px; }
+.voicePanel .voiceRowTight{ margin-bottom: 0; }
+.voicePanel .voiceLabel{ font-size: 12px; color: var(--muted); font-weight: 600; }
+.voicePanel .voiceHint{ font-size: 12px; color: var(--muted2); margin-top: 8px; }
+
+.voicePanel select{
+  flex: 1 1 auto;
+  max-width: 200px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.35);
+  color: var(--text);
+  outline: none;
+}
+.voicePanel select:focus{
+  border-color: rgba(255, 80, 80, 0.8);
+  box-shadow: 0 0 0 3px rgba(106,166,255,0.12);
+}
+.btn-voiceRefresh{ padding: 10px 12px; }

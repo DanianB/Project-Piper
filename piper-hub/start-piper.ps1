@@ -6,6 +6,12 @@
 
 $ErrorActionPreference = 'Continue'
 
+# ---- Conda availability for Chatterbox ----
+$env:CONDA_EXE = "C:\Users\Danian\Documents\miniconda\Scripts\conda.exe"
+$env:CONDA_DEFAULT_ENV = "base"
+$env:PATH = "C:\Users\Danian\Documents\miniconda\Scripts;C:\Users\Danian\Documents\miniconda;$env:PATH"
+
+
 # ---- Config ----
 $PiperDir     = 'D:\AI\piper-hub'
 $NodeExe      = 'C:\Program Files\nodejs\node.exe'

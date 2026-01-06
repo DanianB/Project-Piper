@@ -6,7 +6,52 @@ import { safeResolve } from "../utils/fsx.js";
 /**
  * Compile planner JSON ops into executable actions.
  * HARD RULE: return at most ONE approval action (bundle if needed).
+ *
+ * Also supports:
+ * - planner-level no-op/done detection (when ops compile to zero changes)
+ * - escalation ladder (queue next inspection step when deterministic change can't be formed)
  */
+
+function normalizePlannedPath(inputPath) {
+  const raw = String(inputPath || "").trim();
+  if (!raw) return raw;
+
+  // Already explicit
+  if (raw.startsWith("known:")) return raw;
+
+  // Normalize slashes for detection only
+  const canon = raw.replaceAll("\\", "/");
+  const lower = canon.toLowerCase();
+
+  const map = [
+    { key: "desktop", token: "known:desktop" },
+    { key: "downloads", token: "known:downloads" },
+    { key: "documents", token: "known:documents" },
+  ];
+
+  // Handle relative like "Desktop/foo" or "/Desktop/foo"
+  for (const { key, token } of map) {
+    if (lower === key || lower === `/${key}`) return token;
+    if (lower.startsWith(`${key}/`))
+      return token + "/" + canon.slice(key.length + 1);
+    if (lower.startsWith(`/${key}/`))
+      return token + "/" + canon.slice(key.length + 2);
+  }
+
+  // Handle absolute Windows paths like "C:\Users\Name\Desktop\Foo"
+  // We extract the segment after the known folder name.
+  for (const { key, token } of map) {
+    const marker = `/${key}/`;
+    const pos = lower.indexOf(marker);
+    // crude "drive letter" check after slash-normalization: "c:/..."
+    if (pos > 2 && /^[a-z]:\//i.test(canon.slice(0, 4))) {
+      const tail = canon.slice(pos + marker.length);
+      return tail ? `${token}/${tail}` : token;
+    }
+  }
+
+  return raw;
+}
 
 function ensureEndsWithNewline(s) {
   s = String(s || "");
@@ -21,6 +66,19 @@ function normalizeWs(s) {
 
 function escapeRegExp(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function detectInspectionKindFromCmd(cmd) {
+  const c = String(cmd || "").toLowerCase();
+  if (c.includes("rg -n")) return "rg";
+  if (
+    c.includes("powershell") &&
+    c.includes("get-content") &&
+    c.includes("actionswrap")
+  )
+    return "snippet";
+  if (c.includes("=== public/index.html")) return "snippet";
+  return "other";
 }
 
 function stripDecl(body, prop) {
@@ -59,14 +117,14 @@ function readFileText(relPath) {
 }
 
 /**
- * Find a selector block in CSS using snapshot.uiMap.cssBlocks if possible,
+ * Find a selector block in CSS using snapshot.uiFacts.cssBlocks if possible,
  * otherwise by a simple regex search on the file.
  *
  * Returns { full, body } or null.
  */
 function findCssBlockFromSnapshot(snapshot, selector) {
   const sel = String(selector || "").trim();
-  const blocks = snapshot?.uiMap?.cssBlocks;
+  const blocks = snapshot?.uiFacts?.cssBlocks;
   if (Array.isArray(blocks)) {
     const b = blocks.find((x) => String(x?.selector || "").trim() === sel);
     if (b && typeof b.full === "string" && typeof b.body === "string") {
@@ -81,7 +139,6 @@ function findCssBlockByRegex(cssText, selector) {
   if (!sel) return null;
 
   // Very simple: match `selector { ... }` non-greedily.
-  // Works for normal blocks (not nested preprocessor).
   const re = new RegExp(
     `(^|\\n)\\s*${escapeRegExp(sel)}\\s*\\{([\\s\\S]*?)\\}\\s*`,
     "m"
@@ -121,11 +178,13 @@ function buildCssApplyPatch({
     for (const [k, v] of Object.entries(set || {}))
       nextBody = setDecl(nextBody, k, v);
 
-    if (normalizeWs(nextBody) === normalizeWs(body)) return null;
+    if (normalizeWs(nextBody) === normalizeWs(body))
+      return { action: null, noop: true };
 
     const open = full.indexOf("{");
     const close = full.lastIndexOf("}");
-    if (open === -1 || close === -1 || close <= open) return null;
+    if (open === -1 || close === -1 || close <= open)
+      return { action: null, needsMoreContext: true };
 
     const prefix = full.slice(0, open + 1);
     const suffix = full.slice(close);
@@ -134,25 +193,34 @@ function buildCssApplyPatch({
 
     // Use exact substring replace (deterministic)
     return {
-      type: "apply_patch",
-      title,
-      reason,
-      payload: {
-        path: "public/styles.css",
-        edits: [{ find: full, replace: nextFull, mode: "once" }],
+      action: {
+        type: "apply_patch",
+        title,
+        reason,
+        payload: {
+          path: "public/styles.css",
+          edits: [{ find: full, replace: nextFull, mode: "once" }],
+        },
+        meta: {
+          preview: {
+            kind: "css_block",
+            selector,
+            anchor: full,
+            replacement: nextFull,
+          },
+        },
       },
     };
   }
 
   // If we can't find a block deterministically, append a safe override block.
-  // This is still grounded (we are only adding a new block with the selector).
   const lines = [];
   for (const [k, v] of Object.entries(set || {})) {
     const prop = String(k).trim();
     const val = String(v ?? "").trim();
     if (prop && val) lines.push(`  ${prop}: ${val};`);
   }
-  if (!lines.length) return null;
+  if (!lines.length) return { action: null, noop: true };
 
   const appended =
     `\n\n/* Piper auto-override (approval-gated) */\n${selector} {\n` +
@@ -160,23 +228,33 @@ function buildCssApplyPatch({
     `\n}\n`;
 
   return {
-    type: "apply_patch",
-    title: `CSS override: ${selector}`,
-    reason:
-      reason ||
-      "Could not locate an exact CSS block; appending a minimal override block instead.",
-    payload: {
-      path: "public/styles.css",
-      edits: [{ find: "", replace: appended, mode: "append" }],
+    action: {
+      type: "apply_patch",
+      title: `CSS override: ${selector}`,
+      reason:
+        reason ||
+        "Could not locate an exact CSS block; appending a minimal override block instead.",
+      payload: {
+        path: "public/styles.css",
+        edits: [{ find: "", replace: appended, mode: "append" }],
+      },
+      meta: {
+        allowAppend: true,
+        preview: {
+          kind: "css_append",
+          selector,
+          anchor: "",
+          replacement: appended,
+        },
+      },
     },
-    meta: { allowAppend: true },
   };
 }
 
 function compileCssPatch({ snapshot, op }) {
   const selectors = Array.isArray(op.selectors) ? op.selectors : [];
   const selector = String(selectors[0] || "").trim();
-  if (!selector) return null;
+  if (!selector) return { action: null, needsMoreContext: true };
 
   const set = op.set && typeof op.set === "object" ? op.set : {};
   const unset = Array.isArray(op.unset) ? op.unset : [];
@@ -186,7 +264,7 @@ function compileCssPatch({ snapshot, op }) {
     (snapshot?.rawFiles && snapshot.rawFiles["public/styles.css"]) ||
     readFileText("public/styles.css");
 
-  const action = buildCssApplyPatch({
+  const built = buildCssApplyPatch({
     cssText,
     selector,
     title: `CSS patch: ${selector}`,
@@ -196,172 +274,395 @@ function compileCssPatch({ snapshot, op }) {
     snapshot,
   });
 
-  if (action) {
+  if (built.action) {
     console.log(
-      `[compiler] compile css_patch selector="${selector}" -> ${action.type}`
+      `[compiler] compile css_patch selector="${selector}" -> ${built.action.type}`
     );
   } else {
     console.log(
-      `[compiler] compile css_patch selector="${selector}" -> (no-op)`
+      `[compiler] compile css_patch selector="${selector}" -> (no-op/needs-context)`
     );
   }
 
-  return action;
+  return built;
 }
 
-function compileApplyPatchOp({ op }) {
+function applyPatchInMemoryForCompile(before, edits) {
+  let out = String(before ?? "");
+  let changedAny = false;
+  let anyUnmatched = false;
+
+  for (const e of edits || []) {
+    const find = String(e?.find ?? "");
+    const replace = String(e?.replace ?? "");
+    const mode =
+      e?.mode === "all" ? "all" : e?.mode === "append" ? "append" : "once";
+
+    if (mode === "append") {
+      out = out + replace;
+      changedAny = true;
+      continue;
+    }
+
+    if (!find) {
+      anyUnmatched = true;
+      continue;
+    }
+
+    if (mode === "all") {
+      const matched = out.includes(find);
+      if (!matched) anyUnmatched = true;
+      const next = matched ? out.split(find).join(replace) : out;
+      if (next !== out) changedAny = true;
+      out = next;
+      continue;
+    }
+
+    // once
+    const idx = out.indexOf(find);
+    if (idx === -1) {
+      anyUnmatched = true;
+      continue;
+    }
+    out = out.slice(0, idx) + replace + out.slice(idx + find.length);
+    changedAny = true;
+  }
+
+  return { out, changedAny, anyUnmatched };
+}
+
+function compileApplyPatchOp({ snapshot, op }) {
   const p = String(op?.path || "").trim();
   const edits = Array.isArray(op?.edits) ? op.edits : [];
   const why = String(op?.why || "Apply patch").trim();
-  if (!p || !edits.length) return null;
+
+  if (!p || !edits.length) return { action: null, needsMoreContext: true };
+
+  const before =
+    (snapshot?.rawFiles && typeof snapshot.rawFiles[p] === "string"
+      ? snapshot.rawFiles[p]
+      : readFileText(p)) || "";
+
+  const sim = applyPatchInMemoryForCompile(before, edits);
+
+  // If patch cannot match, ask for more context (escalation ladder handles it)
+  if (!sim.changedAny) {
+    // if it was just already equal, treat as noop
+    if (!sim.anyUnmatched) return { action: null, noop: true };
+    return { action: null, needsMoreContext: true };
+  }
+
+  console.log(
+    `[compiler] compile apply_patch path="${p}" edits=${edits.length}`
+  );
 
   return {
-    type: "apply_patch",
-    title: `Patch: ${p}`,
-    reason: why,
-    payload: { path: p, edits },
+    action: {
+      type: "apply_patch",
+      title: `Patch: ${p}`,
+      reason: why,
+      payload: { path: p, edits },
+      meta: {
+        preview: {
+          kind: "apply_patch",
+          path: p,
+        },
+      },
+    },
   };
 }
 
-function compileWriteFileOp({ op }) {
-  let p = String(op?.path || "").trim();
+function compileWriteFileOp({ snapshot, op }) {
+  const p = normalizePlannedPath(String(op?.path || "").trim());
   const content = String(op?.content ?? "");
   const why = String(op?.why || "Write file").trim();
-  if (!p) return null;
+  if (!p) return { action: null, needsMoreContext: true };
+
+  const oldText =
+    (snapshot?.rawFiles && typeof snapshot.rawFiles[p] === "string"
+      ? snapshot.rawFiles[p]
+      : (() => {
+          try {
+            return readFileText(p);
+          } catch {
+            return "";
+          }
+        })()) || "";
+
+  if (oldText === content) return { action: null, noop: true };
 
   console.log(
     `[compiler] compile write_file path="${p}" bytes=${content.length}`
   );
 
   return {
-    type: "write_file",
-    title: `Write file: ${p}`,
-    reason: why,
-    payload: { path: p, content },
+    action: {
+      type: "write_file",
+      title: `Write file: ${p}`,
+      reason: why,
+      payload: { path: p, content },
+      meta: {
+        preview: {
+          kind: "write_file",
+          path: p,
+        },
+      },
+    },
   };
 }
 
 function compileMkdirOp({ op }) {
-  const p = String(op?.path || "").trim();
+  const p = normalizePlannedPath(String(op?.path || "").trim());
   const why = String(op?.why || "Create folder").trim();
-  if (!p) return null;
+  if (!p) return { action: null, needsMoreContext: true };
 
   console.log(`[compiler] compile mkdir path="${p}"`);
 
   return {
-    type: "mkdir",
-    title: `Create folder: ${p}`,
-    reason: why,
-    payload: { path: p },
+    action: {
+      type: "mkdir",
+      title: `Create folder: ${p}`,
+      reason: why,
+      payload: { path: p },
+    },
   };
 }
 
-function compileRunCmdOp({ op }) {
+function compileRunCmdOp({ snapshot, op }) {
   const cmd = String(op?.cmd || "").trim();
-  if (!cmd) return null;
+  if (!cmd) return { action: null, needsMoreContext: true };
 
   const timeoutMs =
     typeof op?.timeoutMs === "number" ? Math.max(1000, op.timeoutMs) : 12000;
   const why = String(op?.why || "Run command").trim();
 
+  const originalMessage = String(snapshot?.message || "");
+
   return {
-    type: "run_cmd",
-    title: `Run: ${cmd}`,
-    reason: why,
-    payload: { cmd, timeoutMs },
+    action: {
+      type: "run_cmd",
+      title: `Run: ${cmd}`,
+      reason: why,
+      payload: { cmd, timeoutMs },
+      meta: {
+        followup: true,
+        originalMessage,
+        inspectionKind: detectInspectionKindFromCmd(cmd),
+      },
+    },
   };
 }
 
-function compileReadSnippetOp({ op }) {
-  const p = String(op?.path || "").trim();
-  if (!p) return null;
+function compileReadSnippetOp({ snapshot, op }) {
+  const p = normalizePlannedPath(String(op?.path || "").trim());
+  if (!p) return { action: null, needsMoreContext: true };
+
+  const originalMessage = String(snapshot?.message || "");
 
   return {
-    type: "read_snippet",
-    title: `Read snippet: ${p}`,
-    reason: String(op?.why || "Inspect file region").trim(),
+    action: {
+      type: "read_snippet",
+      title: `Read snippet: ${p}`,
+      reason: String(op?.why || "Inspect file region").trim(),
+      payload: {
+        path: p,
+        ...(op.aroundLine != null ? { aroundLine: Number(op.aroundLine) } : {}),
+        ...(op.radius != null ? { radius: Number(op.radius) } : {}),
+        ...(op.startLine != null ? { startLine: Number(op.startLine) } : {}),
+        ...(op.endLine != null ? { endLine: Number(op.endLine) } : {}),
+        maxLines: Number(op.maxLines || 240),
+      },
+      meta: {
+        followup: true,
+        originalMessage,
+        inspectionKind: "snippet",
+      },
+    },
+  };
+}
+
+function bundleActions(actions, reason = "Bundled actions") {
+  return {
+    type: "bundle",
+    title: "Bundle",
+    reason,
     payload: {
-      path: p,
-      ...(op.aroundLine != null ? { aroundLine: Number(op.aroundLine) } : {}),
-      ...(op.radius != null ? { radius: Number(op.radius) } : {}),
-      ...(op.startLine != null ? { startLine: Number(op.startLine) } : {}),
-      ...(op.endLine != null ? { endLine: Number(op.endLine) } : {}),
-      maxLines: Number(op.maxLines || 240),
+      actions,
     },
   };
 }
 
-function forceSingleApproval(actions) {
-  const list = Array.isArray(actions) ? actions.filter(Boolean) : [];
-  if (list.length <= 1) return list;
+function queueEscalationInspection({ snapshot, reason }) {
+  // Escalation ladder:
+  // step 0: rg
+  // step 1: snippet around best rg hit
+  // step 2: broader snippet or fallback
+  // then stop
+  const stage = snapshot?.inspectionStage || {};
+  const step = Number(stage?.step || 0);
 
-  return [
-    {
-      type: "bundle",
-      title: "Queued changes (bundle)",
-      reason:
-        "Multiple safe edits are required; bundling into a single approval item.",
-      payload: { steps: list },
-    },
-  ];
-}
+  const msg = String(snapshot?.message || "");
+  const baseWhy =
+    reason ||
+    "I can’t form a deterministic patch yet; I need more grounding context.";
 
-export function compilePlanToActions({ plan, snapshot, readOnly }) {
-  if (readOnly) {
+  // If we already have a snippet, do not loop; ask for clarification
+  if (stage.hasSnippet) {
     return {
+      done: true,
       reply:
-        "Read-only is enabled, sir. I can outline what to change, but I won’t queue actions.",
+        "I inspected the relevant files but still can’t form a deterministic patch safely. Can you tell me exactly which file/section to change (or paste the relevant block), sir?",
       actions: [],
+      stage: { escalated: true, step, stopped: true },
     };
   }
 
-  const ops = Array.isArray(plan?.ops) ? plan.ops : [];
-  let actions = [];
+  // If we have rg hits, request a snippet around the first good hit
+  const rgMatches =
+    snapshot?.inspectionFacts?.rgMatches?.[0]?.matches ||
+    snapshot?.inspectionFacts?.rgMatches?.flatMap((x) => x.matches || []) ||
+    [];
 
-  for (const op of ops) {
-    if (!op || typeof op !== "object") continue;
+  if (stage.hasRg && rgMatches.length) {
+    const hit = rgMatches[0];
+    const hitFile = String(hit.file || "").trim();
+    const hitLine = Number(hit.line || 1);
 
-    if (op.op === "css_patch") {
-      const a = compileCssPatch({ snapshot, op });
-      if (a) actions.push(a);
-      continue;
-    }
+    if (hitFile) {
+      const read = compileReadSnippetOp({
+        snapshot,
+        op: {
+          op: "read_snippet",
+          path: hitFile,
+          aroundLine: hitLine,
+          radius: 80,
+          why: baseWhy,
+        },
+      });
 
-    if (op.op === "apply_patch") {
-      const a = compileApplyPatchOp({ op });
-      if (a) actions.push(a);
-      continue;
-    }
-
-    if (op.op === "write_file") {
-      const a = compileWriteFileOp({ op });
-      if (a) actions.push(a);
-      continue;
-    }
-
-    if (op.op === "mkdir") {
-      const a = compileMkdirOp({ op });
-      if (a) actions.push(a);
-      continue;
-    }
-
-    if (op.op === "run_cmd") {
-      const a = compileRunCmdOp({ op });
-      if (a) actions.push(a);
-      continue;
-    }
-
-    if (op.op === "read_snippet") {
-      const a = compileReadSnippetOp({ op });
-      if (a) actions.push(a);
-      continue;
+      if (read.action) {
+        return {
+          done: false,
+          reply:
+            "I need a little more context before I can apply a safe, deterministic change. I’ll grab a focused snippet next, sir.",
+          actions: [read.action],
+          stage: { escalated: true, step: step + 1 },
+        };
+      }
     }
   }
 
-  actions = forceSingleApproval(actions);
+  // Otherwise start with rg over likely places
+  const rg = compileRunCmdOp({
+    snapshot,
+    op: {
+      op: "run_cmd",
+      cmd: 'rg -n "Desktop|Downloads|Documents|mkdir\\(|write_file|known:desktop|known:downloads|known:documents" src public',
+      timeoutMs: 12000,
+      why: baseWhy,
+    },
+  });
+
+  if (rg.action) {
+    return {
+      done: false,
+      reply:
+        "I don’t have enough grounded context yet. I’ll inspect the codebase first, sir.",
+      actions: [rg.action],
+      stage: { escalated: true, step: step + 1 },
+    };
+  }
 
   return {
-    reply: String(plan?.reply || "Queued for approval, sir."),
-    actions,
+    done: true,
+    reply:
+      "I can’t proceed safely without more context. Please paste the relevant file section, sir.",
+    actions: [],
+    stage: { escalated: true, step, stopped: true },
+  };
+}
+
+export function compilePlanToActions({ snapshot, plan }) {
+  const ops = Array.isArray(plan?.ops) ? plan.ops : [];
+  const needsApproval = plan?.requiresApproval === true;
+
+  const compiled = [];
+  let noopCount = 0;
+  let needsMoreContext = false;
+
+  for (const op of ops) {
+    let built = { action: null };
+
+    if (op.op === "css_patch") built = compileCssPatch({ snapshot, op });
+    else if (op.op === "apply_patch")
+      built = compileApplyPatchOp({ snapshot, op });
+    else if (op.op === "write_file")
+      built = compileWriteFileOp({ snapshot, op });
+    else if (op.op === "mkdir") built = compileMkdirOp({ op });
+    else if (op.op === "run_cmd") built = compileRunCmdOp({ snapshot, op });
+    else if (op.op === "read_snippet")
+      built = compileReadSnippetOp({ snapshot, op });
+    else if (op.op === "restart") {
+      built = {
+        action: {
+          type: "restart",
+          title: "Restart Piper",
+          reason: String(op?.why || "Restart requested").trim(),
+          payload: {},
+        },
+      };
+    } else if (op.op === "off") {
+      built = {
+        action: {
+          type: "off",
+          title: "Turn off Piper",
+          reason: String(op?.why || "Shutdown requested").trim(),
+          payload: {},
+        },
+      };
+    }
+
+    if (built?.noop) noopCount += 1;
+    if (built?.needsMoreContext) needsMoreContext = true;
+    if (built?.action) compiled.push(built.action);
+  }
+
+  // If the planner asked for approval but produced nothing actionable:
+  // escalate once instead of “feeling like an error”
+  if (compiled.length === 0 && needsApproval) {
+    if (needsMoreContext) {
+      return queueEscalationInspection({
+        snapshot,
+        reason:
+          "Planner couldn’t form a deterministic action from current context.",
+      });
+    }
+
+    // true no-op / done
+    return {
+      done: true,
+      reply: "Already done, sir.",
+      actions: [],
+      stage: { noop: true, noopCount },
+    };
+  }
+
+  // HARD RULE: at most ONE approval action (bundle if needed)
+  if (compiled.length > 1) {
+    return {
+      done: false,
+      reply:
+        plan?.reply ||
+        "I’ve prepared a small bundle of actions for approval, sir.",
+      actions: [bundleActions(compiled, plan?.reply || "Bundled actions")],
+      stage: plan?.stage || {},
+    };
+  }
+
+  return {
+    done: false,
+    reply: plan?.reply || "Ready for approval, sir.",
+    actions: compiled,
+    stage: plan?.stage || {},
   };
 }

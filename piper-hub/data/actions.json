@@ -1,14 +1,230 @@
 [
   {
+    "id": "2615256a5f4c419b8deec757",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested a restart.",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767612794711,
+    "updatedAt": 1767612798251,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
+    "id": "89bc0406371d419b8dd85c8b",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested a restart.",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767611325579,
+    "updatedAt": 1767611328250,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
+    "id": "d5044238b968919b8dcfd7f2",
+    "type": "bundle",
+    "title": "Bundle",
+    "reason": "Request processed",
+    "payload": {
+      "actions": [
+        {
+          "type": "mkdir",
+          "title": "Create folder: known:desktop/Giraffes",
+          "reason": "Creating a folder on your desktop called 'Giraffes'",
+          "payload": {
+            "path": "known:desktop/Giraffes"
+          }
+        },
+        {
+          "type": "write_file",
+          "title": "Write file: known:desktop/Giraffes/giraffe.txt",
+          "reason": "Creating a text document inside the 'Giraffes' folder that describes what a giraffe is",
+          "payload": {
+            "path": "known:desktop/Giraffes/giraffe.txt",
+            "content": "A giraffe is a tall, even-toed ungulate with a distinctive coat pattern and long neck. They are native to Africa and are known for their impressive height, which can reach up to 18 feet (5.5 meters) in some species."
+          },
+          "meta": {
+            "preview": {
+              "kind": "write_file",
+              "path": "known:desktop/Giraffes/giraffe.txt"
+            }
+          }
+        }
+      ]
+    },
+    "status": "done",
+    "createdAt": 1767610767346,
+    "updatedAt": 1767610774137,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "bundle",
+        "results": [
+          {
+            "step": "mkdir",
+            "ok": true,
+            "result": {
+              "type": "mkdir",
+              "path": "known:desktop/Giraffes",
+              "abs": "C:\\Users\\Danian\\Desktop\\Giraffes"
+            }
+          },
+          {
+            "step": "write_file",
+            "ok": true,
+            "result": {
+              "type": "write_file",
+              "path": "known:desktop/Giraffes/giraffe.txt",
+              "abs": "C:\\Users\\Danian\\Desktop\\Giraffes\\giraffe.txt",
+              "backup": "D:\\AI\\piper-hub\\data\\backups\\1767610774135_95f06d37fecd_19b8dcff278_known_desktop_Giraffes_giraffe.txt.bak",
+              "bytes": 215
+            }
+          }
+        ],
+        "restartRequested": false,
+        "offRequested": false
+      }
+    }
+  },
+  {
+    "id": "fff0ed197612819b8dc91840",
+    "type": "bundle",
+    "title": "Queued changes (bundle)",
+    "reason": "Multiple safe edits are required; bundling into a single approval item.",
+    "payload": {
+      "steps": [
+        {
+          "type": "mkdir",
+          "title": "Create folder: /Desktop/Giraffes",
+          "reason": "Creating a folder called 'Giraffes' on your desktop.",
+          "payload": {
+            "path": "/Desktop/Giraffes"
+          }
+        },
+        {
+          "type": "write_file",
+          "title": "Write file: /Desktop/Giraffes/giraffe_info.txt",
+          "reason": "Writing a text document inside the 'Giraffes' folder that describes what a Giraffe is.",
+          "payload": {
+            "path": "/Desktop/Giraffes/giraffe_info.txt",
+            "content": "A giraffe is a tall, even-toed ungulate mammal with a distinctive coat pattern and long neck. They are known for their ability to run quickly and are found in various parts of Africa."
+          }
+        }
+      ]
+    },
+    "status": "failed",
+    "createdAt": 1767610325056,
+    "updatedAt": 1767610344068,
+    "result": {
+      "ok": false,
+      "result": {
+        "type": "bundle",
+        "results": [
+          {
+            "step": "mkdir",
+            "ok": false,
+            "result": {
+              "type": "mkdir",
+              "error": "Error: Path escapes root: /Desktop/Giraffes"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "718e24bebc4eb19b8db1f41a",
+    "type": "write_file",
+    "title": "Write file: public/Giraffes.md",
+    "reason": "Creating a document on what a giraffe is",
+    "payload": {
+      "path": "public/Giraffes.md",
+      "content": "# Giraffes\nA giraffe is a tall, even-toed mammal with a distinctive coat pattern and long neck.\n\nThey are known for their ability to reach high into trees to feed on leaves and fruits."
+    },
+    "status": "done",
+    "createdAt": 1767608808474,
+    "updatedAt": 1767608823601,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "write_file",
+        "path": "public/Giraffes.md",
+        "abs": "D:\\AI\\piper-hub\\public\\Giraffes.md",
+        "backup": "D:\\AI\\piper-hub\\data\\backups\\1767608823600_f7fa54793072_19b8db22f30_public_Giraffes.md.bak",
+        "bytes": 184
+      }
+    }
+  },
+  {
+    "id": "1d82a2506136719b8db08cbb",
+    "type": "run_cmd",
+    "title": "Inspect codebase",
+    "reason": "Need grounding before proposing a deterministic patch.",
+    "payload": {
+      "cmd": "rg -n \"Could you write me a txt document on what a giraffe is and put it into a folder called Giraffe on my desktop?\" public src || rg -n \"<title>|Pending Actions|Recent Actions|actionsWrap|historyList\" public/index.html public/styles.css src",
+      "timeoutMs": 12000
+    },
+    "status": "done",
+    "createdAt": 1767608716475,
+    "updatedAt": 1767608723246,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "run_cmd",
+        "cmd": "rg -n \"Could you write me a txt document on what a giraffe is and put it into a folder called Giraffe on my desktop?\" public src || rg -n \"<title>|Pending Actions|Recent Actions|actionsWrap|historyList\" public/index.html public/styles.css src",
+        "ok": true,
+        "stdout": "public/styles.css:143:  #actionsList, #historyList{display:flex; flex-direction:column; gap:10px;}\r\npublic/styles.css:208:  /* Collapsible Recent Actions */\r\npublic/styles.css:231:  #historyList{\r\npublic/styles.css:246:#actionsWrap {\r\npublic/index.html:6:  <title>Piper</title>\npublic/index.html:40:    <div id=\"actionsWrap\" class=\"section panel\" style=\"display:none\">\npublic/index.html:42:        <h3>Pending Actions</h3>\npublic/index.html:51:          <span style=\"font-weight:700\">Recent Actions</span>\npublic/index.html:54:        <div id=\"historyList\"></div>\npublic/index.html:67:const actionsWrap = document.getElementById(\"actionsWrap\");\npublic/index.html:69:const historyList = document.getElementById(\"historyList\");\npublic/index.html:146:  actionsWrap.style.display = pending.length ? \"block\" : \"none\";\npublic/index.html:262:  historyList.innerHTML = \"\";\npublic/index.html:334:    historyList.appendChild(d);\nsrc\\server.old.js:562:        `Write-Host '=== index.html Recent Actions matches ==='; ` +\r\nsrc\\server.old.js:568:          )}' -Pattern 'Recent Actions','history','actionsList','historyList' | ForEach-Object { $_.LineNumber.ToString()+': '+$_.Line }; ` +\r\nsrc\\server.old.js:579:          )}' -Pattern '#history','historyList','.panel','.wrap','.topbar','overflow','grid','flex' | ForEach-Object { $_.LineNumber.ToString()+': '+$_.Line }\"`,\r\nsrc\\server.old.js:1365:            \"I understand. I’m not generating an actionable patch yet — I likely can’t match the current file text. Try again, or ask: “Queue a patch to move Recent Actions to the right.”\"\r\nsrc\\routes\\actions.js:68:<title>No preview</title>\nsrc\\routes\\chat.js:66:    reason: \"Deterministic edit: set the <title> tag in public/index.html.\",\nsrc\\routes\\chat.js:95:    `rg -n \"<title>|Pending Actions|Recent Actions|actionsWrap|historyList\" public/index.html public/styles.css src`;\nsrc\\routes\\chat.js:270:              \"I have enough context, but I can’t form a deterministic patch from it yet. Tell me exactly which panel should move where (e.g. “set #actionsWrap grid-column to 1”).\"\nsrc\\actions\\executor.js:118:  const re = /<title>[\\s\\S]*?<\\/title>/i;\r\nsrc\\actions\\executor.js:123:      return html.replace(/<head[^>]*>/i, (m) => `${m}\\n  <title>${t}</title>`);\r\nsrc\\actions\\executor.js:125:    return `<title>${t}</title>\\n` + html;\r\nsrc\\actions\\executor.js:127:  return html.replace(re, `<title>${t}</title>`);\r\nsrc\\planner\\planner.js:130:    const groundedHasActionsWrap = hasSelector(snapshot, \"#actionsWrap\");\nsrc\\planner\\planner.js:134:          \"Understood. I found #actionsWrap and can dock Pending Actions below the chat panel by moving it to the chat column.\",\nsrc\\planner\\planner.js:140:            selectors: [\"#actionsWrap\"],\nsrc\\planner\\planner.js:143:            why: \"Dock Pending Actions below the chat box by placing #actionsWrap in the chat column (column 1) instead of the right-side column.\",\nsrc\\planner\\planner.js:151:        \"I can do that, but I don’t yet have a grounded selector for the Pending Actions container. I’ll inspect the relevant HTML/CSS next.\",\nsrc\\planner\\planner.js:156:          cmd: 'rg -n \"<title>|Pending Actions|Recent Actions|actionsWrap|historyList|actionsList|id=\\\\\"actionsWrap\\\\\"\" public/index.html public/styles.css src',\nsrc\\planner\\planner.js:158:          why: \"Locate grounded selectors and layout rules for the Pending Actions panel.\",\nsrc\\actions\\preview.js:8:  const re = /<title>[\\s\\S]*?<\\/title>/i;\nsrc\\actions\\preview.js:11:      return html.replace(/<head[^>]*>/i, (m) => `${m}\\n  <title>${t}</title>`);\nsrc\\actions\\preview.js:13:    return `<title>${t}</title>\\n` + html;\nsrc\\actions\\preview.js:15:  return html.replace(re, `<title>${t}</title>`);\nsrc\\actions\\preview.js:292:  <title>${escapeHtml(title)}</title>\nsrc\\planner\\snapshot.js:29:  // our snippet command is powershell + Get-Content + actionsWrap markers\n",
+        "stderr": ""
+      }
+    }
+  },
+  {
+    "id": "3352b6d8b523819b8daf4698",
+    "type": "set_html_title",
+    "title": "Set page title to \"Piper\"",
+    "reason": "Deterministic edit: set the <title> tag in public/index.html.",
+    "payload": {
+      "path": "public/index.html",
+      "title": "Piper"
+    },
+    "status": "done",
+    "createdAt": 1767608632984,
+    "updatedAt": 1767608641345,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "set_html_title",
+        "path": "public/index.html",
+        "abs": "D:\\AI\\piper-hub\\public\\index.html",
+        "backup": "D:\\AI\\piper-hub\\data\\backups\\1767608641343_d0d885d9b46b_19b8daf673f_public_index.html.bak",
+        "title": "Piper"
+      }
+    }
+  },
+  {
     "id": "06e095618d0e319b8d93dc6a",
     "type": "restart_piper",
     "title": "Restart Piper",
     "reason": "User requested a restart.",
     "payload": {},
-    "status": "pending",
+    "status": "rejected",
     "createdAt": 1767606836330,
-    "updatedAt": 1767606836330,
-    "result": null
+    "updatedAt": 1767607746983,
+    "result": null,
+    "note": ""
   },
   {
     "id": "df21a8826d29e19b8d7abc73",

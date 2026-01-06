@@ -23,6 +23,31 @@
           <span>Read-only</span>
         </label>
 
+        <!-- Voice menu -->
+        <div class="voiceWrap">
+          <button id="voiceBtn" class="btn-secondary btn-voice" type="button">🔊 Voice</button>
+          <div id="voicePanel" class="voicePanel" style="display:none">
+            <div class="voiceRow">
+              <div class="voiceLabel">Voice</div>
+              <select id="voiceSelect" class="voiceSelect"></select>
+            </div>
+
+            <div class="voiceRow voiceRowTight">
+              <label class="pill" style="margin:0">
+                <input id="jarvisMode" type="checkbox" />
+                <span>JARVIS mode</span>
+              </label>
+              <button id="voiceRefresh" class="btn-secondary btn-voiceRefresh" type="button" title="Refresh voice selection">↻</button>
+            </div>
+
+            <div class="voiceHint">
+              <div>• Amy/Jarvis use <code>piper.exe</code></div>
+              <div>• Piper uses <code>chatterbox</code></div>
+              <div style="opacity:.8;margin-top:6px;">If audio fails, open DevTools Console.</div>
+            </div>
+          </div>
+        </div>
+
         <button id="talk" class="btn-primary">🎤 Talk</button>
         <button id="off" class="btn-danger">🛑 Off</button>
       </div>
@@ -68,11 +93,32 @@ const actionsWrap = document.getElementById("actionsWrap");
 const actionsList = document.getElementById("actionsList");
 const historyList = document.getElementById("historyList");
 
+// Voice UI
+const voiceBtn = document.getElementById("voiceBtn");
+const voicePanel = document.getElementById("voicePanel");
+const voiceSelect = document.getElementById("voiceSelect");
+const jarvisMode = document.getElementById("jarvisMode");
+const voiceRefresh = document.getElementById("voiceRefresh");
+
 const sessionId = localStorage.getItem("piper_sessionId") || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 localStorage.setItem("piper_sessionId", sessionId);
 
 // Persist <details> open state per action id
 const openDetails = new Set(JSON.parse(localStorage.getItem("piper_openDetails") || "[]"));
+
+// Hard-coded voice choices (provider + voice)
+const VOICE_CHOICES = [
+  { id: "amy",    label: "Amy",    provider: "piper",      voice: "amy" },
+  { id: "jarvis", label: "Jarvis", provider: "piper",      voice: "jarvis" },
+  { id: "piper",  label: "Piper",  provider: "chatterbox", voice: "default" },
+];
+
+function choiceById(id){
+  return VOICE_CHOICES.find(v => v.id === id) || VOICE_CHOICES[0];
+}
+
+// Voice state
+let lastNonJarvisVoice = localStorage.getItem("piper_lastNonJarvisVoice") || "";
 
 function hookDetailsPersistence(cardEl, actionId){
   const details = cardEl.querySelectorAll("details[data-kind]");
@@ -88,9 +134,6 @@ function hookDetailsPersistence(cardEl, actionId){
   });
 }
 
-function signatureForActions(list){
-  return list.map(a => `${a.id}:${a.status}:${a.updatedAt||a.createdAt}`).join("|");
-}
 function badgeClass(status){
   return ["pending","running","done","failed","rejected","rolled_back","approved"].includes(status) ? status : "pending";
 }
@@ -122,8 +165,6 @@ function add(who, msg, meta){
   row.appendChild(bubble);
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
-
-  // ✅ return DOM node so we can remove/replace “Thinking…”
   return row;
 }
 
@@ -142,6 +183,139 @@ async function api(path, body){
   return j;
 }
 
+// Speak helper: DO NOT swallow errors
+async function speak(text){
+  try{
+    const r = await fetch('/voice/speak',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ text: String(text || "") })
+    });
+    if(!r.ok){
+      const body = await r.text().catch(()=>"(no body)");
+      console.warn("/voice/speak failed:", r.status, body);
+    }
+  }catch(e){
+    console.warn("/voice/speak error:", e);
+  }
+}
+
+// ---- Voice UI logic ----
+async function fetchVoiceConfig(){
+  const r = await fetch("/voice/config", { cache: "no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error("Failed to load voice config.");
+
+  // Accept either:
+  // 1) { provider, voice, ... }   (your current backend GET returns this)
+  // 2) { ok:true, config:{...} }  (older wrapper format)
+  if(j && j.ok && j.config) return j.config;
+  if(j && typeof j === "object" && (("provider" in j) || ("voice" in j))) return j;
+
+  throw new Error("Failed to load voice config.");
+}
+
+function fillVoiceSelect(selectedId){
+  voiceSelect.innerHTML = "";
+  for(const v of VOICE_CHOICES){
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = v.label;
+    voiceSelect.appendChild(opt);
+  }
+  voiceSelect.value = VOICE_CHOICES.some(v => v.id === selectedId) ? selectedId : VOICE_CHOICES[0].id;
+}
+
+async function applyVoice(choiceId){
+  const c = choiceById(choiceId);
+
+  const out = await api("/voice/config", { provider: c.provider, voice: c.voice });
+  const provider = out?.config?.provider || c.provider;
+  const voice = out?.config?.voice || c.voice;
+
+  voiceBtn.textContent = `🔊 ${c.label}`;
+  jarvisMode.checked = (provider === "piper" && voice === "jarvis");
+
+  if(!(provider === "piper" && voice === "jarvis")){
+    lastNonJarvisVoice = choiceId;
+    localStorage.setItem("piper_lastNonJarvisVoice", lastNonJarvisVoice);
+  }
+}
+
+async function initVoiceUI(){
+  try{
+    const cfg = await fetchVoiceConfig();
+    let selected = "amy";
+    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
+    if(cfg.provider === "chatterbox") selected = "piper";
+
+    fillVoiceSelect(selected);
+    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
+    jarvisMode.checked = (selected === "jarvis");
+  }catch(e){
+    console.warn("voice ui init failed", e);
+    fillVoiceSelect("amy");
+    voiceBtn.textContent = "🔊 Amy";
+    jarvisMode.checked = false;
+  }
+}
+
+// Open/close menu
+voiceBtn.onclick = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const open = voicePanel.style.display !== 'none';
+  voicePanel.style.display = open ? 'none' : 'block';
+};
+
+document.addEventListener("click", (e) => {
+  if(!voicePanel) return;
+  if(voicePanel.style.display === "none") return;
+  const vw = voiceBtn.closest(".voiceWrap");
+  if(vw && !vw.contains(e.target)){
+    voicePanel.style.display = 'none';
+  }
+});
+
+voiceRefresh.onclick = async () => {
+  try{
+    const cfg = await fetchVoiceConfig();
+    let selected = "amy";
+    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
+    if(cfg.provider === "chatterbox") selected = "piper";
+
+    fillVoiceSelect(selected);
+    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
+    jarvisMode.checked = (selected === "jarvis");
+  }catch(e){
+    alert("Failed to refresh voices: " + e);
+  }
+};
+
+voiceSelect.onchange = async () => {
+  try{ await applyVoice(voiceSelect.value); }
+  catch(e){ alert("Failed to set voice: " + e); }
+};
+
+jarvisMode.onchange = async () => {
+  if(jarvisMode.checked){
+    voiceSelect.value = "jarvis";
+    await applyVoice("jarvis");
+  } else {
+    const restore = lastNonJarvisVoice || "amy";
+    voiceSelect.value = restore;
+    await applyVoice(restore);
+  }
+};
+
+// ---- Actions (match your backend) ----
+async function fetchAllActions(){
+  const r = await fetch("/actions", { cache: "no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!(j && j.ok && Array.isArray(j.actions))) throw new Error("Failed to load actions.");
+  return j.actions;
+}
+
 function renderPending(pending){
   actionsWrap.style.display = pending.length ? "block" : "none";
   actionsList.innerHTML = "";
@@ -152,10 +326,7 @@ function renderPending(pending){
 
     const payloadPretty = JSON.stringify(a.payload || {}, null, 2);
     const reason = a.reason ? a.reason : "";
-
-    // ✅ include set_html_title so title edits can show preview
     const canPreview = ["apply_patch","write_file","mkdir","bundle","set_html_title"].includes(a.type);
-
     const previewHref = "/action/preview/" + a.id;
 
     d.innerHTML = `
@@ -176,81 +347,45 @@ function renderPending(pending){
         <pre>${esc(payloadPretty)}</pre>
       </details>
 
-      <div class="btns">
-        ${canPreview ? `<a class="previewLink" href="${previewHref}" target="_blank" rel="noopener">🔎 Preview</a>` : `<span class="previewDisabled">No preview</span>`}
-        <button class="btn-primary" data-approve="${a.id}">✅ Approve</button>
-        <button class="btn-danger" data-reject="${a.id}">❌ Reject</button>
+      <div class="btnRow">
+        <button class="btn-primary" data-act="approve">Approve</button>
+        <button class="btn-secondary" data-act="reject">Reject</button>
+        ${canPreview ? `<a class="btn-secondary" href="${previewHref}" target="_blank" rel="noopener">Preview</a>` : ``}
       </div>
     `;
 
     hookDetailsPersistence(d, a.id);
 
-    d.querySelector("[data-approve]").onclick = async () => {
-      if(!confirm("Approve and execute this action?")) return;
+    const approveBtn = d.querySelector('[data-act="approve"]');
+    const rejectBtn = d.querySelector('[data-act="reject"]');
 
-      const btn = d.querySelector("[data-approve]");
-      btn.disabled = true;
-
-      add("piper","🛠 Executing approved action…");
-
-      async function waitForPing(timeoutMs = 15000){
-        const t0 = Date.now();
-        while(Date.now() - t0 < timeoutMs){
-          try{
-            const r = await fetch("/ping", { cache: "no-store" });
-            if(r.ok) return true;
-          }catch{}
-          await new Promise(r => setTimeout(r, 500));
-        }
-        return false;
-      }
-
+    approveBtn.onclick = async () => {
       try{
-        const out = await api("/action/approve",{ id: a.id });
-
-        add("piper", out.action?.status==="done" ? "✅ Done." : "⚠️ Failed. Check details.");
-
-        // restart/off may drop connection
-        if ((out.action?.type || a.type) === "restart_piper") {
-          add("piper","🔁 Restarting…");
-          const ok = await waitForPing();
-          add("piper", ok ? "✅ Back online." : "⚠️ Still offline. Check the supervisor window.");
-        }
-        if ((out.action?.type || a.type) === "shutdown_piper") {
-          add("piper","🛑 Powered down.");
-        }
-
-      }catch(e){
-        if (a.type === "restart_piper") {
-          add("piper","🔁 Restarting… (connection dropped — expected)");
-          const ok = await waitForPing();
-          add("piper", ok ? "✅ Back online." : "⚠️ Still offline. Check the supervisor window.");
-        } else if (a.type === "shutdown_piper") {
-          add("piper","🛑 Powered down.");
-        } else {
-          add("piper","⚠️ Execute failed: " + e);
-        }
-      }finally{
-        btn.disabled = false;
+        approveBtn.disabled = true;
+        const note = prompt("Optional note for approval (leave blank for none):") || "";
+        await api("/action/approve",{id:a.id,note});
+        add("piper","Approved.");
+        await speak("Approved.");
         refreshActions(true);
+      }catch(e){
+        alert("Approve failed: "+e);
+      }finally{
+        approveBtn.disabled = false;
       }
     };
 
-    d.querySelector("[data-reject]").onclick = async () => {
-      const note = prompt("Reject note (optional):") || "";
+    rejectBtn.onclick = async () => {
       try{
+        rejectBtn.disabled = true;
+        const note = prompt("Why reject this action?") || "";
         await api("/action/reject",{id:a.id,note});
         add("piper","Rejected.");
-        try{
-          await fetch('/voice/speak',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({text:"Rejected."})
-          });
-        }catch{}
+        await speak("Rejected.");
         refreshActions(true);
       }catch(e){
-        add("piper","⚠️ Reject failed: "+e);
+        alert("Reject failed: "+e);
+      }finally{
+        rejectBtn.disabled = false;
       }
     };
 
@@ -260,22 +395,17 @@ function renderPending(pending){
 
 function renderHistory(list){
   historyList.innerHTML = "";
-  const recent = list.filter(a => a.status!=="pending").slice(0, 10);
-
-  for(const a of recent){
+  for(const a of list){
     const d = document.createElement("div");
-    d.className = "card subtle";
+    d.className = "card card-small";
 
     const payloadPretty = JSON.stringify(a.payload || {}, null, 2);
-    const resultPretty = a.result ? JSON.stringify(a.result, null, 2) : "";
-    const canRollback =
-      ["write_file","apply_patch"].includes(a.type) &&
-      ["done","failed"].includes(a.status);
+    const note = a.note ? a.note : "";
 
-    // ✅ include set_html_title so title edits can show preview in history too
     const canPreview = ["apply_patch","write_file","mkdir","bundle","set_html_title"].includes(a.type);
-
     const previewHref = "/action/preview/" + a.id;
+
+    const canRollback = a.status === "approved" || a.status === "done" || a.status === "failed";
 
     d.innerHTML = `
       <h4>
@@ -288,45 +418,38 @@ function renderHistory(list){
         <span>Updated: ${fmtTime(a.updatedAt || a.createdAt)}</span>
       </div>
 
+      ${note ? `<div class="kv" style="margin-top:6px;"><span><b>Note:</b> ${esc(note)}</span></div>` : ``}
+
       <details data-kind="payload">
-        <summary>Payload</summary>
+        <summary>View details</summary>
         <pre>${esc(payloadPretty)}</pre>
       </details>
 
-      ${resultPretty ? `
-        <details data-kind="result">
-          <summary>Result</summary>
-          <pre>${esc(resultPretty)}</pre>
-        </details>
-      ` : ``}
-
-      <div class="btns">
-        ${canPreview ? `<a class="previewLink" href="${previewHref}" target="_blank" rel="noopener">🔎 Preview</a>` : ``}
-        ${canRollback ? `<button class="btn-secondary" data-rollback="${a.id}">↩ Rollback</button>` : ``}
+      <div class="btnRow">
+        ${canPreview ? `<a class="btn-secondary" href="${previewHref}" target="_blank" rel="noopener">Preview</a>` : ``}
+        ${canRollback ? `<button class="btn-secondary" data-act="rollback">Rollback</button>` : ``}
       </div>
     `;
 
     hookDetailsPersistence(d, a.id);
 
-    const rb = d.querySelector("[data-rollback]");
-    if(rb){
-      rb.onclick = async () => {
-        if(!confirm("Rollback this action? (Restores from backup when possible)")) return;
-        add("piper","↩ Attempting rollback…");
+    const rollbackBtn = d.querySelector('[data-act="rollback"]');
+    if(rollbackBtn){
+      rollbackBtn.onclick = async () => {
         try{
-          const out = await api("/action/rollback",{id:a.id});
-          const msg = out.action?.status==="rolled_back" ? "✅ Rolled back." : "Rollback finished.";
+          rollbackBtn.disabled = true;
+          const ok = confirm("Rollback this action?");
+          if(!ok) return;
+
+          const res = await api("/action/rollback", { id: a.id });
+          const msg = res && res.ok ? "✅ Rolled back." : "Rollback finished.";
           add("piper", msg);
-          try{
-            await fetch('/voice/speak',{
-              method:'POST',
-              headers:{'Content-Type':'application/json'},
-              body:JSON.stringify({text: msg})
-            });
-          }catch{}
+          await speak(msg);
           refreshActions(true);
         }catch(e){
-          add("piper","⚠️ Rollback failed: "+e);
+          alert("Rollback failed: " + e);
+        }finally{
+          rollbackBtn.disabled = false;
         }
       };
     }
@@ -335,74 +458,54 @@ function renderHistory(list){
   }
 }
 
-let lastActionsSignature = "";
+let lastSig = "";
 
-async function refreshActions(force=false){
-  try{
-    const r = await fetch("/actions");
-    if(!r.ok) return;
-    const j = await r.json();
-    if(!(j && j.ok && Array.isArray(j.actions))) return;
-
-    const list = j.actions;
-    const sig = signatureForActions(list);
-    if(!force && sig === lastActionsSignature) return;
-    lastActionsSignature = sig;
-
-    renderPending(list.filter(a => a.status==="pending"));
-    renderHistory(list);
-  }catch{}
+function signatureForActions(list){
+  return list.map(a => `${a.id}:${a.status}:${a.updatedAt||a.createdAt}`).join("|");
 }
 
-// Poll
-setInterval(() => refreshActions(false), 2500);
-refreshActions(true);
-
-async function sendToChat(message, { timeoutMs = 60000 } = {}){
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
+async function refreshActions(force){
   try{
-    const r = await fetch('/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ sessionId, message, readOnly: readOnly.checked }),
-      signal: controller.signal
-    });
+    const all = await fetchAllActions();
 
-    if(!r.ok){
-      const txt = await r.text().catch(()=>"(no body)");
-      add('piper','⚠️ /chat error: '+r.status+' '+txt);
-      throw new Error('chat failed');
-    }
-    return await r.json();
+    const pending = all.filter(a => a.status === "pending");
+    const recent = all
+      .slice()
+      .sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0))
+      .slice(0, 10);
 
+    const sig = signatureForActions(pending);
+    if(!force && sig === lastSig) return;
+    lastSig = sig;
+
+    renderPending(pending);
+    renderHistory(recent);
   }catch(e){
-    if(e && e.name === "AbortError"){
-      add('piper', `⚠️ /chat timed out after ${timeoutMs/1000}s. (Ollama/server stalled)`);
-    } else {
-      add('piper', '⚠️ /chat failed: ' + e);
-    }
-    throw e;
-
-  }finally{
-    clearTimeout(timer);
+    console.warn("refreshActions failed:", e);
   }
+}
+
+// ---- Chat ----
+async function sendToChat(text){
+  return await api("/chat", {
+    sessionId,
+    message: text,            // ✅ backend expects "message"
+    readOnly: readOnly.checked // ✅ backend reads this too
+  });
 }
 
 f.onsubmit = async (e) => {
   e.preventDefault();
+  const msg = t.value.trim();
+  if(!msg) return;
 
-  const m = t.value.trim();
-  if(!m) return;
-
-  add('me', m);
-  t.value = '';
+  t.value = "";
+  add('me', msg);
 
   const thinkingNode = add('piper', '🧠 Thinking…');
 
   try{
-    const c = await sendToChat(m);
+    const c = await sendToChat(msg);
     remove(thinkingNode);
 
     add('piper', c.reply);
@@ -410,20 +513,14 @@ f.onsubmit = async (e) => {
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
     const speakText = queued ? "Queued for approval." : c.reply;
 
-    try{
-      await fetch('/voice/speak',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ text: speakText })
-      });
-    }catch{}
+    await speak(speakText);
 
-    // If actions were queued, refresh immediately so you see them.
     if (queued) refreshActions(true);
 
-  }catch{
+  }catch(e){
     remove(thinkingNode);
     add('piper', '⚠️ Something went wrong. Try again.');
+    console.warn("chat failed:", e);
   }
 };
 
@@ -515,22 +612,22 @@ talk.onclick = async () => {
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
     const speakText = queued ? "Queued for approval." : c.reply;
 
-    try{
-      await fetch('/voice/speak',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ text: speakText })
-      });
-    }catch{}
+    await speak(speakText);
 
     if (queued) refreshActions(true);
 
   }catch(e){
-    add("piper","⚠️ Mic failed: "+e);
+    console.warn("talk flow failed:", e);
+    add("piper","⚠️ Voice input failed. Check console.");
   }finally{
     talk.disabled = false;
   }
 };
+
+// Boot
+initVoiceUI();
+refreshActions(true);
+setInterval(()=>refreshActions(false), 1200);
 </script>
 </body>
 </html>
