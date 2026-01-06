@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-06T14:28:18.449Z",
+  "generatedAt": "2026-01-06T15:24:42.066Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -294,6 +294,13 @@
       {
         "file": "public/index.html",
         "tag": "code",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
         "id": null,
         "classes": [],
         "text": null
@@ -2196,12 +2203,12 @@
           "start": {
             "line": 41,
             "column": 0,
-            "index": 1104
+            "index": 1136
           },
           "end": {
             "line": 56,
             "column": 1,
-            "index": 1525
+            "index": 1557
           }
         }
       },
@@ -2213,12 +2220,12 @@
           "start": {
             "line": 58,
             "column": 0,
-            "index": 1527
+            "index": 1559
           },
           "end": {
             "line": 86,
             "column": 1,
-            "index": 2351
+            "index": 2391
           }
         }
       },
@@ -2228,14 +2235,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 247,
+            "line": 261,
             "column": 0,
-            "index": 7225
+            "index": 7744
           },
           "end": {
-            "line": 282,
+            "line": 296,
             "column": 1,
-            "index": 8156
+            "index": 8675
           }
         }
       },
@@ -2245,14 +2252,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 284,
+            "line": 298,
             "column": 0,
-            "index": 8158
+            "index": 8677
           },
           "end": {
-            "line": 292,
+            "line": 306,
             "column": 1,
-            "index": 8473
+            "index": 8992
           }
         }
       },
@@ -2262,14 +2269,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 469,
+            "line": 483,
             "column": 0,
-            "index": 13350
+            "index": 13869
           },
           "end": {
-            "line": 479,
+            "line": 493,
             "column": 1,
-            "index": 13668
+            "index": 14187
           }
         }
       },
@@ -2279,14 +2286,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 483,
+            "line": 497,
             "column": 0,
-            "index": 13705
+            "index": 14224
           },
           "end": {
-            "line": 526,
+            "line": 540,
             "column": 1,
-            "index": 14828
+            "index": 15347
           }
         }
       },

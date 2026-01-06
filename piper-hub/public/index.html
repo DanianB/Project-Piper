@@ -46,9 +46,10 @@
             </div>
 
             <div class="voiceHint">
-              <div>• Amy/Jarvis use <code>piper.exe</code></div>
+              <div>• Amy/Jarvis/Alba use <code>piper.exe</code></div>
               <div>• Piper uses <code>chatterbox</code></div>
               <div style="opacity:.8;margin-top:6px;">If audio fails, open DevTools Console.</div>
+              <div style="opacity:.8;margin-top:6px;">Tip: audio now queues, so replies won’t cut each other off.</div>
             </div>
           </div>
         </div>
@@ -116,6 +117,7 @@ const openDetails = new Set(JSON.parse(localStorage.getItem("piper_openDetails")
 const VOICE_CHOICES = [
   { id: "amy",    label: "Amy",    provider: "piper",      voice: "amy" },
   { id: "jarvis", label: "Jarvis", provider: "piper",      voice: "jarvis" },
+  { id: "alba",   label: "Alba",   provider: "piper",      voice: "alba" },
   { id: "piper",  label: "Piper",  provider: "chatterbox", voice: "default" },
 ];
 
@@ -126,6 +128,220 @@ function choiceById(id){
 // Voice state
 let lastNonJarvisVoice = localStorage.getItem("piper_lastNonJarvisVoice") || "";
 
+// ----------------------
+// Audio queue (prevents cutoffs)
+// ----------------------
+const audioQueue = [];
+let audioPlaying = false;
+
+// Optional: simple debounce to avoid stacking tons of clips if user spams.
+const MAX_QUEUE = 6;
+
+async function playNextInQueue(){
+  if(audioPlaying) return;
+  const item = audioQueue.shift();
+  if(!item) return;
+
+  audioPlaying = true;
+  try{
+    const { blob, meta } = item;
+
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio();
+    audio.src = url;
+
+    // Attempt to allow overlapping browsers to play without user gesture issues
+    audio.preload = "auto";
+
+    if(debugEmotion.checked){
+      console.log("[voice] play", meta);
+    }
+
+    // Wait for play to start (some browsers reject without user gesture)
+    await audio.play().catch((e)=>{
+      console.warn("[voice] audio.play failed:", e);
+      // If playback fails, drop this clip and continue
+    });
+
+    // Wait until it finishes (or errors)
+    await new Promise((resolve) => {
+      const done = () => resolve();
+      audio.addEventListener("ended", done, { once: true });
+      audio.addEventListener("error", done, { once: true });
+      audio.addEventListener("stalled", done, { once: true });
+    });
+
+    URL.revokeObjectURL(url);
+  } finally {
+    audioPlaying = false;
+    // Continue queue
+    if(audioQueue.length) playNextInQueue();
+  }
+}
+
+function enqueueAudioBlob(blob, meta){
+  // Keep queue bounded
+  while(audioQueue.length >= MAX_QUEUE) audioQueue.shift();
+  audioQueue.push({ blob, meta });
+  playNextInQueue();
+}
+
+// Speak helper: fetch audio and enqueue it (instead of letting a new one cut off old playback)
+async function speak(text, emotion, intensity){
+  try{
+    const payload = { text: String(text || ""), sessionId };
+    if(emotion) payload.emotion = emotion;
+    if(typeof intensity === 'number') payload.intensity = intensity;
+
+    const r = await fetch('/voice/speak',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+
+    if(!r.ok){
+      const body = await r.text().catch(()=>"(no body)");
+      console.warn("/voice/speak failed:", r.status, body, payload);
+      return;
+    }
+
+    // Expect server returns audio/wav bytes
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    if(!ct.includes("audio")){
+      const body = await r.text().catch(()=>"(no body)");
+      console.warn("/voice/speak unexpected content-type:", ct, body);
+      return;
+    }
+
+    const blob = await r.blob();
+    enqueueAudioBlob(blob, { emotion: payload.emotion, intensity: payload.intensity, chars: payload.text.length });
+
+    if(debugEmotion.checked) console.log("[voice] speak queued", payload);
+
+  }catch(e){
+    console.warn("/voice/speak error:", e);
+  }
+}
+
+// ---- Voice UI logic ----
+async function api(path, body){
+  const r = await fetch(path,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body||{})
+  });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error((j && (j.error||j.message)) || (r.status+" "+r.statusText));
+  return j;
+}
+
+async function fetchVoiceConfig(){
+  const r = await fetch("/voice/config", { cache: "no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!r.ok) throw new Error("Failed to load voice config.");
+
+  if(j && j.ok && j.config) return j.config;
+  if(j && typeof j === "object" && (("provider" in j) || ("voice" in j))) return j;
+
+  throw new Error("Failed to load voice config.");
+}
+
+function fillVoiceSelect(selectedId){
+  voiceSelect.innerHTML = "";
+  for(const v of VOICE_CHOICES){
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = v.label;
+    voiceSelect.appendChild(opt);
+  }
+  voiceSelect.value = VOICE_CHOICES.some(v => v.id === selectedId) ? selectedId : VOICE_CHOICES[0].id;
+}
+
+async function applyVoice(choiceId){
+  const c = choiceById(choiceId);
+
+  const out = await api("/voice/config", { provider: c.provider, voice: c.voice });
+  const provider = out?.config?.provider || c.provider;
+  const voice = out?.config?.voice || c.voice;
+
+  voiceBtn.textContent = `🔊 ${c.label}`;
+  jarvisMode.checked = (provider === "piper" && voice === "jarvis");
+
+  if(!(provider === "piper" && voice === "jarvis")){
+    lastNonJarvisVoice = choiceId;
+    localStorage.setItem("piper_lastNonJarvisVoice", lastNonJarvisVoice);
+  }
+}
+
+async function initVoiceUI(){
+  try{
+    const cfg = await fetchVoiceConfig();
+    let selected = "amy";
+    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
+    if(cfg.provider === "chatterbox") selected = "piper";
+    if(cfg.provider === "piper" && cfg.voice === "alba") selected = "alba";
+
+    fillVoiceSelect(selected);
+    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
+    jarvisMode.checked = (selected === "jarvis");
+  }catch(e){
+    console.warn("voice ui init failed", e);
+    fillVoiceSelect("amy");
+    voiceBtn.textContent = "🔊 Amy";
+    jarvisMode.checked = false;
+  }
+}
+
+// Open/close menu
+voiceBtn.onclick = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  const open = voicePanel.style.display !== 'none';
+  voicePanel.style.display = open ? 'none' : 'block';
+};
+
+document.addEventListener("click", (e) => {
+  if(!voicePanel) return;
+  if(voicePanel.style.display === "none") return;
+  const vw = voiceBtn.closest(".voiceWrap");
+  if(vw && !vw.contains(e.target)){
+    voicePanel.style.display = 'none';
+  }
+});
+
+voiceRefresh.onclick = async () => {
+  try{
+    const cfg = await fetchVoiceConfig();
+    let selected = "amy";
+    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
+    if(cfg.provider === "chatterbox") selected = "piper";
+    if(cfg.provider === "piper" && cfg.voice === "alba") selected = "alba";
+
+    fillVoiceSelect(selected);
+    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
+    jarvisMode.checked = (selected === "jarvis");
+  }catch(e){
+    alert("Failed to refresh voices: " + e);
+  }
+};
+
+voiceSelect.onchange = async () => {
+  try{ await applyVoice(voiceSelect.value); }
+  catch(e){ alert("Failed to set voice: " + e); }
+};
+
+jarvisMode.onchange = async () => {
+  if(jarvisMode.checked){
+    voiceSelect.value = "jarvis";
+    await applyVoice("jarvis");
+  } else {
+    const restore = lastNonJarvisVoice || "amy";
+    voiceSelect.value = restore;
+    await applyVoice(restore);
+  }
+};
+
+// ---- Utilities ----
 function hookDetailsPersistence(cardEl, actionId){
   const details = cardEl.querySelectorAll("details[data-kind]");
   details.forEach(d => {
@@ -178,151 +394,7 @@ function remove(node){
   try{ node && node.remove && node.remove(); }catch{}
 }
 
-async function api(path, body){
-  const r = await fetch(path,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body||{})
-  });
-  const j = await r.json().catch(()=>null);
-  if(!r.ok) throw new Error((j && (j.error||j.message)) || (r.status+" "+r.statusText));
-  return j;
-}
-
-// Speak helper: DO NOT swallow errors
-// Speak helper: DO NOT swallow errors
-async function speak(text, emotion, intensity){
-  try{
-    const payload = { text: String(text || ""), sessionId };
-    if(emotion) payload.emotion = emotion;
-    if(typeof intensity === 'number') payload.intensity = intensity;
-
-    const r = await fetch('/voice/speak',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
-
-    if(!r.ok){
-      const body = await r.text().catch(()=>"(no body)");
-      console.warn("/voice/speak failed:", r.status, body, payload);
-    }else{
-      if(debugEmotion.checked) console.log("[voice] speak ok", payload);
-    }
-  }catch(e){
-    console.warn("/voice/speak error:", e);
-  }
-}
-
-// ---- Voice UI logic ----
-async function fetchVoiceConfig(){
-  const r = await fetch("/voice/config", { cache: "no-store" });
-  const j = await r.json().catch(()=>null);
-  if(!r.ok) throw new Error("Failed to load voice config.");
-
-  // Accept either:
-  // 1) { provider, voice, ... }   (your current backend GET returns this)
-  // 2) { ok:true, config:{...} }  (older wrapper format)
-  if(j && j.ok && j.config) return j.config;
-  if(j && typeof j === "object" && (("provider" in j) || ("voice" in j))) return j;
-
-  throw new Error("Failed to load voice config.");
-}
-
-function fillVoiceSelect(selectedId){
-  voiceSelect.innerHTML = "";
-  for(const v of VOICE_CHOICES){
-    const opt = document.createElement("option");
-    opt.value = v.id;
-    opt.textContent = v.label;
-    voiceSelect.appendChild(opt);
-  }
-  voiceSelect.value = VOICE_CHOICES.some(v => v.id === selectedId) ? selectedId : VOICE_CHOICES[0].id;
-}
-
-async function applyVoice(choiceId){
-  const c = choiceById(choiceId);
-
-  const out = await api("/voice/config", { provider: c.provider, voice: c.voice });
-  const provider = out?.config?.provider || c.provider;
-  const voice = out?.config?.voice || c.voice;
-
-  voiceBtn.textContent = `🔊 ${c.label}`;
-  jarvisMode.checked = (provider === "piper" && voice === "jarvis");
-
-  if(!(provider === "piper" && voice === "jarvis")){
-    lastNonJarvisVoice = choiceId;
-    localStorage.setItem("piper_lastNonJarvisVoice", lastNonJarvisVoice);
-  }
-}
-
-async function initVoiceUI(){
-  try{
-    const cfg = await fetchVoiceConfig();
-    let selected = "amy";
-    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
-    if(cfg.provider === "chatterbox") selected = "piper";
-
-    fillVoiceSelect(selected);
-    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
-    jarvisMode.checked = (selected === "jarvis");
-  }catch(e){
-    console.warn("voice ui init failed", e);
-    fillVoiceSelect("amy");
-    voiceBtn.textContent = "🔊 Amy";
-    jarvisMode.checked = false;
-  }
-}
-
-// Open/close menu
-voiceBtn.onclick = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  const open = voicePanel.style.display !== 'none';
-  voicePanel.style.display = open ? 'none' : 'block';
-};
-
-document.addEventListener("click", (e) => {
-  if(!voicePanel) return;
-  if(voicePanel.style.display === "none") return;
-  const vw = voiceBtn.closest(".voiceWrap");
-  if(vw && !vw.contains(e.target)){
-    voicePanel.style.display = 'none';
-  }
-});
-
-voiceRefresh.onclick = async () => {
-  try{
-    const cfg = await fetchVoiceConfig();
-    let selected = "amy";
-    if(cfg.provider === "piper" && cfg.voice === "jarvis") selected = "jarvis";
-    if(cfg.provider === "chatterbox") selected = "piper";
-
-    fillVoiceSelect(selected);
-    voiceBtn.textContent = `🔊 ${choiceById(selected).label}`;
-    jarvisMode.checked = (selected === "jarvis");
-  }catch(e){
-    alert("Failed to refresh voices: " + e);
-  }
-};
-
-voiceSelect.onchange = async () => {
-  try{ await applyVoice(voiceSelect.value); }
-  catch(e){ alert("Failed to set voice: " + e); }
-};
-
-jarvisMode.onchange = async () => {
-  if(jarvisMode.checked){
-    voiceSelect.value = "jarvis";
-    await applyVoice("jarvis");
-  } else {
-    const restore = lastNonJarvisVoice || "amy";
-    voiceSelect.value = restore;
-    await applyVoice(restore);
-  }
-};
-
-// ---- Actions (match your backend) ----
+// ---- Actions ----
 async function fetchAllActions(){
   const r = await fetch("/actions", { cache: "no-store" });
   const j = await r.json().catch(()=>null);
@@ -531,8 +603,6 @@ f.onsubmit = async (e) => {
 
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
 
-    // Speak exactly once per reply.
-    // If actions are queued, speak a short deterministic line (not the full reply).
     if(queued){
       await speak("Queued for approval.", "confident", 0.45);
     } else {

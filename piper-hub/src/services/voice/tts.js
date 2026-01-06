@@ -32,9 +32,9 @@ const DEFAULT_CFG = {
     min_p: 0.05,
     top_p: 1.0,
 
-    max_new_tokens_mode: "estimate",
-    max_new_tokens_min: 140, // slightly safer floor for avoiding truncation/empty audio
-    max_new_tokens_max: 550,
+    max_new_tokens_mode: "max",
+    max_new_tokens_min: 220, // safer floor to avoid truncation, // slightly safer floor for avoiding truncation/empty audio
+    max_new_tokens_max: 1200,
   },
 };
 
@@ -77,7 +77,7 @@ export function setVoiceConfig(patch = {}) {
   if (next.provider === "chatterbox") next.voice = next.voice || "default";
   else {
     next.voice = next.voice || "amy";
-    if (!["amy", "jarvis"].includes(String(next.voice).toLowerCase()))
+    if (!["amy", "jarvis", "alba"].includes(String(next.voice).toLowerCase()))
       next.voice = "amy";
   }
 
@@ -94,7 +94,9 @@ const JARVIS_VOICE_PATH =
     ? path.join(path.dirname(AMY_VOICE_PATH), "jarvis-medium.onnx")
     : null);
 
-const ALBA_VOICE_PATH = process.env.PIPER_ALBA_VOICE || "D:\\AI\\piper-tts\\voices\\en_GB-alba-medium.onnx";
+const ALBA_VOICE_PATH =
+  process.env.PIPER_ALBA_VOICE ||
+  (AMY_VOICE_PATH ? path.join(path.dirname(AMY_VOICE_PATH), "en_GB-alba-medium.onnx") : null);
 const TMP_PIPER_TEXT =
   PATHS.TMP_PIPER_TEXT || path.join(TMP_DIR, "piper_text.txt");
 const TMP_PIPER_WAV =
@@ -181,15 +183,15 @@ function chooseMaxNewTokensEstimate(text, cb) {
   const s = String(text || "").trim();
   const words = s ? s.split(/\s+/).filter(Boolean).length : 0;
 
-  const wordsPerSec = Number(process.env.CHATTERBOX_WORDS_PER_SEC || "3.2");
+  const wordsPerSec = Number(process.env.CHATTERBOX_WORDS_PER_SEC || "2.6");
   const seconds = wordsPerSec > 0 ? words / wordsPerSec : 0;
 
   const tokensPerSec = Number(
-    process.env.CHATTERBOX_AUDIO_TOKENS_PER_SEC || "20"
+    process.env.CHATTERBOX_AUDIO_TOKENS_PER_SEC || "28"
   );
   let tokens = Math.ceil(seconds * tokensPerSec);
 
-  const margin = Number(process.env.CHATTERBOX_TOKEN_MARGIN || "25");
+  const margin = Number(process.env.CHATTERBOX_TOKEN_MARGIN || "80");
   tokens += margin;
 
   const minCap =
@@ -208,6 +210,18 @@ function chooseMaxNewTokensEstimate(text, cb) {
 function chooseMaxNewTokens(text) {
   const cfg = getVoiceConfig();
   const cb = cfg?.chatterbox || DEFAULT_CFG.chatterbox;
+
+  // If mode is "max", always give the model plenty of headroom.
+  // This does NOT necessarily slow generation: it's just a ceiling, and the model can stop early.
+  const mode = String(cb?.max_new_tokens_mode || "estimate").toLowerCase();
+  if (mode === "max") {
+    const maxCap =
+      Number(
+        process.env.CHATTERBOX_MAX_NEW_TOKENS_MAX || cb?.max_new_tokens_max || 1200
+      ) || 1200;
+    return Math.trunc(maxCap);
+  }
+
   return chooseMaxNewTokensEstimate(text, cb);
 }
 

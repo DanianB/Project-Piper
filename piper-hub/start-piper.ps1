@@ -9,7 +9,7 @@ $env:CHATTERBOX_CONDA_ENV = "chatterbox"
 $env:CHATTERBOX_HOST = "127.0.0.1"
 $env:CHATTERBOX_PORT = "4123"
 $env:CHATTERBOX_PROMPT_WAV = "D:\AI\piper-tts\voices\Piper-Default-Voice.wav"
-
+$env:TTS_LOG_VOICE_PATHS = "1"
 
 # If conda is NOT on PATH, uncomment and adjust this line:
 # $env:CHATTERBOX_START_CMD = "C:\Users\Danian\Documents\miniconda\Scripts\conda.exe run -n chatterbox python tools\chatterbox_server.py"
