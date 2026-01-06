@@ -1,3 +1,4 @@
+// src/routes/voice.js
 import { Router } from "express";
 import multer from "multer";
 import { transcribeAudioBuffer } from "../services/voice/stt.js";
@@ -9,14 +10,12 @@ import {
   ensureChatterboxRunning,
   getChatterboxStatus,
 } from "../services/voice/tts.js";
-import { makeSpoken } from "../services/persona.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 export function voiceRoutes() {
   const r = Router();
 
-  // ---- STT ----
   r.post("/voice/transcribe", upload.single("audio"), async (req, res) => {
     try {
       if (!req.file || !req.file.buffer) {
@@ -29,12 +28,8 @@ export function voiceRoutes() {
     }
   });
 
-  // ---- GET voice config ----
-  r.get("/voice/config", (_req, res) => {
-    res.json(getVoiceConfig());
-  });
+  r.get("/voice/config", (_req, res) => res.json(getVoiceConfig()));
 
-  // ---- SET voice config ----
   r.post("/voice/config", (req, res) => {
     try {
       const next = setVoiceConfig(req.body || {});
@@ -44,25 +39,23 @@ export function voiceRoutes() {
     }
   });
 
-  // ---- List voices (debug/helper) ----
-  r.get("/voice/voices", (_req, res) => {
-    res.json(listVoices());
-  });
+  r.get("/voice/voices", (_req, res) => res.json(listVoices()));
 
-  // ---- Speak ----
   r.post("/voice/speak", async (req, res) => {
     const text = String(req.body?.text || "").trim();
     if (!text) return res.json({ ok: true });
 
+    const emotion = req.body?.emotion; // optional
+    const intensity = req.body?.intensity; // optional
+
     try {
-      await speakQueued(makeSpoken(text));
+      await speakQueued(text, { emotion, intensity });
       res.json({ ok: true });
     } catch (e) {
       res.status(500).json({ ok: false, error: String(e?.message || e) });
     }
   });
 
-  // ---- Optional: prewarm chatterbox ----
   r.post("/voice/chatterbox/start", async (_req, res) => {
     try {
       await ensureChatterboxRunning();
@@ -72,7 +65,6 @@ export function voiceRoutes() {
     }
   });
 
-  // ---- New: chatterbox status (device/cuda check) ----
   r.get("/voice/chatterbox/status", async (_req, res) => {
     try {
       const status = await getChatterboxStatus();

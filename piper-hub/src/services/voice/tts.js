@@ -4,12 +4,12 @@ import path from "path";
 import http from "http";
 import { exec, spawn } from "child_process";
 import * as PATHS from "../../config/paths.js";
+import { normalizeEmotion, clamp01, makeSpoken } from "../persona.js";
 
-/* ---------------- Robust paths (avoid named-export landmines) ---------------- */
+/* ---------------- Robust paths ---------------- */
 const ROOT = PATHS.ROOT || process.cwd();
 const DATA_DIR = PATHS.DATA_DIR || path.join(ROOT, "data");
 const TMP_DIR = PATHS.TMP_DIR || path.join(ROOT, "tmp");
-
 for (const d of [DATA_DIR, TMP_DIR]) {
   try {
     fs.mkdirSync(d, { recursive: true });
@@ -20,20 +20,20 @@ for (const d of [DATA_DIR, TMP_DIR]) {
 const VOICE_CONFIG_PATH = path.join(DATA_DIR, "voice_config.json");
 
 const DEFAULT_CFG = {
-  provider: "piper", // "piper" (Default) or "chatterbox" (Piper)
-  voice: "amy", // for piper: "amy" | "jarvis"; for chatterbox: "default"
+  provider: "piper",
+  voice: "amy",
   autoStartChatterbox: false,
-
-  // Optional Chatterbox tuning knobs (safe defaults; server may ignore unknown fields)
   chatterbox: {
     cfg_weight: 0.35,
     exaggeration: 0.5,
     temperature: 0.8,
 
-    // "estimate" is fastest without truncation for short replies
-    max_new_tokens_mode: "estimate",
+    // Supported by your chatterbox_server.py request model
+    repetition_penalty: 1.2,
+    min_p: 0.05,
+    top_p: 1.0,
 
-    // Tighter caps by default; override via env if desired
+    max_new_tokens_mode: "estimate",
     max_new_tokens_min: 90,
     max_new_tokens_max: 700,
   },
@@ -60,7 +60,6 @@ export function setVoiceConfig(patch = {}) {
   const prev = getVoiceConfig();
   const next = { ...prev, ...(patch || {}) };
 
-  // Deep-merge chatterbox object if provided
   if (
     patch &&
     typeof patch === "object" &&
@@ -75,15 +74,12 @@ export function setVoiceConfig(patch = {}) {
     next.chatterbox = prev.chatterbox || DEFAULT_CFG.chatterbox;
   }
 
-  // Normalize provider/voice
   next.provider = next.provider === "chatterbox" ? "chatterbox" : "piper";
-  if (next.provider === "chatterbox") {
-    next.voice = next.voice || "default";
-  } else {
+  if (next.provider === "chatterbox") next.voice = next.voice || "default";
+  else {
     next.voice = next.voice || "amy";
-    if (!["amy", "jarvis"].includes(String(next.voice).toLowerCase())) {
+    if (!["amy", "jarvis"].includes(String(next.voice).toLowerCase()))
       next.voice = "amy";
-    }
   }
 
   fs.writeFileSync(VOICE_CONFIG_PATH, JSON.stringify(next, null, 2), "utf8");
@@ -92,11 +88,7 @@ export function setVoiceConfig(patch = {}) {
 
 /* ---------------- Piper (Default) ---------------- */
 const PIPER_EXE = PATHS.PIPER_EXE || null;
-
-// We treat PATHS.PIPER_VOICE as "Amy"
 const AMY_VOICE_PATH = PATHS.PIPER_VOICE || null;
-
-// Jarvis model is expected in the same folder as Amy by default:
 const JARVIS_VOICE_PATH =
   process.env.PIPER_JARVIS_VOICE ||
   (AMY_VOICE_PATH
@@ -118,9 +110,8 @@ function runPiperToWav(text, voiceId = "amy") {
   return new Promise((resolve, reject) => {
     const voicePath = resolvePiperVoicePath(voiceId);
 
-    if (!PIPER_EXE || !fs.existsSync(PIPER_EXE)) {
+    if (!PIPER_EXE || !fs.existsSync(PIPER_EXE))
       return reject(new Error(`piper.exe not found: ${PIPER_EXE}`));
-    }
     if (!voicePath || !fs.existsSync(voicePath)) {
       return reject(
         new Error(
@@ -156,11 +147,10 @@ function runPiperToWav(text, voiceId = "amy") {
     }
 
     child.on("exit", (code) => {
-      if (code !== 0) {
+      if (code !== 0)
         return reject(
           new Error(`piper.exe exited ${code}: ${errBuf.slice(-1200)}`)
         );
-      }
       resolve(TMP_PIPER_WAV);
     });
   });
@@ -174,7 +164,6 @@ function playWavBlocking(wavPath) {
       /'/g,
       "''"
     )}'; $m = New-Object System.Media.SoundPlayer $p; $m.PlaySync();"`;
-
     exec(ps, { windowsHide: true }, (err) => (err ? reject(err) : resolve()));
   });
 }
@@ -182,28 +171,20 @@ function playWavBlocking(wavPath) {
 /* ---------------- Chatterbox (Piper) ---------------- */
 const CHATTERBOX_HOST = process.env.CHATTERBOX_HOST || "127.0.0.1";
 const CHATTERBOX_PORT = Number(process.env.CHATTERBOX_PORT || "4123");
-const CHATTERBOX_BASE_PATH = (process.env.CHATTERBOX_BASE_PATH || "").trim(); // e.g. "/v1"
+const CHATTERBOX_BASE_PATH = (process.env.CHATTERBOX_BASE_PATH || "").trim();
 const CHATTERBOX_URL = `http://${CHATTERBOX_HOST}:${CHATTERBOX_PORT}${CHATTERBOX_BASE_PATH}`;
 
 const TMP_CHATTERBOX_WAV = path.join(TMP_DIR, "chatterbox_out.wav");
 
-// Health caching (reduces per-utterance overhead)
 const HEALTH_CACHE_MS = Number(
   process.env.CHATTERBOX_HEALTH_CACHE_MS || "2000"
 );
 let _healthCache = { at: 0, data: null };
 
 function resolveChatterboxPromptPath() {
-  const explicit =
-    (
-      PATHS.CHATTERBOX_PROMPT_WAV ||
-      process.env.CHATTERBOX_PROMPT_WAV ||
-      ""
-    ).trim?.() ||
-    String(
-      PATHS.CHATTERBOX_PROMPT_WAV || process.env.CHATTERBOX_PROMPT_WAV || ""
-    ).trim();
-
+  const explicit = String(
+    PATHS.CHATTERBOX_PROMPT_WAV || process.env.CHATTERBOX_PROMPT_WAV || ""
+  ).trim();
   if (explicit) {
     try {
       if (fs.existsSync(explicit) && fs.statSync(explicit).isFile())
@@ -211,31 +192,21 @@ function resolveChatterboxPromptPath() {
     } catch {}
   }
 
-  const dir =
-    (
-      PATHS.CHATTERBOX_PROMPT_DIR ||
-      process.env.CHATTERBOX_PROMPT_DIR ||
-      ""
-    ).trim?.() ||
-    String(
-      PATHS.CHATTERBOX_PROMPT_DIR || process.env.CHATTERBOX_PROMPT_DIR || ""
-    ).trim();
-
+  const dir = String(
+    PATHS.CHATTERBOX_PROMPT_DIR || process.env.CHATTERBOX_PROMPT_DIR || ""
+  ).trim();
   if (!dir) return null;
 
   try {
     if (!fs.existsSync(dir)) return null;
     const st = fs.statSync(dir);
-    if (st.isFile()) {
-      return dir.toLowerCase().endsWith(".wav") ? dir : null;
-    }
+    if (st.isFile()) return dir.toLowerCase().endsWith(".wav") ? dir : null;
     if (!st.isDirectory()) return null;
 
     const files = fs
       .readdirSync(dir)
       .filter((f) => String(f).toLowerCase().endsWith(".wav"))
-      .sort((a, b) => a.localeCompare(b));
-
+      .sort();
     if (!files.length) return null;
     return path.join(dir, files[0]);
   } catch {
@@ -280,7 +251,6 @@ function chooseMaxNewTokensEstimate(text, cfg) {
 
   if (tokens < minCap) tokens = minCap;
   if (tokens > maxCap) tokens = maxCap;
-
   return tokens;
 }
 
@@ -288,7 +258,6 @@ function chooseMaxNewTokens(text) {
   const cfg = getVoiceConfig();
   const cb = cfg?.chatterbox || DEFAULT_CFG.chatterbox;
   const mode = String(cb?.max_new_tokens_mode || "estimate").toLowerCase();
-
   if (mode === "legacy") return chooseMaxNewTokensLegacy(text);
   return chooseMaxNewTokensEstimate(text, cb);
 }
@@ -320,24 +289,20 @@ function normalizeHealthJson(json) {
     Boolean(j.healthy) ||
     String(j.status || "").toLowerCase() === "healthy" ||
     String(j.status || "").toLowerCase() === "ok";
-
   const modelLoaded =
     j.model_loaded === undefined ? undefined : Boolean(j.model_loaded);
   const device = j.device ? String(j.device) : undefined;
-
   return { ok, modelLoaded, device, raw: j };
 }
 
 export async function getChatterboxStatus() {
   const now = Date.now();
-  if (_healthCache.data && now - _healthCache.at < HEALTH_CACHE_MS) {
+  if (_healthCache.data && now - _healthCache.at < HEALTH_CACHE_MS)
     return _healthCache.data;
-  }
 
   try {
     const r = await httpGetJson(`${CHATTERBOX_URL}/health`);
     const norm = normalizeHealthJson(r.json);
-
     const data = {
       reachable: r.status > 0 && r.status < 500,
       statusCode: r.status,
@@ -348,7 +313,6 @@ export async function getChatterboxStatus() {
       url: CHATTERBOX_URL,
       at: now,
     };
-
     _healthCache = { at: now, data };
     return data;
   } catch (e) {
@@ -371,22 +335,16 @@ export async function getChatterboxStatus() {
 export async function ensureChatterboxRunning() {
   const s = await getChatterboxStatus();
   if (s.ok) return true;
-
   try {
     const r2 = await httpGetJson(`${CHATTERBOX_URL}/openapi.json`);
     if (r2.status === 200) return true;
   } catch {}
-
-  throw new Error(
-    `Chatterbox not reachable at ${CHATTERBOX_URL}. ` +
-      `If it's running but still failing, check CHATTERBOX_HOST/PORT/BASE_PATH and confirm /health or /openapi.json responds.`
-  );
+  throw new Error(`Chatterbox not reachable at ${CHATTERBOX_URL}.`);
 }
 
 function httpPostWav(url, jsonBody, outPath) {
   return new Promise((resolve, reject) => {
     const body = Buffer.from(JSON.stringify(jsonBody), "utf8");
-
     const req = http.request(
       url,
       {
@@ -416,27 +374,138 @@ function httpPostWav(url, jsonBody, outPath) {
         });
       }
     );
-
     req.on("error", reject);
     req.write(body);
     req.end();
   });
 }
 
-async function runChatterboxToWav(text, voiceId = "default") {
+/**
+ * Emotion -> generation parameter mapping.
+ * This is what makes TTS *actually* sound different.
+ */
+function clamp(n, lo, hi) {
+  if (!Number.isFinite(n)) return lo;
+  if (n < lo) return lo;
+  if (n > hi) return hi;
+  return n;
+}
+
+function emotionToChatterboxParams(base, emotion, intensity) {
+  const e = normalizeEmotion(emotion);
+  const k = clamp01(intensity);
+
+  let exaggeration = Number(base.exaggeration ?? 0.5);
+  let cfg_weight = Number(base.cfg_weight ?? 0.5);
+  let temperature = Number(base.temperature ?? 0.8);
+
+  let repetition_penalty = Number(base.repetition_penalty ?? 1.2);
+  let min_p = Number(base.min_p ?? 0.05);
+  let top_p = Number(base.top_p ?? 1.0);
+
+  // Apply deltas
+  switch (e) {
+    case "excited":
+      exaggeration += 0.3 * k;
+      temperature += 0.2 * k;
+      cfg_weight -= 0.1 * k;
+      repetition_penalty -= 0.05 * k;
+      break;
+
+    case "amused":
+      exaggeration += 0.15 * k;
+      temperature += 0.1 * k;
+      cfg_weight -= 0.05 * k;
+      break;
+
+    case "dry":
+      exaggeration -= 0.1 * k;
+      temperature -= 0.1 * k;
+      cfg_weight += 0.1 * k;
+      break;
+
+    case "confident":
+      cfg_weight += 0.2 * k;
+      temperature -= 0.05 * k;
+      break;
+
+    case "serious":
+      cfg_weight += 0.15 * k;
+      temperature -= 0.15 * k;
+      exaggeration -= 0.1 * k;
+      break;
+
+    case "concerned":
+    case "sad":
+      cfg_weight += 0.2 * k;
+      temperature -= 0.2 * k;
+      exaggeration -= 0.2 * k;
+      break;
+
+    case "angry":
+      // firmer, more forceful delivery
+      exaggeration += 0.35 * k;
+      cfg_weight += 0.1 * k;
+      temperature += 0.05 * k;
+      // tighten sampling a little so it stays crisp
+      top_p = Math.max(0.85, top_p - 0.1 * k);
+      break;
+
+    case "apologetic":
+      cfg_weight += 0.1 * k;
+      temperature -= 0.1 * k;
+      exaggeration -= 0.1 * k;
+      break;
+
+    case "warm":
+      exaggeration += 0.1 * k;
+      temperature += 0.05 * k;
+      break;
+
+    default:
+      break;
+  }
+
+  // Clamp to sane ranges
+  exaggeration = clamp(exaggeration, 0.0, 1.2);
+  cfg_weight = clamp(cfg_weight, 0.1, 1.2);
+  temperature = clamp(temperature, 0.1, 1.3);
+
+  repetition_penalty = clamp(repetition_penalty, 0.9, 1.4);
+  min_p = clamp(min_p, 0.0, 0.3);
+  top_p = clamp(top_p, 0.6, 1.0);
+
+  return {
+    exaggeration,
+    cfg_weight,
+    temperature,
+    repetition_penalty,
+    min_p,
+    top_p,
+  };
+}
+
+async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
   await ensureChatterboxRunning();
-  const promptPath = resolveChatterboxPromptPath();
+
   const cfg = getVoiceConfig();
   const cb = cfg?.chatterbox || DEFAULT_CFG.chatterbox;
+
+  const emotion = meta?.emotion ?? "neutral";
+  const intensity = meta?.intensity ?? 0.4;
+
+  const promptPath = resolveChatterboxPromptPath();
+
+  const tuned = emotionToChatterboxParams(cb, emotion, intensity);
 
   const payload = {
     input: String(text || ""),
     voice: String(voiceId || "default"),
+
     max_new_tokens: chooseMaxNewTokens(text),
 
-    ...(cb?.cfg_weight != null ? { cfg_weight: cb.cfg_weight } : {}),
-    ...(cb?.exaggeration != null ? { exaggeration: cb.exaggeration } : {}),
-    ...(cb?.temperature != null ? { temperature: cb.temperature } : {}),
+    // Core controls your server supports:
+    ...tuned,
 
     ...(promptPath ? { audio_prompt_path: promptPath } : {}),
   };
@@ -447,26 +516,42 @@ async function runChatterboxToWav(text, voiceId = "default") {
 
 /* ---------------- Public API ---------------- */
 export function listVoices() {
-  const voices = [
-    { id: "amy", label: "Amy", provider: "piper" },
-    { id: "jarvis", label: "Jarvis", provider: "piper" },
-    { id: "default", label: "Piper", provider: "chatterbox" },
-  ];
-  return { ok: true, voices };
+  return {
+    ok: true,
+    voices: [
+      { id: "amy", label: "Amy", provider: "piper" },
+      { id: "jarvis", label: "Jarvis", provider: "piper" },
+      { id: "default", label: "Piper", provider: "chatterbox" },
+    ],
+  };
 }
 
 let ttsQueue = Promise.resolve();
 
-export function speakQueued(text) {
+/**
+ * Speak with optional emotion/intensity.
+ * meta = { emotion, intensity }
+ */
+export function speakQueued(text, meta = {}) {
   ttsQueue = ttsQueue.then(async () => {
     const cfg = getVoiceConfig();
     const provider = cfg.provider || "piper";
 
+    const emotion = meta?.emotion ?? "neutral";
+    const intensity = meta?.intensity ?? 0.4;
+
+    // Text shaping for spoken output (cadence), but NOT changing meaning
+    const spoken = makeSpoken(text, emotion, intensity);
+
     let wavPath;
     if (provider === "chatterbox") {
-      wavPath = await runChatterboxToWav(text, cfg.voice || "default");
+      wavPath = await runChatterboxToWav(spoken, cfg.voice || "default", {
+        emotion,
+        intensity,
+      });
     } else {
-      wavPath = await runPiperToWav(text, cfg.voice || "amy");
+      // Piper.exe has no native emotion controls; cadence shaping still helps a bit
+      wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
     }
 
     await playWavBlocking(wavPath);

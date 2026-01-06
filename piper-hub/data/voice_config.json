@@ -1,6 +1,6 @@
 {
-  "provider": "piper",
-  "voice": "amy",
+  "provider": "chatterbox",
+  "voice": "default",
   "autoStartChatterbox": true,
   "chatterbox": {
     "cfg_weight": 0.35,

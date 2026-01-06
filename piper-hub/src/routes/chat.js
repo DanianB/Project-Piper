@@ -1,13 +1,12 @@
 // src/routes/chat.js
 import { Router } from "express";
-import { enforceJarvis } from "../services/persona.js";
-import { callOllama } from "../services/ollama.js";
+import { callOllama, extractFirstJsonObject } from "../services/ollama.js";
+import { piperSystemPrompt, enforcePiper } from "../services/persona.js";
 
 import { triageNeedsPlanner } from "../planner/triage.js";
 import { buildSnapshot } from "../planner/snapshot.js";
 import { llmRespondAndPlan } from "../planner/planner.js";
 import { compilePlanToActions } from "../planner/compiler.js";
-
 import { addAction } from "../actions/store.js";
 
 const sessions = new Map();
@@ -16,20 +15,60 @@ function newId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
 
-function buildSimpleChatMessages(message) {
+function buildPiperJsonChatMessages(message) {
+  // We instruct strict JSON so we can reliably pull emotion & intensity.
   return [
     {
       role: "system",
       content:
-        "You are Piper — a calm, confident, concise Jarvis-style local assistant.\n" +
-        "Be helpful and grounded.\n" +
-        "Style: respectful, a little dry, efficient.\n" +
-        'Address the user as "sir" occasionally (max once per reply).\n' +
-        "Avoid using the user's name unless they ask you to.\n" +
-        "Do not propose or execute tool actions unless explicitly asked.",
+        piperSystemPrompt() +
+        "\nReturn STRICT JSON ONLY, no markdown, no extra text.\n" +
+        "Schema:\n" +
+        '{ "text": string, "emotion": "neutral"|"warm"|"amused"|"confident"|"serious"|"concerned"|"excited"|"apologetic"|"dry", "intensity": number }\n' +
+        "Rules:\n" +
+        "- text: your actual reply to the user.\n" +
+        "- emotion: pick one that matches your delivery.\n" +
+        "- intensity: 0.0 to 1.0 (0.4 is normal).\n" +
+        "- Be witty/sharp only when appropriate; never rude.\n" +
+        '- Use "sir" at most once.\n',
     },
     { role: "user", content: String(message || "") },
   ];
+}
+
+function safeEmotion(obj) {
+  const e = String(obj?.emotion || "neutral").toLowerCase();
+  const allowed = new Set([
+    "neutral",
+    "warm",
+    "amused",
+    "confident",
+    "serious",
+    "concerned",
+    "excited",
+    "apologetic",
+    "dry",
+  ]);
+  return allowed.has(e) ? e : "neutral";
+}
+
+function safeIntensity(obj) {
+  const n = Number(obj?.intensity);
+  if (!Number.isFinite(n)) return 0.4;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+function parsePiperJson(content) {
+  const obj = extractFirstJsonObject(content);
+  if (!obj || typeof obj !== "object") return null;
+  if (typeof obj.text !== "string" || !obj.text.trim()) return null;
+  return {
+    text: obj.text.trim(),
+    emotion: safeEmotion(obj),
+    intensity: safeIntensity(obj),
+  };
 }
 
 function looksLikeTitleRequest(message) {
@@ -52,15 +91,19 @@ function handleTitleRequest(message) {
   const desired = desiredTitle(message);
   if (!desired) {
     return {
-      reply: enforceJarvis("What title would you like, sir? Put it in quotes."),
+      reply: enforcePiper("What title would you like, sir? Put it in quotes."),
+      emotion: "neutral",
+      intensity: 0.4,
       proposed: [],
     };
   }
   const id = newId();
   return {
-    reply: enforceJarvis(
+    reply: enforcePiper(
       `Queued for approval, sir. I will set the page title to "${desired}".`
     ),
+    emotion: "confident",
+    intensity: 0.5,
     proposed: [
       { id, type: "set_html_title", title: `Set page title to "${desired}"` },
     ],
@@ -77,14 +120,12 @@ export function chatRoutes() {
       const sid = sessionId || "default";
 
       const allowActions = !!req?.app?.locals?.allowActions;
-
       const s = sessions.get(sid) || {
         turns: 0,
         lastIntent: "chat",
         lastMsg: "",
       };
 
-      // Special-case: simple title request (kept as-is)
       if (looksLikeTitleRequest(msg)) {
         const out = handleTitleRequest(msg);
         s.turns += 1;
@@ -94,16 +135,27 @@ export function chatRoutes() {
         return res.json(out);
       }
 
-      // If actions are not allowed, do pure chat (no addAction anywhere).
+      // If actions are not allowed, do pure chat.
       if (!allowActions) {
-        const reply = await callOllama(buildSimpleChatMessages(msg), {
+        const raw = await callOllama(buildPiperJsonChatMessages(msg), {
           model: process.env.OLLAMA_MODEL || "llama3.1",
+          format: "json",
         });
+
+        const parsed = parsePiperJson(raw);
+        const replyText = enforcePiper(parsed?.text || raw || "…");
+
         s.turns += 1;
         s.lastIntent = "chat";
         s.lastMsg = msg;
         sessions.set(sid, s);
-        return res.json({ reply: enforceJarvis(reply || "…"), proposed: [] });
+
+        return res.json({
+          reply: replyText,
+          emotion: parsed?.emotion || "neutral",
+          intensity: parsed?.intensity ?? 0.4,
+          proposed: [],
+        });
       }
 
       const triage = await triageNeedsPlanner({
@@ -113,14 +165,25 @@ export function chatRoutes() {
 
       // CHAT
       if (triage.mode === "chat") {
-        const reply = await callOllama(buildSimpleChatMessages(msg), {
+        const raw = await callOllama(buildPiperJsonChatMessages(msg), {
           model: process.env.OLLAMA_MODEL || "llama3.1",
+          format: "json",
         });
+
+        const parsed = parsePiperJson(raw);
+        const replyText = enforcePiper(parsed?.text || raw || "…");
+
         s.turns += 1;
         s.lastIntent = "chat";
         s.lastMsg = msg;
         sessions.set(sid, s);
-        return res.json({ reply: enforceJarvis(reply || "…"), proposed: [] });
+
+        return res.json({
+          reply: replyText,
+          emotion: parsed?.emotion || "neutral",
+          intensity: parsed?.intensity ?? 0.4,
+          proposed: [],
+        });
       }
 
       // CHANGE / PLAN
@@ -134,7 +197,6 @@ export function chatRoutes() {
 
       const compiled = compilePlanToActions(planned, snapshot);
 
-      // Store actions for UI approval queue
       const proposed = [];
       for (const a of compiled.actions || []) {
         const id = addAction(a);
@@ -146,17 +208,20 @@ export function chatRoutes() {
       s.lastMsg = msg;
       sessions.set(sid, s);
 
+      // For planner replies, we keep emotion neutral unless you want it there too later.
       return res.json({
-        reply: enforceJarvis(planned.reply || "Understood, sir."),
+        reply: enforcePiper(planned.reply || "Understood, sir."),
+        emotion: "neutral",
+        intensity: 0.4,
         proposed,
       });
     } catch (e) {
-      return res
-        .status(500)
-        .json({
-          reply: enforceJarvis("Something went wrong, sir."),
-          error: String(e?.message || e),
-        });
+      return res.status(500).json({
+        reply: enforcePiper("Something went wrong, sir."),
+        emotion: "concerned",
+        intensity: 0.5,
+        error: String(e?.message || e),
+      });
     }
   });
 
