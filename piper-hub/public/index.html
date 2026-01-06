@@ -489,8 +489,9 @@ async function refreshActions(force){
 async function sendToChat(text){
   return await api("/chat", {
     sessionId,
-    message: text,            // ✅ backend expects "message"
-    readOnly: readOnly.checked // ✅ backend reads this too
+    message: text,
+    readOnly: readOnly.checked,
+    userInitiated: true,
   });
 }
 
