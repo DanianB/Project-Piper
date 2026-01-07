@@ -1,5 +1,22 @@
 [
   {
+    "id": "1939863d-0498-4b69-9d46-f31076dcbeb9",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested restart",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767752041643,
+    "updatedAt": 1767752048071,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
     "id": "5b3bd996-3779-4b4b-96e3-3ab29b42e937",
     "type": "restart_piper",
     "title": "Restart Piper",

@@ -1,14 +1,14 @@
 {
   "version": 1,
   "createdAt": 1767697124060,
-  "updatedAt": 1767713167015,
+  "updatedAt": 1767758016251,
   "opinions": {
     "topic:the color red": {
-      "score": -0.2549705,
+      "score": 0.04502950000000003,
       "stance": "mixed",
       "rationale": "It attracts the wrong kind of complexity.",
       "createdAt": 1767697189270,
-      "updatedAt": 1767709614360
+      "updatedAt": 1767757125836
     },
     "topic:neon green ui": {
       "score": 0.09033149999999995,
@@ -23,10 +23,45 @@
       "rationale": "It tends to do what it says on the tin.",
       "createdAt": 1767712421904,
       "updatedAt": 1767712421904
+    },
+    "topic:the material of glass": {
+      "score": -0.13829250000000004,
+      "stance": "I’m torn.",
+      "rationale": "It shines in the right context and fights you in the wrong one.",
+      "createdAt": 1767750861877,
+      "updatedAt": 1767750861877
+    },
+    "topic:brenton": {
+      "score": 0.15387299999999993,
+      "stance": "I’m torn.",
+      "rationale": "It shines in the right context and fights you in the wrong one.",
+      "createdAt": 1767756811542,
+      "updatedAt": 1767756811542
+    },
+    "topic:jayden": {
+      "score": 0.010597499999999982,
+      "stance": "I’m torn.",
+      "rationale": "It can be brilliant or obnoxious, depending on execution.",
+      "createdAt": 1767757593732,
+      "updatedAt": 1767757593732
+    },
+    "topic:me": {
+      "score": 0.36290400000000006,
+      "stance": "I’m fond of it.",
+      "rationale": "It tends to do what it says on the tin.",
+      "createdAt": 1767757665278,
+      "updatedAt": 1767757665278
+    },
+    "topic:them": {
+      "score": 0.09865800000000008,
+      "stance": "I’m neutral on it—context matters.",
+      "rationale": "It’s powerful, but easy to overdo.",
+      "createdAt": 1767757802879,
+      "updatedAt": 1767757802879
     }
   },
   "prefs": {},
-  "moodBaseline": 0.08299999999999987,
+  "moodBaseline": 0.2079999999999998,
   "frustration": {
     "llm": 0,
     "tts": 0,

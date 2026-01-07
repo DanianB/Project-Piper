@@ -15,6 +15,7 @@ import {
   getAffectSnapshot,
   getOrCreateOpinion,
   recordEvent,
+  recordSocialSignal,
   pushConversationTurn,
   getConversationMessages,
   setLastOpinionKey,
@@ -24,6 +25,16 @@ import {
   shouldSelfReportExplicitly,
   markSelfReportUsed,
 } from "../services/mind.js";
+
+import {
+  classifyUserMessage,
+  isOpinionQuery as isOpinionQuery2,
+  extractOpinionTopic as extractOpinionTopic2,
+  extractReasonClause as extractReasonClause2,
+  isOpinionWorthyTopic,
+  parseUserPreferenceSignal as parseUserPreferenceSignal2,
+  parsePersuasionAttempt,
+} from "../services/mind_classifier.js";
 
 const sessions = new Map();
 
@@ -56,6 +67,32 @@ function isOpinionQuery(msg) {
     m.startsWith("do you love ")
   );
 }
+
+function deterministicOpinionReply(topic, opinion) {
+  const t = String(topic || "").trim();
+  const score = Number(opinion?.score ?? 0);
+  const stance = String(opinion?.stance || "mixed");
+  const rationale = String(opinion?.rationale || "").trim();
+
+  const stanceLine =
+    stance === "like" ? "warmly in favor" :
+    stance === "dislike" ? "mildly against" :
+    "mixed / neutral";
+
+  let why = "";
+  if (rationale) {
+    why = ` Reasoning: ${rationale}`;
+  } else {
+    // fallback, keep it short
+    if (score > 0.35) why = " It reads bold and decisive when used as an accent.";
+    else if (score < -0.35) why = " It can get loud fast if it dominates the palette.";
+    else why = " Context matters — accent vs. wall-to-wall.";
+  }
+
+  // Piper speaks as an assistant with an AI core: feelings + opinions are allowed.
+  return `On ${t}, I feel ${stanceLine}.` + why;
+}
+
 
 function extractOpinionTopic(msg) {
   const s = String(msg || "").trim();
@@ -414,12 +451,31 @@ export function chatRoutes() {
         // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
         let resolvedTopic = null;
 
-        if (isOpinionQuery(msg)) {
-          resolvedTopic = extractOpinionTopic(msg);
+        // Classify the user message for mood/opinion gating.
+        const cls = classifyUserMessage(msg);
+        if (cls?.kind === "SOCIAL_RITUAL" || cls?.kind === "UTILITY") {
+          console.log("[mind] no-affect", { sid, kind: cls.kind, text: msg });
+        } else if (cls?.kind === "PRAISE" || cls?.kind === "INSULT") {
+          const nextAffect = recordSocialSignal(sid, cls.kind, 1.0);
+          console.log("[mind]", cls.kind.toLowerCase(), { sid, mood: nextAffect.mood, text: msg });
+        }
+
+        if (isOpinionQuery2(msg)) {
+          resolvedTopic = extractOpinionTopic2(msg);
         } else if (isLikelyPreferenceFollowup(msg)) {
           const lastKey = getLastOpinionKey(sid);
           // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
           if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
+        }
+
+        // Persuasion follow-up that refers to the last opinion topic without restating it
+        // e.g. "Are you sure? it's your UI theme color."
+        if (!resolvedTopic) {
+          const persuasion = parsePersuasionAttempt(msg);
+          if (persuasion?.signal) {
+            const lastKey = getLastOpinionKey(sid);
+            if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
+          }
         }
 
         if (resolvedTopic) {
@@ -428,9 +484,45 @@ export function chatRoutes() {
           setLastOpinionKey(sid, opinion?.key || null);
         }
 
+        // Deterministic opinion query response (prevents "I can't have opinions" drift from the LLM)
+        if (isOpinionQuery2(msg) && resolvedTopic && isOpinionWorthyTopic(resolvedTopic) && opinion) {
+          const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+          let reply = deterministicOpinionReply(resolvedTopic, opinion);
+
+          // If the user is actively persuading in the same turn (rare), apply the nudge.
+          const persuasion = parsePersuasionAttempt(msg);
+          const reasonNow = extractReasonClause2(msg);
+          if (persuasion?.signal) {
+            const shifted = adjustOpinionTowardUser(resolvedTopic, persuasion.signal, reasonNow);
+            if (shifted) {
+              opinion = shifted;
+              opinionScore = shifted.score;
+              reply = deterministicOpinionReply(resolvedTopic, opinion);
+              console.log("[mind] persuasion", { sid, topic: resolvedTopic, signal: persuasion.signal, reason: reasonNow });
+            }
+          }
+
+          reply = maybeAddExplicitSelfReport(enforcePiper(reply), picked.emotion, picked.intensity);
+          console.log("[chat] chat-only opinion", {
+            sid,
+            ms: Date.now() - started,
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel,
+            authorityOverride,
+            opinionKey: opinion?.key || null,
+          });
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+          recordEvent(sid, "chat_deterministic", { kind: "opinion_query", topic: resolvedTopic });
+          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        }
+
         // If the user expresses a preference about the last topic, allow Piper to shift slightly.
-        const pref = parseUserPreferenceSignal(msg);
-        const reason = extractReasonClause(msg);
+        const pref = parseUserPreferenceSignal2(msg);
+        const reason = extractReasonClause2(msg);
         if (pref && resolvedTopic && opinion) {
           const shifted = adjustOpinionTowardUser(resolvedTopic, pref.signal, reason);
           if (shifted) {
@@ -479,6 +571,51 @@ export function chatRoutes() {
           pushConversationTurn(sid, "assistant", reply);
           recordEvent(sid, "chat_deterministic", { kind: "pref_followup", topic });
           return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        }
+
+        // Deterministic opinion answers (prevents "I can't have opinions" leakage)
+        if (resolvedTopic && isOpinionQuery2(msg) && isOpinionWorthyTopic(resolvedTopic) && opinion) {
+          const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+          let reply = enforcePiper(deterministicOpinionReply(resolvedTopic, opinion));
+          reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+          console.log("[chat] chat-only opinion", {
+            sid,
+            ms: Date.now() - started,
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            disagreeLevel,
+            authorityOverride,
+            opinionKey: opinion?.key || null,
+          });
+          setLastIntent(sid, "chat", msg);
+          pushConversationTurn(sid, "assistant", reply);
+          recordEvent(sid, "chat_deterministic", { kind: "opinion_query", topic: resolvedTopic });
+          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        }
+
+        // Persuasion attempts about the last topic ("you should like it because...")
+        const persu = parsePersuasionAttempt(msg);
+        if (persu && !pref) {
+          const lastKey = getLastOpinionKey(sid);
+          const lastTopic = lastKey && lastKey.startsWith("topic:") ? lastKey.slice(6) : null;
+          const topic = lastTopic || resolvedTopic;
+          if (topic) {
+            const why = extractReasonClause2(msg);
+            const shifted = adjustOpinionTowardUser(topic, persu.signal, why);
+            if (shifted) {
+              const picked = pickEmotion({ msg, affect, opinionScore: shifted.score, disagreeLevel, authorityOverride });
+              let reply = enforcePiper(
+                `Fair point. On ${topic}, I'm shifting slightly in your direction — ${shifted.stance === "like" ? "more favorable" : "more cautious"}.` +
+                  (why ? ` Reason noted: ${why}` : "")
+              );
+              reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+              console.log("[mind] persuasion", { sid, topic, signal: persu.signal, reason: why });
+              pushConversationTurn(sid, "assistant", reply);
+              return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+            }
+          }
         }
 
         const raw = await callOllama(buildChatMessages({ userMsg: msg, affect, disagreeLevel, authorityOverride, opinion, history: getConversationMessages(sid), lastTopic: getLastOpinionKey(sid) }), {

@@ -174,6 +174,32 @@ const CHATTERBOX_PROMPT_WAV = process.env.CHATTERBOX_PROMPT_WAV || "";
 
 const TMP_CHATTERBOX_WAV = path.join(TMP_DIR, "chatterbox_out.wav");
 
+// Chatterbox (python) has occasionally thrown internal errors when fed certain
+// unicode punctuation / emoji on some Windows setups. Keep this conservative:
+// preserve meaning, but normalize to a mostly-ASCII surface form.
+function sanitizeForChatterbox(text) {
+  let s = String(text || "");
+  if (!s) return s;
+
+  // Normalize common typographic punctuation.
+  s = s
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2013\u2014\u2212]/g, "-")
+    .replace(/\u2026/g, "...")
+    .replace(/\u00A0/g, " ");
+
+  // Strip remaining non-ASCII chars (emoji etc.) rather than risk server 500.
+  // Keep whitespace tidy.
+  s = s
+    .normalize("NFKD")
+    .replace(/[^\x00-\x7F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return s;
+}
+
 const HEALTH_CACHE_MS = Number(
   process.env.CHATTERBOX_HEALTH_CACHE_MS || "2000"
 );
@@ -420,14 +446,17 @@ async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
   const emotion = meta?.emotion ?? "neutral";
   const intensity = meta?.intensity ?? 0.4;
 
+  // See note in sanitizeForChatterbox().
+  const safeText = sanitizeForChatterbox(text);
+
   const tuned = emotionToChatterboxParams(cb, emotion, intensity);
 
   const endpoint = `${CHATTERBOX_URL}/audio/speech`;
 
-  const max_new_tokens = Math.trunc(chooseMaxNewTokens(text));
+  const max_new_tokens = Math.trunc(chooseMaxNewTokens(safeText));
 
   const basePayload = {
-    input: String(text || ""),
+    input: String(safeText || ""),
     voice: String(voiceId || "default"),
     max_new_tokens,
     ...(CHATTERBOX_PROMPT_WAV ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV } : {}),
@@ -447,7 +476,7 @@ async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
     if (msg.includes("Errno 22") || msg.includes("Invalid argument")) {
       const retryTokens = Math.trunc(Math.max(max_new_tokens * 2, 260));
       const fallbackPayload = {
-        input: String(text || ""),
+        input: String(safeText || ""),
         voice: String(voiceId || "default"),
         max_new_tokens: retryTokens,
         ...(CHATTERBOX_PROMPT_WAV ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV } : {}),
@@ -504,6 +533,10 @@ export function speakQueued(text, meta = {}) {
 
     const spoken = makeSpoken(text, emotion, intensity);
 
+    // Chatterbox can be sensitive to unicode punctuation on some setups.
+    // We only sanitize for chatterbox; piper.exe is fine with unicode input.
+    const spokenForChatterbox = sanitizeForChatterbox(spoken);
+
     console.log("[tts] speakQueued", {
       provider,
       voice: cfg.voice,
@@ -525,15 +558,30 @@ export function speakQueued(text, meta = {}) {
         ),
         voice: cfg.voice || "default",
       });
-      wavPath = await runChatterboxToWav(spoken, cfg.voice || "default", {
-        emotion,
-        intensity,
-      });
+      try {
+        wavPath = await runChatterboxToWav(spokenForChatterbox, cfg.voice || "default", {
+          emotion,
+          intensity,
+        });
+      } catch (e) {
+        const msg = String(e?.message || e);
+        console.warn("[tts] chatterbox failed; falling back to piper.exe", { error: msg.slice(0, 600) });
+
+        // Best-effort fallback to piper.exe if installed.
+        // This prevents the UI from breaking when Chatterbox throws a 500.
+        try {
+          wavPath = await runPiperToWav(spoken, cfg?.fallbackVoice || "amy");
+        } catch (e2) {
+          console.warn("[tts] piper fallback also failed", { error: String(e2?.message || e2).slice(0, 600) });
+          // Fail silently: chat still works, and UI won't hard error.
+          return;
+        }
+      }
     } else {
       wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
     }
 
-    await playWavBlocking(wavPath);
+    if (wavPath) await playWavBlocking(wavPath);
   });
 
   return ttsQueue;

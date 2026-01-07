@@ -291,6 +291,29 @@ export function recordEvent(sessionId, type, detail = {}) {
   return { mind, session: s, detail, at: now };
 }
 
+// ---------------- Social signal → mood ----------------
+// These are intentionally stronger than normal drift, and are NOT triggered by
+// social rituals/utility queries (handled by the classifier).
+export function recordSocialSignal(sessionId, kind, strength = 1.0) {
+  const mind = getMind();
+  const s = getSessionState(sessionId);
+  const k = clamp(Number(strength) || 1.0, 0, 1);
+
+  const t = String(kind || "").toUpperCase();
+  if (t === "PRAISE") {
+    s.sessionMood = clamp(s.sessionMood + 0.18 * k, -1, 1);
+    mind.moodBaseline = clamp(mind.moodBaseline + 0.03 * k, -1, 1);
+  } else if (t === "INSULT") {
+    s.sessionMood = clamp(s.sessionMood - 0.22 * k, -1, 1);
+    mind.moodBaseline = clamp(mind.moodBaseline - 0.04 * k, -1, 1);
+  } else {
+    return getAffectSnapshot(sessionId);
+  }
+
+  saveMind();
+  return getAffectSnapshot(sessionId);
+}
+
 function normalizeTopic(raw) {
   return String(raw || "")
     .trim()

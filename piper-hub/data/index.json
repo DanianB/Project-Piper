@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-06T15:24:42.066Z",
+  "generatedAt": "2026-01-07T03:46:24.188Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -1925,18 +1925,35 @@
       },
       {
         "file": "src/services/mind.js",
+        "name": "recordSocialSignal",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 297,
+            "column": 0,
+            "index": 8921
+          },
+          "end": {
+            "line": 315,
+            "column": 1,
+            "index": 9576
+          }
+        }
+      },
+      {
+        "file": "src/services/mind.js",
         "name": "getOrCreateOpinion",
         "kind": "function",
         "loc": {
           "start": {
-            "line": 370,
+            "line": 393,
             "column": 0,
-            "index": 10778
+            "index": 11636
           },
           "end": {
-            "line": 394,
+            "line": 417,
             "column": 1,
-            "index": 11377
+            "index": 12235
           }
         }
       },
@@ -1946,14 +1963,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 396,
+            "line": 419,
             "column": 0,
-            "index": 11379
+            "index": 12237
           },
           "end": {
-            "line": 403,
+            "line": 426,
             "column": 1,
-            "index": 11616
+            "index": 12474
           }
         }
       },
@@ -1963,14 +1980,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 405,
+            "line": 428,
             "column": 0,
-            "index": 11618
+            "index": 12476
           },
           "end": {
-            "line": 421,
+            "line": 444,
             "column": 1,
-            "index": 12093
+            "index": 12951
           }
         }
       },
@@ -1980,14 +1997,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 423,
+            "line": 446,
             "column": 0,
-            "index": 12095
+            "index": 12953
           },
           "end": {
-            "line": 427,
+            "line": 450,
             "column": 1,
-            "index": 12252
+            "index": 13110
           }
         }
       },
@@ -1997,14 +2014,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 429,
+            "line": 452,
             "column": 0,
-            "index": 12254
+            "index": 13112
           },
           "end": {
-            "line": 433,
+            "line": 456,
             "column": 1,
-            "index": 12367
+            "index": 13225
           }
         }
       },
@@ -2014,14 +2031,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 435,
+            "line": 458,
             "column": 0,
-            "index": 12369
+            "index": 13227
           },
           "end": {
-            "line": 456,
+            "line": 479,
             "column": 1,
-            "index": 12967
+            "index": 13825
           }
         }
       },
@@ -2031,14 +2048,133 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 458,
+            "line": 481,
             "column": 0,
-            "index": 12969
+            "index": 13827
           },
           "end": {
-            "line": 468,
+            "line": 491,
             "column": 1,
-            "index": 13332
+            "index": 14190
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "classifyUserMessage",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 280
+          },
+          "end": {
+            "line": 46,
+            "column": 1,
+            "index": 1547
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "isOpinionQuery",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 48,
+            "column": 0,
+            "index": 1549
+          },
+          "end": {
+            "line": 58,
+            "column": 1,
+            "index": 1858
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "extractOpinionTopic",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 60,
+            "column": 0,
+            "index": 1860
+          },
+          "end": {
+            "line": 71,
+            "column": 1,
+            "index": 2342
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "extractReasonClause",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 73,
+            "column": 0,
+            "index": 2344
+          },
+          "end": {
+            "line": 77,
+            "column": 1,
+            "index": 2541
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "isOpinionWorthyTopic",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 79,
+            "column": 0,
+            "index": 2543
+          },
+          "end": {
+            "line": 87,
+            "column": 1,
+            "index": 2920
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "parseUserPreferenceSignal",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 89,
+            "column": 0,
+            "index": 2922
+          },
+          "end": {
+            "line": 98,
+            "column": 1,
+            "index": 3556
+          }
+        }
+      },
+      {
+        "file": "src/services/mind_classifier.js",
+        "name": "parsePersuasionAttempt",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 100,
+            "column": 0,
+            "index": 3558
+          },
+          "end": {
+            "line": 111,
+            "column": 1,
+            "index": 4131
           }
         }
       },
@@ -2121,9 +2257,9 @@
             "index": 756
           },
           "end": {
-            "line": 49,
+            "line": 54,
             "column": 1,
-            "index": 1366
+            "index": 1920
           }
         }
       },
@@ -2133,14 +2269,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 51,
+            "line": 56,
             "column": 0,
-            "index": 1368
+            "index": 1922
           },
           "end": {
-            "line": 62,
+            "line": 123,
             "column": 1,
-            "index": 1686
+            "index": 5840
           }
         }
       },
@@ -2150,14 +2286,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 68,
+            "line": 129,
             "column": 0,
-            "index": 1790
+            "index": 5944
           },
           "end": {
-            "line": 138,
+            "line": 199,
             "column": 1,
-            "index": 3542
+            "index": 7696
           }
         }
       },
@@ -2167,14 +2303,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 140,
+            "line": 201,
             "column": 0,
-            "index": 3544
+            "index": 7698
           },
           "end": {
-            "line": 157,
+            "line": 218,
             "column": 1,
-            "index": 4017
+            "index": 8171
           }
         }
       },
@@ -2235,14 +2371,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 261,
+            "line": 287,
             "column": 0,
-            "index": 7744
+            "index": 8544
           },
           "end": {
-            "line": 296,
+            "line": 322,
             "column": 1,
-            "index": 8675
+            "index": 9475
           }
         }
       },
@@ -2252,14 +2388,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 298,
+            "line": 324,
             "column": 0,
-            "index": 8677
+            "index": 9477
           },
           "end": {
-            "line": 306,
+            "line": 332,
             "column": 1,
-            "index": 8992
+            "index": 9792
           }
         }
       },
@@ -2269,14 +2405,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 483,
+            "line": 512,
             "column": 0,
-            "index": 13869
+            "index": 14772
           },
           "end": {
-            "line": 493,
+            "line": 522,
             "column": 1,
-            "index": 14187
+            "index": 15090
           }
         }
       },
@@ -2286,14 +2422,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 497,
+            "line": 526,
             "column": 0,
-            "index": 14224
+            "index": 15127
           },
           "end": {
-            "line": 540,
+            "line": 588,
             "column": 1,
-            "index": 15347
+            "index": 17153
           }
         }
       },
@@ -2337,14 +2473,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 323,
+            "line": 360,
             "column": 0,
-            "index": 10768
+            "index": 11982
           },
           "end": {
-            "line": 718,
+            "line": 855,
             "column": 1,
-            "index": 26011
+            "index": 32559
           }
         }
       },
@@ -3670,14 +3806,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 326,
+            "line": 363,
             "column": 2,
-            "index": 10824
+            "index": 12038
           },
           "end": {
-            "line": 715,
+            "line": 852,
             "column": 4,
-            "index": 25995
+            "index": 32543
           }
         }
       },
@@ -4865,9 +5001,25 @@
             "index": 499
           },
           "end": {
-            "line": 26,
+            "line": 27,
             "column": 29,
-            "index": 796
+            "index": 818
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/mind_classifier.js",
+        "loc": {
+          "start": {
+            "line": 29,
+            "column": 0,
+            "index": 820
+          },
+          "end": {
+            "line": 37,
+            "column": 40,
+            "index": 1132
           }
         }
       },
