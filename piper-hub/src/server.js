@@ -7,6 +7,7 @@ import { systemRoutes } from "./routes/system.js";
 import { chatRoutes } from "./routes/chat.js";
 import { voiceRoutes } from "./routes/voice.js";
 import { actionRoutes } from "./routes/actions.js";
+import { runlogRoutes } from "./routes/runlog.js";
 import { deviceRoutes } from "./routes/devices.js";
 import { blocksRoutes } from "./routes/blocks.js";
 import { buildCodebaseIndex } from "./indexer/indexer.js";
@@ -22,6 +23,7 @@ app.use(systemRoutes({ port: PORT }));
 app.use(chatRoutes());
 app.use(voiceRoutes());
 app.use(actionRoutes());
+app.use(runlogRoutes());
 app.use(deviceRoutes());
 
 let server;

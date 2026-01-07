@@ -9,6 +9,7 @@ import { buildSnapshot } from "../planner/snapshot.js";
 import { llmRespondAndPlan } from "../planner/planner.js";
 import { compilePlanToActions } from "../planner/compiler.js";
 import { addAction } from "../actions/store.js";
+import { logRunEvent } from "../utils/runlog.js";
 
 import {
   bumpTurn,
@@ -939,15 +940,22 @@ export function chatRoutes() {
           setLastIntent(sid, "change", msg);
 
           console.log("[chat] plan", {
-            sid,
-            ms: Date.now() - started,
-            proposed: 1,
-            mood: getAffectSnapshot(sid).mood,
-            fr: getAffectSnapshot(sid).frustration.total,
-            deterministic: "set_html_title",
-          });
+        sid,
+        ms: Date.now() - started,
+        proposed: proposed.length,
+        mood: affect.mood,
+        fr: affect.frustration.total,
+      });
 
-          const affect = getAffectSnapshot(sid);
+      logRunEvent({
+        kind: "chat_out",
+        sid,
+        ms: Date.now() - started,
+        proposedCount: proposed.length,
+        emotion,
+        intensity,
+      });
+const affect = getAffectSnapshot(sid);
           const picked = pickEmotion({
             msg,
             affect,

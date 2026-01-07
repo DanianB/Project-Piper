@@ -127,7 +127,9 @@ function setHtmlTitleInText(html, title) {
   return html.replace(re, `<title>${t}</title>`);
 }
 
-export async function executeAction(action) {
+export async function executeAction(action, opts = {}) {
+  const dryRun = Boolean(opts?.dryRun);
+
   const type = String(action?.type || "");
   const payload = action?.payload || {};
 
@@ -151,10 +153,12 @@ export async function executeAction(action) {
         };
       }
 
-      const backup = writeBackupForTarget(rel, oldText);
+      const backup = dryRun ? null : writeBackupForTarget(rel, oldText);
 
       ensureDirForFile(abs);
-      fs.writeFileSync(abs, newText, "utf8");
+      if (!dryRun) {
+        fs.writeFileSync(abs, newText, "utf8");
+      }
 
       console.log(
         `[executor] set_html_title ok rel="${rel}" abs="${abs}" title="${desired}"`
@@ -173,10 +177,12 @@ export async function executeAction(action) {
       const oldText = readTextIfExists(abs, "");
       const newText = String(payload.content ?? "");
 
-      const backup = writeBackupForTarget(rel, oldText);
+      const backup = dryRun ? null : writeBackupForTarget(rel, oldText);
 
       ensureDirForFile(abs);
-      fs.writeFileSync(abs, newText, "utf8");
+      if (!dryRun) {
+        fs.writeFileSync(abs, newText, "utf8");
+      }
 
       console.log(
         `[executor] write_file ok rel="${rel}" abs="${abs}" bytes=${Buffer.byteLength(
@@ -227,10 +233,12 @@ export async function executeAction(action) {
         };
       }
 
-      const backup = writeBackupForTarget(rel, oldText);
+      const backup = dryRun ? null : writeBackupForTarget(rel, oldText);
 
       ensureDirForFile(abs);
-      fs.writeFileSync(abs, newText, "utf8");
+      if (!dryRun) {
+        fs.writeFileSync(abs, newText, "utf8");
+      }
 
       console.log(
         `[executor] apply_patch ok rel="${rel}" abs="${abs}" edits=${edits.length}`
@@ -253,7 +261,9 @@ export async function executeAction(action) {
       const rel = String(payload.path || "");
       const abs = safeResolve(rel);
 
-      fs.mkdirSync(abs, { recursive: true });
+      if (!dryRun) {
+        fs.mkdirSync(abs, { recursive: true });
+      }
 
       console.log(`[executor] mkdir ok rel="${rel}" abs="${abs}"`);
       return { ok: true, result: { type, path: rel, abs } };

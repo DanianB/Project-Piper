@@ -60,6 +60,7 @@ export const OFF_FLAG_PATH = path.join(DATA_DIR, "OFF.flag");
 
 export const ACTIONS_FILE = path.join(DATA_DIR, "actions.json");
 export const APPS_FILE = path.join(DATA_DIR, "apps.json");
+export const RUNLOG_FILE = path.join(DATA_DIR, "runlog.jsonl");
 
 /* ---------- Temp audio ---------- */
 export const TMP_PIPER_TEXT = path.join(TMP_DIR, "piper_text.txt");

@@ -12,6 +12,7 @@ import {
 } from "../actions/store.js";
 
 import { executeAction, restoreBackup } from "../actions/executor.js";
+import { logRunEvent } from "../utils/runlog.js";
 
 import {
   isPreviewableType,
@@ -85,6 +86,8 @@ No preview available for <b>${String(action.type)}</b>.
    * ========================= */
   r.post("/action/reject", (req, res) => {
     const { id, note } = req.body || {};
+    logRunEvent({ kind: "action_reject", id, note: note ? String(note).slice(0,200) : "" });
+
     const a = updateAction(id, {
       status: "rejected",
       updatedAt: Date.now(),
@@ -101,7 +104,8 @@ No preview available for <b>${String(action.type)}</b>.
    * ROLLBACK
    * ========================= */
   r.post("/action/rollback", (req, res) => {
-    const { id } = req.body || {};
+    logRunEvent({ kind: "action_rollback", id: (req.body||{}).id, dryRun: Boolean((req.body||{}).dryRun) });
+    const { id, dryRun } = req.body || {};
     const a = getActionById(id);
     if (!a)
       return res.status(404).json({ ok: false, error: "Unknown action id" });
@@ -115,6 +119,10 @@ No preview available for <b>${String(action.type)}</b>.
         return res
           .status(400)
           .json({ ok: false, error: "No rollback info available." });
+
+      if (dryRun) {
+        return res.json({ ok: true, dryRun: true, wouldRestore: { target, backup } });
+      }
 
       restoreBackup(backup, target);
 
@@ -134,7 +142,7 @@ No preview available for <b>${String(action.type)}</b>.
    * APPROVE (EXECUTE + SMART LOOP)
    * ========================= */
   r.post("/action/approve", async (req, res) => {
-    const { id } = req.body || {};
+    const { id, dryRun } = req.body || {};
     const a = getActionById(id);
 
     if (!a)
@@ -147,7 +155,9 @@ No preview available for <b>${String(action.type)}</b>.
 
     console.log(`[executor] execute type="${a.type}" id="${a.id}"`);
 
-    const result = await executeAction(a);
+    logRunEvent({ kind: "action_approve", id: a.id, type: a.type, dryRun: Boolean(dryRun) });
+
+    const result = await executeAction(a, { dryRun: Boolean(dryRun) });
 
     const updated = updateAction(id, {
       result,

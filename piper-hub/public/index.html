@@ -24,6 +24,11 @@
         </label>
 
         <label class="pill">
+          <input id="dryRun" type="checkbox" />
+          <span>Dry-run</span>
+        </label>
+
+        <label class="pill">
           <input id="debugEmotion" type="checkbox" />
           <span>Debug emotion</span>
         </label>
@@ -84,6 +89,16 @@
         </summary>
         <div id="historyList"></div>
       </details>
+
+    <div id="runlog" class="section panel">
+      <details>
+        <summary class="sectionSummary">
+          <span style="font-weight:700">Run Log</span>
+          <span class="hint">Latest events</span>
+        </summary>
+        <div id="runlogList"></div>
+      </details>
+    </div>
     </div>
   </div>
 
@@ -94,11 +109,13 @@ const t = document.getElementById('t');
 const talk = document.getElementById('talk');
 const off = document.getElementById('off');
 const readOnly = document.getElementById('readOnly');
+const dryRun = document.getElementById('dryRun');
 const debugEmotion = document.getElementById('debugEmotion');
 
 const actionsWrap = document.getElementById("actionsWrap");
 const actionsList = document.getElementById("actionsList");
 const historyList = document.getElementById("historyList");
+const runlogList = document.getElementById("runlogList");
 
 // Voice UI
 const voiceBtn = document.getElementById("voiceBtn");
@@ -401,6 +418,37 @@ function remove(node){
   try{ node && node.remove && node.remove(); }catch{}
 }
 
+// ---- Run Log ----
+async function fetchRunLog(){
+  const r = await fetch("/runlog?limit=200", { cache: "no-store" });
+  const j = await r.json().catch(()=>null);
+  if(!(j && j.ok && Array.isArray(j.events))) return [];
+  return j.events;
+}
+
+function renderRunLog(list){
+  if(!runlogList) return;
+  runlogList.innerHTML = "";
+  for(const e of list){
+    const d = document.createElement("div");
+    d.className = "card card-small";
+    const when = fmtTime(e.ts);
+    const kind = esc(String(e.kind||"event"));
+    const meta = esc(JSON.stringify({ ...e, ts: undefined }, null, 2));
+    d.innerHTML = `
+      <h4>
+        <span>${kind}</span>
+        <span class="badge">${when}</span>
+      </h4>
+      <details data-kind="payload">
+        <summary>View details</summary>
+        <pre>${meta}</pre>
+      </details>
+    `;
+    runlogList.appendChild(d);
+  }
+}
+
 // ---- Actions ----
 async function fetchAllActions(){
   const r = await fetch("/actions", { cache: "no-store" });
@@ -456,10 +504,11 @@ function renderPending(pending){
       try{
         approveBtn.disabled = true;
         const note = prompt("Optional note for approval (leave blank for none):") || "";
-        await api("/action/approve",{id:a.id,note});
+        await api("/action/approve",{id:a.id,note,dryRun: Boolean(dryRun && dryRun.checked)});
         add("piper","Approved.");
         await speak("Approved.");
         refreshActions(true);
+refreshRunLog();
       }catch(e){
         alert("Approve failed: "+e);
       }finally{
@@ -475,6 +524,7 @@ function renderPending(pending){
         add("piper","Rejected.");
         await speak("Rejected.");
         refreshActions(true);
+refreshRunLog();
       }catch(e){
         alert("Reject failed: "+e);
       }finally{
@@ -534,11 +584,12 @@ function renderHistory(list){
           const ok = confirm("Rollback this action?");
           if(!ok) return;
 
-          const res = await api("/action/rollback", { id: a.id });
+          const res = await api("/action/rollback", { id: a.id, dryRun: Boolean(dryRun && dryRun.checked) });
           const msg = res && res.ok ? "✅ Rolled back." : "Rollback finished.";
           add("piper", msg);
           await speak(msg);
           refreshActions(true);
+refreshRunLog();
         }catch(e){
           alert("Rollback failed: " + e);
         }finally{
@@ -557,6 +608,15 @@ function signatureForActions(list){
   return list.map(a => `${a.id}:${a.status}:${a.updatedAt||a.createdAt}`).join("|");
 }
 
+async function refreshRunLog(){
+  try{
+    const events = await fetchRunLog();
+    renderRunLog(events);
+  }catch(e){
+    console.warn("refreshRunLog failed:", e);
+  }
+}
+
 async function refreshActions(force){
   try{
     const all = await fetchAllActions();
@@ -567,7 +627,7 @@ async function refreshActions(force){
       .sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0))
       .slice(0, 10);
 
-    const sig = signatureForActions(pending);
+    const sig = signatureForActions(all);
     if(!force && sig === lastSig) return;
     lastSig = sig;
 
@@ -611,12 +671,20 @@ f.onsubmit = async (e) => {
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
 
     if(queued){
+      // Show what was proposed in chat so it is never ambiguous
+      try{
+        const titles = c.proposed.map(p => p.title || p.type).slice(0, 6);
+        const more = c.proposed.length > titles.length ? ` (+${c.proposed.length - titles.length} more)` : "";
+        add("piper", `🧾 Action(s) proposed: ${titles.map(t=>`“${t}”`).join(", ")}${more}`);
+      }catch{}
+
       await speak("Queued for approval.", "confident", 0.45);
     } else {
       await speak(c.reply, c.emotion, c.intensity);
     }
 
     if (queued) refreshActions(true);
+refreshRunLog();
 
   }catch(e){
     remove(thinkingNode);
@@ -712,12 +780,20 @@ talk.onclick = async () => {
 
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
     if(queued){
+      // Show what was proposed in chat so it is never ambiguous
+      try{
+        const titles = c.proposed.map(p => p.title || p.type).slice(0, 6);
+        const more = c.proposed.length > titles.length ? ` (+${c.proposed.length - titles.length} more)` : "";
+        add("piper", `🧾 Action(s) proposed: ${titles.map(t=>`“${t}”`).join(", ")}${more}`);
+      }catch{}
+
       await speak("Queued for approval.", "confident", 0.45);
     } else {
       await speak(c.reply, c.emotion, c.intensity);
     }
 
     if (queued) refreshActions(true);
+refreshRunLog();
 
   }catch(e){
     console.warn("talk flow failed:", e);
@@ -730,6 +806,7 @@ talk.onclick = async () => {
 // Boot
 initVoiceUI();
 refreshActions(true);
+refreshRunLog();
 setInterval(()=>refreshActions(false), 1200);
 </script>
 </body>

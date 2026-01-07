@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-07T07:16:24.151Z",
+  "generatedAt": "2026-01-07T08:14:46.424Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -130,6 +130,29 @@
         "file": "public/index.html",
         "tag": "input",
         "id": "readOnly",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "dryRun",
         "classes": [],
         "text": null
       },
@@ -457,6 +480,55 @@
         "file": "public/index.html",
         "tag": "div",
         "id": "historyList",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "runlog",
+        "classes": [
+          "section",
+          "panel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "details",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "summary",
+        "id": null,
+        "classes": [
+          "sectionSummary"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [
+          "hint"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "runlogList",
         "classes": [],
         "text": null
       },
@@ -3645,6 +3717,40 @@
         }
       },
       {
+        "file": "src/utils/runlog.js",
+        "name": "logRunEvent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 205
+          },
+          "end": {
+            "line": 20,
+            "column": 1,
+            "index": 514
+          }
+        }
+      },
+      {
+        "file": "src/utils/runlog.js",
+        "name": "readRunLog",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 22,
+            "column": 0,
+            "index": 516
+          },
+          "end": {
+            "line": 36,
+            "column": 1,
+            "index": 951
+          }
+        }
+      },
+      {
         "file": "src/services/apps.js",
         "name": "loadApps",
         "kind": "function",
@@ -4483,14 +4589,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 27,
+            "line": 28,
             "column": 0,
-            "index": 656
+            "index": 706
           },
           "end": {
-            "line": 272,
+            "line": 282,
             "column": 1,
-            "index": 7427
+            "index": 7936
           }
         }
       },
@@ -4517,14 +4623,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 347,
+            "line": 414,
             "column": 0,
-            "index": 12276
+            "index": 11896
           },
           "end": {
-            "line": 821,
+            "line": 1099,
             "column": 1,
-            "index": 30953
+            "index": 32867
           }
         }
       },
@@ -4542,6 +4648,23 @@
             "line": 22,
             "column": 1,
             "index": 623
+          }
+        }
+      },
+      {
+        "file": "src/routes/runlog.js",
+        "name": "runlogRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 108
+          },
+          "end": {
+            "line": 15,
+            "column": 1,
+            "index": 343
           }
         }
       },
@@ -4573,9 +4696,9 @@
             "index": 477
           },
           "end": {
-            "line": 99,
+            "line": 117,
             "column": 1,
-            "index": 3187
+            "index": 3439
           }
         }
       },
@@ -5193,18 +5316,35 @@
       },
       {
         "file": "src/config/paths.js",
+        "name": "RUNLOG_FILE",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 63,
+            "column": 0,
+            "index": 2287
+          },
+          "end": {
+            "line": 63,
+            "column": 63,
+            "index": 2350
+          }
+        }
+      },
+      {
+        "file": "src/config/paths.js",
         "name": "TMP_PIPER_TEXT",
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 65,
+            "line": 66,
             "column": 0,
-            "index": 2327
+            "index": 2391
           },
           "end": {
-            "line": 65,
+            "line": 66,
             "column": 67,
-            "index": 2394
+            "index": 2458
           }
         }
       },
@@ -5214,14 +5354,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 66,
+            "line": 67,
             "column": 0,
-            "index": 2395
+            "index": 2459
           },
           "end": {
-            "line": 66,
+            "line": 67,
             "column": 65,
-            "index": 2460
+            "index": 2524
           }
         }
       },
@@ -5231,14 +5371,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 67,
+            "line": 68,
             "column": 0,
-            "index": 2461
+            "index": 2525
           },
           "end": {
-            "line": 67,
+            "line": 68,
             "column": 75,
-            "index": 2536
+            "index": 2600
           }
         }
       },
@@ -5248,14 +5388,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 70,
+            "line": 71,
             "column": 0,
-            "index": 2590
+            "index": 2654
           },
           "end": {
-            "line": 70,
+            "line": 71,
             "column": 39,
-            "index": 2629
+            "index": 2693
           }
         }
       },
@@ -5265,14 +5405,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 71,
+            "line": 72,
             "column": 0,
-            "index": 2630
+            "index": 2694
           },
           "end": {
-            "line": 71,
+            "line": 72,
             "column": 44,
-            "index": 2674
+            "index": 2738
           }
         }
       },
@@ -5284,12 +5424,12 @@
           "start": {
             "line": 87,
             "column": 0,
-            "index": 2357
+            "index": 2271
           },
           "end": {
             "line": 102,
             "column": 1,
-            "index": 2949
+            "index": 2848
           }
         }
       },
@@ -5301,12 +5441,12 @@
           "start": {
             "line": 130,
             "column": 0,
-            "index": 3814
+            "index": 3685
           },
           "end": {
-            "line": 326,
+            "line": 336,
             "column": 1,
-            "index": 9598
+            "index": 9497
           }
         }
       },
@@ -7886,14 +8026,14 @@
         "path": "/shutdown",
         "loc": {
           "start": {
-            "line": 71,
+            "line": 73,
             "column": 0,
-            "index": 1982
+            "index": 2058
           },
           "end": {
-            "line": 77,
+            "line": 79,
             "column": 2,
-            "index": 2190
+            "index": 2266
           }
         }
       },
@@ -8120,14 +8260,14 @@
         "path": "/actions",
         "loc": {
           "start": {
-            "line": 33,
+            "line": 34,
             "column": 2,
-            "index": 797
+            "index": 847
           },
           "end": {
-            "line": 35,
+            "line": 36,
             "column": 3,
-            "index": 883
+            "index": 933
           }
         }
       },
@@ -8138,14 +8278,14 @@
         "path": "/action/preview/:id.json",
         "loc": {
           "start": {
-            "line": 40,
+            "line": 41,
             "column": 2,
-            "index": 973
+            "index": 1023
           },
           "end": {
-            "line": 54,
+            "line": 55,
             "column": 4,
-            "index": 1492
+            "index": 1542
           }
         }
       },
@@ -8156,14 +8296,14 @@
         "path": "/action/preview/:id",
         "loc": {
           "start": {
-            "line": 59,
+            "line": 60,
             "column": 2,
-            "index": 1582
+            "index": 1632
           },
           "end": {
-            "line": 81,
+            "line": 82,
             "column": 4,
-            "index": 2295
+            "index": 2345
           }
         }
       },
@@ -8174,14 +8314,14 @@
         "path": "/action/reject",
         "loc": {
           "start": {
-            "line": 86,
+            "line": 87,
             "column": 2,
-            "index": 2377
+            "index": 2427
           },
           "end": {
-            "line": 98,
+            "line": 101,
             "column": 4,
-            "index": 2728
+            "index": 2872
           }
         }
       },
@@ -8192,14 +8332,14 @@
         "path": "/action/rollback",
         "loc": {
           "start": {
-            "line": 103,
+            "line": 106,
             "column": 2,
-            "index": 2812
+            "index": 2956
           },
           "end": {
-            "line": 131,
+            "line": 139,
             "column": 4,
-            "index": 3607
+            "index": 3984
           }
         }
       },
@@ -8210,14 +8350,14 @@
         "path": "/action/approve",
         "loc": {
           "start": {
-            "line": 136,
+            "line": 144,
             "column": 2,
-            "index": 3713
+            "index": 4090
           },
           "end": {
-            "line": 246,
+            "line": 256,
             "column": 4,
-            "index": 6744
+            "index": 7253
           }
         }
       },
@@ -8228,14 +8368,14 @@
         "path": "/action/add",
         "loc": {
           "start": {
-            "line": 251,
+            "line": 261,
             "column": 2,
-            "index": 6859
+            "index": 7368
           },
           "end": {
-            "line": 269,
+            "line": 279,
             "column": 4,
-            "index": 7411
+            "index": 7920
           }
         }
       },
@@ -8264,14 +8404,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 350,
+            "line": 417,
             "column": 2,
-            "index": 12332
+            "index": 11952
           },
           "end": {
-            "line": 818,
+            "line": 1096,
             "column": 4,
-            "index": 30937
+            "index": 32851
           }
         }
       },
@@ -8308,6 +8448,24 @@
             "line": 19,
             "column": 3,
             "index": 604
+          }
+        }
+      },
+      {
+        "file": "src/routes/runlog.js",
+        "object": "r",
+        "method": "GET",
+        "path": "/runlog",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 2,
+            "index": 166
+          },
+          "end": {
+            "line": 12,
+            "column": 4,
+            "index": 327
           }
         }
       },
@@ -8413,9 +8571,9 @@
             "index": 1415
           },
           "end": {
-            "line": 76,
+            "line": 94,
             "column": 4,
-            "index": 2576
+            "index": 2828
           }
         }
       },
@@ -8426,14 +8584,14 @@
         "path": "/voice/chatterbox/start",
         "loc": {
           "start": {
-            "line": 79,
+            "line": 97,
             "column": 2,
-            "index": 2615
+            "index": 2867
           },
           "end": {
-            "line": 87,
+            "line": 105,
             "column": 4,
-            "index": 2908
+            "index": 3160
           }
         }
       },
@@ -8444,14 +8602,14 @@
         "path": "/voice/chatterbox/status",
         "loc": {
           "start": {
-            "line": 89,
+            "line": 107,
             "column": 2,
-            "index": 2913
+            "index": 3165
           },
           "end": {
-            "line": 96,
+            "line": 114,
             "column": 4,
-            "index": 3171
+            "index": 3423
           }
         }
       },
@@ -9323,7 +9481,7 @@
       },
       {
         "file": "src/server.js",
-        "source": "./routes/devices.js",
+        "source": "./routes/runlog.js",
         "loc": {
           "start": {
             "line": 10,
@@ -9332,8 +9490,24 @@
           },
           "end": {
             "line": 10,
-            "column": 51,
+            "column": 50,
+            "index": 460
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/devices.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
             "index": 461
+          },
+          "end": {
+            "line": 11,
+            "column": 51,
+            "index": 512
           }
         }
       },
@@ -9342,14 +9516,14 @@
         "source": "./routes/blocks.js",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 12,
             "column": 0,
-            "index": 462
+            "index": 513
           },
           "end": {
-            "line": 11,
+            "line": 12,
             "column": 50,
-            "index": 512
+            "index": 563
           }
         }
       },
@@ -9358,14 +9532,14 @@
         "source": "./indexer/indexer.js",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 13,
             "column": 0,
-            "index": 513
+            "index": 564
           },
           "end": {
-            "line": 12,
+            "line": 13,
             "column": 58,
-            "index": 571
+            "index": 622
           }
         }
       },
@@ -9374,14 +9548,14 @@
         "source": "./services/chatterbox_manager.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 14,
             "column": 0,
-            "index": 572
+            "index": 623
           },
           "end": {
-            "line": 13,
+            "line": 14,
             "column": 97,
-            "index": 669
+            "index": 720
           }
         }
       },
@@ -9542,6 +9716,38 @@
             "line": 4,
             "column": 42,
             "index": 112
+          }
+        }
+      },
+      {
+        "file": "src/utils/runlog.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 23
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 43
+          }
+        }
+      },
+      {
+        "file": "src/utils/runlog.js",
+        "source": "../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 44
+          },
+          "end": {
+            "line": 3,
+            "column": 49,
+            "index": 93
           }
         }
       },
@@ -9963,17 +10169,33 @@
       },
       {
         "file": "src/routes/actions.js",
+        "source": "../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 337
+          },
+          "end": {
+            "line": 15,
+            "column": 49,
+            "index": 386
+          }
+        }
+      },
+      {
+        "file": "src/routes/actions.js",
         "source": "../actions/preview.js",
         "loc": {
           "start": {
-            "line": 16,
+            "line": 17,
             "column": 0,
-            "index": 338
+            "index": 388
           },
           "end": {
-            "line": 20,
+            "line": 21,
             "column": 31,
-            "index": 450
+            "index": 500
           }
         }
       },
@@ -9982,14 +10204,14 @@
         "source": "../planner/snapshot.js",
         "loc": {
           "start": {
-            "line": 23,
+            "line": 24,
             "column": 0,
-            "index": 477
+            "index": 527
           },
           "end": {
-            "line": 23,
+            "line": 24,
             "column": 55,
-            "index": 532
+            "index": 582
           }
         }
       },
@@ -9998,14 +10220,14 @@
         "source": "../planner/planner.js",
         "loc": {
           "start": {
-            "line": 24,
+            "line": 25,
             "column": 0,
-            "index": 533
+            "index": 583
           },
           "end": {
-            "line": 24,
+            "line": 25,
             "column": 58,
-            "index": 591
+            "index": 641
           }
         }
       },
@@ -10014,14 +10236,14 @@
         "source": "../planner/compiler.js",
         "loc": {
           "start": {
-            "line": 25,
+            "line": 26,
             "column": 0,
-            "index": 592
+            "index": 642
           },
           "end": {
-            "line": 25,
+            "line": 26,
             "column": 62,
-            "index": 654
+            "index": 704
           }
         }
       },
@@ -10203,17 +10425,33 @@
       },
       {
         "file": "src/routes/chat.js",
+        "source": "../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 498
+          },
+          "end": {
+            "line": 12,
+            "column": 49,
+            "index": 547
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
         "source": "../services/mind.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 14,
             "column": 0,
-            "index": 499
+            "index": 549
           },
           "end": {
-            "line": 26,
+            "line": 27,
             "column": 29,
-            "index": 796
+            "index": 846
           }
         }
       },
@@ -10246,6 +10484,38 @@
             "line": 2,
             "column": 69,
             "index": 104
+          }
+        }
+      },
+      {
+        "file": "src/routes/runlog.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 24
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 57
+          }
+        }
+      },
+      {
+        "file": "src/routes/runlog.js",
+        "source": "../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 58
+          },
+          "end": {
+            "line": 3,
+            "column": 48,
+            "index": 106
           }
         }
       },
@@ -10704,12 +10974,12 @@
           "start": {
             "line": 2,
             "column": 0,
-            "index": 28
+            "index": 27
           },
           "end": {
             "line": 2,
             "column": 20,
-            "index": 48
+            "index": 47
           }
         }
       },
@@ -10720,12 +10990,12 @@
           "start": {
             "line": 3,
             "column": 0,
-            "index": 50
+            "index": 48
           },
           "end": {
             "line": 3,
             "column": 24,
-            "index": 74
+            "index": 72
           }
         }
       },
@@ -10736,12 +11006,12 @@
           "start": {
             "line": 4,
             "column": 0,
-            "index": 76
+            "index": 73
           },
           "end": {
             "line": 4,
             "column": 28,
-            "index": 104
+            "index": 101
           }
         }
       },
@@ -10752,12 +11022,12 @@
           "start": {
             "line": 5,
             "column": 0,
-            "index": 106
+            "index": 102
           },
           "end": {
             "line": 5,
             "column": 47,
-            "index": 153
+            "index": 149
           }
         }
       },
@@ -10768,12 +11038,12 @@
           "start": {
             "line": 6,
             "column": 0,
-            "index": 155
+            "index": 150
           },
           "end": {
             "line": 6,
             "column": 33,
-            "index": 188
+            "index": 183
           }
         }
       },
@@ -10784,12 +11054,12 @@
           "start": {
             "line": 7,
             "column": 0,
-            "index": 190
+            "index": 184
           },
           "end": {
             "line": 7,
             "column": 42,
-            "index": 232
+            "index": 226
           }
         }
       },
@@ -10800,12 +11070,12 @@
           "start": {
             "line": 8,
             "column": 0,
-            "index": 234
+            "index": 227
           },
           "end": {
             "line": 12,
             "column": 25,
-            "index": 327
+            "index": 316
           }
         }
       },
