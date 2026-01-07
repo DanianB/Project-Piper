@@ -401,10 +401,66 @@ function add(who, msg, meta){
   bubble.innerHTML = String(msg).replaceAll('\n','<br>');
 
   if(meta){
-    const m = document.createElement('div');
-    m.className = 'metaLine';
-    m.textContent = meta;
-    bubble.appendChild(m);
+    // String meta (legacy)
+    if(typeof meta === 'string'){
+      const m = document.createElement('div');
+      m.className = 'metaLine';
+      m.textContent = meta;
+      bubble.appendChild(m);
+    }
+
+    // Structured meta (Phase 1.1+)
+    if(typeof meta === 'object' && meta.locationMatches){
+      const lm = meta.locationMatches;
+      const box = document.createElement('div');
+      box.className = 'locMatches';
+
+      const title = document.createElement('div');
+      title.className = 'locMatchesTitle';
+      title.textContent = `Matches for "${lm.query}"`;
+      box.appendChild(title);
+
+      const ul = document.createElement('ul');
+      ul.className = 'locMatchesList';
+      for(const m of (lm.shown || [])){
+        const li = document.createElement('li');
+        li.textContent = `${m.file}:${m.line}:${m.col} ${String(m.preview||'').trim()}`;
+        ul.appendChild(li);
+      }
+      box.appendChild(ul);
+
+      const hidden = Array.isArray(lm.hidden) ? lm.hidden : [];
+      if(hidden.length > 0){
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'btn btn-ghost btn-small';
+        moreBtn.type = 'button';
+        moreBtn.textContent = `Show more (${hidden.length})`;
+
+        const more = document.createElement('div');
+        more.className = 'locMatchesMore';
+        more.style.display = 'none';
+
+        const ul2 = document.createElement('ul');
+        ul2.className = 'locMatchesList';
+        for(const m of hidden){
+          const li = document.createElement('li');
+          li.textContent = `${m.file}:${m.line}:${m.col} ${String(m.preview||'').trim()}`;
+          ul2.appendChild(li);
+        }
+        more.appendChild(ul2);
+
+        moreBtn.addEventListener('click', () => {
+          const open = more.style.display !== 'none';
+          more.style.display = open ? 'none' : 'block';
+          moreBtn.textContent = open ? `Show more (${hidden.length})` : 'Show less';
+        });
+
+        box.appendChild(moreBtn);
+        box.appendChild(more);
+      }
+
+      bubble.appendChild(box);
+    }
   }
 
   row.appendChild(whoEl);
@@ -413,7 +469,6 @@ function add(who, msg, meta){
   log.scrollTop = log.scrollHeight;
   return row;
 }
-
 function remove(node){
   try{ node && node.remove && node.remove(); }catch{}
 }
@@ -662,7 +717,7 @@ f.onsubmit = async (e) => {
     const c = await sendToChat(msg);
     remove(thinkingNode);
 
-    add('piper', c.reply);
+    add('piper', c.reply, c.meta);
 
     if(debugEmotion.checked){
       console.log('[chat] reply meta', { emotion: c.emotion, intensity: c.intensity, meta: c.meta });

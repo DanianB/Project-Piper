@@ -11,6 +11,9 @@ import { compilePlanToActions } from "../planner/compiler.js";
 import { addAction } from "../actions/store.js";
 import { logRunEvent } from "../utils/runlog.js";
 
+import { listTools } from "../tools/index.js";
+import { toolRegistry, ToolRisk } from "../tools/registry.js";
+
 import {
   bumpTurn,
   getAffectSnapshot,
@@ -342,6 +345,55 @@ function handleTitleRequest(msg) {
   };
 }
 
+
+// ---------------- Repo grounding: "where is X defined?" ----------------
+// Deterministic, server-side grounding for repository location/definition questions.
+// This runs in BOTH read-only(chat) and actions-allowed modes so the model cannot dodge inspection.
+function deriveRepoLocationQuery(text) {
+  const s = String(text || "").trim();
+  if (!s) return null;
+
+  // Must be a "where/defined/located" style question.
+  const hasWhereWords = /\b(where|located|define[sd]?|definition|declared?|stored|set)\b/i.test(
+    s
+  );
+  if (!hasWhereWords) return null;
+
+  // Strong code/repo context words (prevents "Where is Kansas?" from triggering).
+  const hasCodeContext =
+    /\b(file|files|repo|repository|code|codebase|source|config|env|variable|constant|function|class|module|import|export|route|path|line)\b/i.test(
+      s
+    );
+
+  // Identifier-like cues.
+  const backtick = s.match(/`([^`]{2,128})`/);
+  const fileLike = s.match(
+    /\b([a-zA-Z0-9_\\/\.-]+\.(?:js|ts|json|py|css|html|md))\b/i
+  );
+  const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
+  const voiceMention = /voice[_\s]?choices/i.test(s);
+  const nameMention = /\byour\s+name\b/i.test(s);
+
+  const identifierLike =
+    Boolean(backtick) ||
+    Boolean(fileLike) ||
+    Boolean(allCaps) ||
+    voiceMention ||
+    nameMention;
+
+  if (!(hasCodeContext || identifierLike)) return null;
+
+  if (backtick?.[1]) return backtick[1];
+  if (fileLike?.[1]) return fileLike[1];
+  if (allCaps?.[0]) return allCaps[0];
+  if (voiceMention) return "VOICE_CHOICES";
+  if (nameMention) return "Piper";
+
+  // Fallback: first plausible identifier token.
+  const maybeIdent = s.match(/\b([A-Za-z][A-Za-z0-9_]{2,64})\b/);
+  return maybeIdent?.[1] || null;
+}
+
 // ---------------- Chat route ----------------
 
 function buildChatMessages({
@@ -434,6 +486,82 @@ export function chatRoutes() {
 
     // Track conversation for coherence
     pushConversationTurn(sid, "user", msg);
+
+    // Phase 1.1: deterministic repo grounding for "where is X defined/located" questions.
+    // This runs before any LLM call, even in read-only chat mode.
+    const locationQuery = deriveRepoLocationQuery(msg);
+    if (
+      locationQuery &&
+      listTools().some((t) => t.id === "repo.searchText") &&
+      toolRegistry.get("repo.searchText")?.risk === ToolRisk.READ_ONLY
+    ) {
+      const ran = await toolRegistry.run({
+        id: "repo.searchText",
+        args: { query: locationQuery, maxResults: 25 },
+        context: { sid },
+      });
+      logRunEvent("tool_call_forced", {
+        sid,
+        tool: "repo.searchText",
+        query: locationQuery,
+        ok: ran.ok,
+      });
+
+      if (ran.ok && Array.isArray(ran.result?.matches)) {
+        const matches = ran.result.matches;
+        const total = matches.length;
+        const affect = getAffectSnapshot(sid);
+
+        if (total === 0) {
+          const reply = enforcePiper(
+            `I searched the repository for "${locationQuery}" and found no matches.`
+          );
+          pushConversationTurn(sid, "assistant", reply);
+          return res.json({
+            reply,
+            emotion: "confident",
+            intensity: 0.45,
+            proposed: [],
+            meta: {
+              affect,
+              locationMatches: { query: locationQuery, total: 0, shown: [], hidden: [] },
+            },
+          });
+        }
+
+        const shown = matches.slice(0, 3);
+        const hidden = matches.slice(3);
+        const fmt = (m) =>
+          `${m.file}:${m.line}:${m.col} ${String(m.preview || "").trim()}`;
+
+        const lines = [];
+        lines.push(
+          `I searched the repository for "${locationQuery}" and found ${total} match(es).`
+        );
+        lines.push("Top results:");
+        for (const m of shown) lines.push(`- ${fmt(m)}`);
+        if (hidden.length > 0)
+          lines.push(`(${hidden.length} more hidden — click “Show more”.)`);
+        lines.push(
+          "If you want, ask me to open one of these files and I can show the exact definition in context."
+        );
+
+        const reply = enforcePiper(lines.join("\n"));
+        pushConversationTurn(sid, "assistant", reply);
+        return res.json({
+          reply,
+          emotion: "confident",
+          intensity: 0.45,
+          proposed: [],
+          meta: {
+            affect,
+            locationMatches: { query: locationQuery, total, shown, hidden },
+          },
+        });
+      }
+      // If the tool failed, continue into normal flow.
+    }
+
 
     // Deterministic title change shortcut
     if (isTitleRequest(msg)) {
@@ -1038,11 +1166,131 @@ const affect = getAffectSnapshot(sid);
         lastIntent: sessions.get(sid)?.lastIntent || "chat",
       });
 
-      const planned = await llmRespondAndPlan({
-        message: msg,
-        snapshot,
-        lastIntent: sessions.get(sid)?.lastIntent || "chat",
+      const availableTools = listTools();
+
+
+      // (Phase 1.1 grounding handled earlier in this handler.)
+
+      let planned = await llmRespondAndPlan({
+  message: msg,
+  snapshot,
+  lastIntent: sessions.get(sid)?.lastIntent || "chat",
+  availableTools,
+  toolResults: preToolResults,
+});
+
+      // If we forced a repo.searchText and found no matches, do not let the model guess.
+      if (locationQuery && Array.isArray(preToolResults) && preToolResults[0]?.ok) {
+        const m = preToolResults[0]?.result?.matches;
+        if (Array.isArray(m) && m.length === 0) {
+          planned = {
+            reply: `I searched the repository for "${locationQuery}" and found no matches. It may be generated at runtime, injected from environment/config outside the repo, or spelled differently. If you tell me where you saw it (file/snippet), I can trace it.`,
+            requiresApproval: false,
+            toolCalls: [],
+            ops: [],
+          };
+        }
+      }
+
+
+// --- Tool pass (read-only tools only) ---
+const toolCalls = Array.isArray(planned?.toolCalls) ? planned.toolCalls : [];
+
+// If the model did not request tools but the user is asking for a code/config location,
+// force a read-only repo search so we don't hallucinate.
+if (toolCalls.length === 0) {
+  const s = String(msg || "");
+  const looksLikeLocationQuestion = (() => {
+  const t = String(s || "");
+  const hasWhereWords = /(\bwhere\b|\blocated\b|\bdefined\b|\bdefinition\b|\bset\b|\bstored\b)/i.test(t);
+  if (!hasWhereWords) return false;
+
+  // If the user mentions an identifier-like token (e.g. VOICE_CHOICES), force grounding.
+  const hasIdentifier = /\b[A-Z][A-Z0-9_]{2,}\b/.test(t) || /\bvoice[_\s]?choices\b/i.test(t);
+
+  // Or they explicitly ask about repo/file/code locations.
+  const hasCodeContext = /(\bfile\b|\bfiles\b|\brepo\b|\bcode\b|\bconstant\b|\bconfig\b|\bsetting\b|\bvariable\b|\bname\b)/i.test(t);
+
+  return hasIdentifier || hasCodeContext;
+})();
+
+  if (looksLikeLocationQuestion && availableTools.some((t) => t.id === "repo.searchText")) {
+    // Prefer explicit identifiers if present: `LIKE_THIS` or ALL_CAPS tokens.
+    const backtick = s.match(/`([^`]{2,64})`/);
+    const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
+    let query = backtick?.[1] || allCaps?.[0] || (String(s).match(/\b[A-Z][A-Z0-9_]{2,}\b/)||[])[0] || null;
+
+    if (!query && /your\s+name/i.test(s)) query = "Piper";
+    if (!query && /voice_choices|voice choices/i.test(s)) query = "VOICE_CHOICES";
+    if (!query) query = s.slice(0, 120);
+
+    toolCalls.push({
+      tool: "repo.searchText",
+      args: { query, maxResults: 20 },
+      why: "User asked where something is defined/located; grounding required.",
+    });
+
+    logRunEvent("tool_call_forced", { sid, tool: "repo.searchText", query });
+  }
+}
+let toolResults = null;
+
+if (toolCalls.length > 0) {
+  const limited = toolCalls.slice(0, 3);
+  toolResults = [];
+
+  for (const tc of limited) {
+    const toolId = String(tc?.tool || "");
+    const args = tc?.args || {};
+    const why = String(tc?.why || "");
+
+    const tool = toolRegistry.get(toolId);
+    if (!tool) {
+      toolResults.push({ tool: toolId, ok: false, error: "Unknown tool", why });
+      continue;
+    }
+
+    // Never auto-run tools with any side effects
+    if (tool.risk !== ToolRisk.READ_ONLY) {
+      toolResults.push({
+        tool: toolId,
+        ok: false,
+        error: `Tool not allowed for auto-run (risk=${tool.risk}).`,
+        why,
       });
+      continue;
+    }
+
+    const ran = await toolRegistry.run({ id: toolId, args, context: { sid } });
+
+    logRunEvent("tool_call", {
+      sid,
+      tool: toolId,
+      ok: ran.ok,
+      why,
+      args,
+      error: ran.ok ? null : ran.error,
+    });
+
+    toolResults.push({
+      tool: toolId,
+      ok: ran.ok,
+      why,
+      args,
+      error: ran.ok ? null : ran.error,
+      result: ran.ok ? ran.result : null,
+    });
+  }
+
+  // Second pass: feed tool results back into planner
+  planned = await llmRespondAndPlan({
+    message: msg,
+    snapshot,
+    lastIntent: sessions.get(sid)?.lastIntent || "chat",
+    availableTools,
+    toolResults,
+  });
+}
 
       const compiled = compilePlanToActions(planned, snapshot);
 

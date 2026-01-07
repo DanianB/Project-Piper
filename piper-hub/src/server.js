@@ -8,6 +8,7 @@ import { chatRoutes } from "./routes/chat.js";
 import { voiceRoutes } from "./routes/voice.js";
 import { actionRoutes } from "./routes/actions.js";
 import { runlogRoutes } from "./routes/runlog.js";
+import { toolsRoutes } from "./routes/tools.js";
 import { deviceRoutes } from "./routes/devices.js";
 import { blocksRoutes } from "./routes/blocks.js";
 import { buildCodebaseIndex } from "./indexer/indexer.js";
@@ -24,6 +25,7 @@ app.use(chatRoutes());
 app.use(voiceRoutes());
 app.use(actionRoutes());
 app.use(runlogRoutes());
+app.use(toolsRoutes());
 app.use(deviceRoutes());
 
 let server;

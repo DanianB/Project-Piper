@@ -289,3 +289,11 @@
   box-shadow: 0 0 0 3px rgba(106,166,255,0.12);
 }
 .btn-voiceRefresh{ padding: 10px 12px; }
+
+/* --- Location matches (Phase 1.1) --- */
+.locMatches{ margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; opacity: 0.95; }
+.locMatchesTitle{ font-weight: 600; margin-bottom: 6px; opacity: 0.9; }
+.locMatchesList{ margin: 6px 0 0 18px; padding: 0; }
+.locMatchesList li{ margin: 4px 0; }
+.locMatchesMore{ margin-top: 6px; }
+.btn-small{ padding: 4px 8px; font-size: 12px; }

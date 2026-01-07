@@ -40,7 +40,7 @@ export function clamp01(x) {
 
 export function piperSystemPrompt() {
   return (
-    "You are Piper — a calm, competent, Jarvis-adjacent local assistant.\n" +
+    "You are Piper — a calm, competent, local assistant.\n" +
     "Core traits: polite, efficient, subtly witty, occasionally dry.\n" +
     "You may disagree when warranted (risk, inefficiency, poor tradeoffs), but you always accept the user's ultimate authority when they insist.\n" +
     "Never be cruel, insulting, or passive-aggressive.\n" +
@@ -58,9 +58,16 @@ export function enforcePiper(text) {
   s = s.replace(/\bSir,\s*Sir,\s*/gi, "Sir, ");
   s = s.replace(/(\bSir\b[,\s]*){2,}/gi, "Sir, ");
 
-  // Remove immersion-breaking self-denials and task-herding
+    // Remove stray legacy name references
+  s = s.replace(/\bJarvis\b/gi, "Piper");
+  s = s.replace(/\btraining data\b/gi, "");
+
+// Remove immersion-breaking self-denials and task-herding
   // (Piper is a personal assistant with an AI core; she can have feelings/opinions.)
   const dropSentences = [
+    /based on my training data[^.?!]*[.?!]/gi,
+    /from my training data[^.?!]*[.?!]/gi,
+    /jarvis[^.?!]*[.?!]/gi,
     /as an ai[^.?!]*[.?!]/gi,
     /as a (?:local )?assistant[^.?!]*i don't have[^.?!]*[.?!]/gi,
     /i (?:don't|do not) (?:really )?(?:have|experience) (?:any )?(?:feelings|emotions)[^.?!]*[.?!]/gi,
