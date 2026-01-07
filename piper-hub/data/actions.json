@@ -1,5 +1,45 @@
 [
   {
+    "id": "2797422f-93c9-4c0a-8d2c-822417b3421a",
+    "type": "set_html_title",
+    "title": "Set page title to \"Piper Hub\"",
+    "reason": "User requested title change",
+    "payload": {
+      "path": "public/index.html",
+      "title": "Piper Hub"
+    },
+    "status": "done",
+    "createdAt": 1767770281515,
+    "updatedAt": 1767770289010,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "set_html_title",
+        "path": "public/index.html",
+        "abs": "E:\\AI\\piper-hub\\public\\index.html",
+        "backup": "E:\\AI\\piper-hub\\data\\backups\\1767770289009_0f89f883ef5e_19b9751f371_public_index.html.bak",
+        "title": "Piper Hub"
+      }
+    }
+  },
+  {
+    "id": "6157ecbe-5189-4bf4-a6a2-f67ccb777c27",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested restart",
+    "payload": {},
+    "status": "done",
+    "createdAt": 1767759800294,
+    "updatedAt": 1767759804124,
+    "result": {
+      "ok": true,
+      "result": {
+        "type": "restart_piper",
+        "restartRequested": true
+      }
+    }
+  },
+  {
     "id": "1939863d-0498-4b69-9d46-f31076dcbeb9",
     "type": "restart_piper",
     "title": "Restart Piper",

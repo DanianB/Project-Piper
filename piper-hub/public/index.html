@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Piper</title>
+  <title>Piper Hub</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -208,6 +208,13 @@ async function speak(text, emotion, intensity){
     // Expect server returns audio/wav bytes
     const ct = (r.headers.get("content-type") || "").toLowerCase();
     if(!ct.includes("audio")){
+      // Server may respond JSON when it plays audio server-side.
+      if(ct.includes("application/json")){
+        const j = await r.json().catch(()=>null);
+        if(j && j.ok) return;
+        console.warn("/voice/speak json response:", j);
+        return;
+      }
       const body = await r.text().catch(()=>"(no body)");
       console.warn("/voice/speak unexpected content-type:", ct, body);
       return;

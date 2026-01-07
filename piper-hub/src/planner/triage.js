@@ -21,6 +21,18 @@ function deterministicTriage(message) {
     return { mode: "chat", action: "none", confidence: 1.0 };
   }
 
+// If the user is asking for a simple choice (e.g. "choose left or right"),
+// that's a chat interaction, not a UI/layout change request.
+// We only treat left/right as "change" when it's clearly about layout/panels/UI.
+if (
+  /\b(?:pick|choose|select)\b/.test(lower) &&
+  /\b(left|right)\b/.test(lower) &&
+  !/\b(ui|layout|panel|dock|css|style|theme|button|tab|window)\b/.test(lower)
+) {
+  return { mode: "chat", action: "none", confidence: 1.0 };
+}
+
+
   // hard commands
   if (/^(restart)\b/.test(lower)) {
     return { mode: "plan", action: "restart", confidence: 1.0 };
@@ -36,9 +48,7 @@ function deterministicTriage(message) {
     "below",
     "under",
     "above",
-    "left",
-    "right",
-    "resize",
+        "resize",
     "layout",
     "ui",
     "css",

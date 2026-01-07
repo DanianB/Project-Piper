@@ -15,7 +15,6 @@ import {
   getAffectSnapshot,
   getOrCreateOpinion,
   recordEvent,
-  recordSocialSignal,
   pushConversationTurn,
   getConversationMessages,
   setLastOpinionKey,
@@ -25,16 +24,6 @@ import {
   shouldSelfReportExplicitly,
   markSelfReportUsed,
 } from "../services/mind.js";
-
-import {
-  classifyUserMessage,
-  isOpinionQuery as isOpinionQuery2,
-  extractOpinionTopic as extractOpinionTopic2,
-  extractReasonClause as extractReasonClause2,
-  isOpinionWorthyTopic,
-  parseUserPreferenceSignal as parseUserPreferenceSignal2,
-  parsePersuasionAttempt,
-} from "../services/mind_classifier.js";
 
 const sessions = new Map();
 
@@ -50,7 +39,9 @@ function shouldAllowActions(reqBody) {
 
 function reqMeta(req) {
   const ua = String(req?.headers?.["user-agent"] || "");
-  const ip = String(req?.headers?.["x-forwarded-for"] || req?.socket?.remoteAddress || "");
+  const ip = String(
+    req?.headers?.["x-forwarded-for"] || req?.socket?.remoteAddress || ""
+  );
   return { ua, ip };
 }
 
@@ -61,6 +52,9 @@ function isOpinionQuery(msg) {
   return (
     m.includes("how do you feel about") ||
     m.includes("what do you think about") ||
+    m.includes("what are your thoughts on") ||
+    m.includes("what were your thoughts on") ||
+    m.includes("your thoughts on") ||
     m.includes("your opinion on") ||
     m.startsWith("do you like ") ||
     m.startsWith("do you hate ") ||
@@ -68,59 +62,62 @@ function isOpinionQuery(msg) {
   );
 }
 
-function deterministicOpinionReply(topic, opinion) {
-  const t = String(topic || "").trim();
-  const score = Number(opinion?.score ?? 0);
-  const stance = String(opinion?.stance || "mixed");
-  const rationale = String(opinion?.rationale || "").trim();
-
-  const stanceLine =
-    stance === "like" ? "warmly in favor" :
-    stance === "dislike" ? "mildly against" :
-    "mixed / neutral";
-
-  let why = "";
-  if (rationale) {
-    why = ` Reasoning: ${rationale}`;
-  } else {
-    // fallback, keep it short
-    if (score > 0.35) why = " It reads bold and decisive when used as an accent.";
-    else if (score < -0.35) why = " It can get loud fast if it dominates the palette.";
-    else why = " Context matters — accent vs. wall-to-wall.";
-  }
-
-  // Piper speaks as an assistant with an AI core: feelings + opinions are allowed.
-  return `On ${t}, I feel ${stanceLine}.` + why;
-}
-
-
 function extractOpinionTopic(msg) {
   const s = String(msg || "").trim();
-  // Patterns: "how do you feel about X", "what do you think about X", "your opinion on X"
+
   let m = s.match(/feel about\s+(.+)$/i);
-  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
   m = s.match(/think about\s+(.+)$/i);
-  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
+  m = s.match(/(?:are|were)\s+your\s+thoughts\s+on\s+(.+)$/i);
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
+  m = s.match(/your\s+thoughts\s+on\s+(.+)$/i);
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
   m = s.match(/opinion on\s+(.+)$/i);
-  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
   m = s.match(/do you (?:like|love|hate)\s+(.+)$/i);
-  if (m && m[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+
   return null;
 }
 
-
 function parseUserPreferenceSignal(msg) {
-  const s = String(msg || "").trim().toLowerCase();
+  const s = String(msg || "")
+    .trim()
+    .toLowerCase();
 
   // strong negatives
-  if (/(i\s+)?(really\s+)?(hate|can'?t\s+stand|despise)\b/.test(s)) return { signal: "dislike", strength: 0.8 };
-  if (/(i\s+)?(don'?t|do not)\s+like\b/.test(s)) return { signal: "dislike", strength: 0.6 };
+  if (/(i\s+)?(really\s+)?(hate|can'?t\s+stand|despise)\b/.test(s))
+    return { signal: "dislike", strength: 0.8 };
+  if (/(i\s+)?(don'?t|do not)\s+like\b/.test(s))
+    return { signal: "dislike", strength: 0.6 };
   if (/\bnot\s+a\s+fan\b/.test(s)) return { signal: "dislike", strength: 0.5 };
 
   // positives
-  if (/(i\s+)?(really\s+)?(love|adore)\b/.test(s)) return { signal: "like", strength: 0.8 };
-  if (/(i\s+)?(like|enjoy)\b/.test(s)) return { signal: "like", strength: 0.55 };
+  if (/(i\s+)?(really\s+)?(love|adore)\b/.test(s))
+    return { signal: "like", strength: 0.8 };
+  if (/(i\s+)?(like|enjoy)\b/.test(s))
+    return { signal: "like", strength: 0.55 };
 
+  // Soft persuasion cue: "it's your theme color / primary UI color" implies a gentle 'like' nudge.
+  if (
+    /(theme\s+color|primary\s+color|ui\s+color)/.test(s) &&
+    /(should|favorite|favourite|ought)/.test(s)
+  ) {
+    return { signal: "like", strength: 0.45 };
+  }
+  if (
+    /(theme\s+color|primary\s+color|ui\s+color)/.test(s) &&
+    !/(don'?t|do not|hate|not\s+a\s+fan)/.test(s)
+  ) {
+    // Even without 'should', treat as a mild positive framing cue.
+    return { signal: "like", strength: 0.3 };
+  }
   return null;
 }
 
@@ -132,11 +129,14 @@ function extractReasonClause(msg) {
 }
 
 function isLikelyPreferenceFollowup(msg) {
-  const s = String(msg || "").trim().toLowerCase();
+  const s = String(msg || "")
+    .trim()
+    .toLowerCase();
   // short preference statements often omit the topic: "I don't like it"
-  return /(don'?t\s+like|do not like|not a fan|hate|love|like it|don'?t like it)/.test(s);
+  return /(don'?t\s+like|do not like|not a fan|hate|love|like it|don'?t like it|theme\s+color|primary\s+color|ui\s+color)/.test(
+    s
+  );
 }
-
 
 // ---------------- Authority / disagreement policy ----------------
 
@@ -185,12 +185,21 @@ function computeDisagreeLevel(msg) {
   return 0;
 }
 
-function maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride) {
+function maybeDeterministicStrongDisagree(
+  msg,
+  disagreeLevel,
+  authorityOverride
+) {
   if (authorityOverride) return null;
   if (disagreeLevel < 2) return null;
 
   const m = String(msg || "").toLowerCase();
-  if (m.includes("rewrite everything") || m.includes("rewrite the whole") || m.includes("delete everything") || m.includes("wipe")) {
+  if (
+    m.includes("rewrite everything") ||
+    m.includes("rewrite the whole") ||
+    m.includes("delete everything") ||
+    m.includes("wipe")
+  ) {
     return (
       "I wouldn’t recommend rewriting everything, sir. It’s high risk, slow, and usually unnecessary.\n\n" +
       "If you tell me what outcome you want, I’ll propose a minimal, approval-gated plan (inspect first, then small changes)."
@@ -210,7 +219,13 @@ function clamp01(x) {
   return n;
 }
 
-function pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride }) {
+function pickEmotion({
+  msg,
+  affect,
+  opinionScore,
+  disagreeLevel,
+  authorityOverride,
+}) {
   const m = String(msg || "").toLowerCase();
   const fr = affect?.frustration?.total || 0;
   const streaks = affect?.frustration?.streaks || {};
@@ -224,11 +239,19 @@ function pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverri
   // Repeated failures / high friction
   if (fr >= 2.2 || (streaks.llmFail || 0) >= 2 || (streaks.ttsFail || 0) >= 2) {
     // Keep within the supported emotion set.
-    return { emotion: "angry", intensity: clamp01(0.65 + 0.12 * Math.min(1, fr / 3)) };
+    return {
+      emotion: "angry",
+      intensity: clamp01(0.65 + 0.12 * Math.min(1, fr / 3)),
+    };
   }
 
   // If user is reporting problems
-  if (m.includes("not working") || m.includes("error") || m.includes("slow") || m.includes("stuck")) {
+  if (
+    m.includes("not working") ||
+    m.includes("error") ||
+    m.includes("slow") ||
+    m.includes("stuck")
+  ) {
     return { emotion: "concerned", intensity: 0.55 };
   }
 
@@ -254,10 +277,16 @@ function maybeAddExplicitSelfReport(text, emotion, intensity) {
   const e = String(emotion || "neutral");
   let line = null;
 
-  if (e === "angry") line = "I’m getting a bit impatient, sir — this should have behaved by now.";
-  else if (e === "concerned") line = "I’m slightly concerned, sir — let’s keep it controlled and inspect first.";
-  else if (e === "sad") line = "That’s… unfortunate. Let’s see what we can salvage.";
-  else if (e === "excited") line = "I’m genuinely pleased with that result, sir.";
+  if (e === "angry")
+    line =
+      "I’m getting a bit impatient, sir — this should have behaved by now.";
+  else if (e === "concerned")
+    line =
+      "I’m slightly concerned, sir — let’s keep it controlled and inspect first.";
+  else if (e === "sad")
+    line = "That’s… unfortunate. Let’s see what we can salvage.";
+  else if (e === "excited")
+    line = "I’m genuinely pleased with that result, sir.";
   else if (e === "confident") line = "I’m satisfied with this direction, sir.";
 
   if (!line) return text;
@@ -269,7 +298,9 @@ function maybeAddExplicitSelfReport(text, emotion, intensity) {
 // ---------------- Deterministic title shortcut ----------------
 
 function isRestartRequest(msg) {
-  const s = String(msg || "").trim().toLowerCase();
+  const s = String(msg || "")
+    .trim()
+    .toLowerCase();
   if (!s) return false;
   // Avoid catching chatterbox-specific requests
   if (s.includes("chatterbox")) return false;
@@ -282,7 +313,9 @@ function isTitleRequest(msg) {
 }
 
 function handleTitleRequest(msg) {
-  const m = String(msg || "").match(/(?:set|change)\s+(?:the\s+)?title\s+to\s+"([^"]+)"/i);
+  const m = String(msg || "").match(
+    /(?:set|change)\s+(?:the\s+)?title\s+to\s+"([^"]+)"/i
+  );
   const desired = String(m?.[1] || "").trim();
   if (!desired) return null;
 
@@ -298,20 +331,41 @@ function handleTitleRequest(msg) {
     updatedAt: Date.now(),
   });
 
-  return { reply: enforcePiper(`Queued for approval, sir. I will set the page title to "${desired}".`), proposed: [{ id, type: "set_html_title", title: `Set page title to "${desired}"` }] };
+  return {
+    reply: enforcePiper(
+      `Queued for approval, sir. I will set the page title to "${desired}".`
+    ),
+    proposed: [
+      { id, type: "set_html_title", title: `Set page title to "${desired}"` },
+    ],
+  };
 }
 
 // ---------------- Chat route ----------------
 
-function buildChatMessages({ userMsg, affect, disagreeLevel, authorityOverride, opinion, history, lastTopic }) {
+function buildChatMessages({
+  userMsg,
+  affect,
+  disagreeLevel,
+  authorityOverride,
+  opinion,
+  history,
+  lastTopic,
+}) {
   const mood = Number(affect?.mood || 0).toFixed(2);
   const fr = Number(affect?.frustration?.total || 0).toFixed(2);
 
   const opinionLine = opinion
-    ? `Known opinion: ${opinion.key} score=${Number(opinion.score ?? 0).toFixed(2)} stance="${opinion.stance}" rationale="${String(opinion.rationale || "").slice(0, 220)}"`
+    ? `Known opinion: ${opinion.key} score=${Number(opinion.score ?? 0).toFixed(
+        2
+      )} stance="${opinion.stance}" rationale="${String(
+        opinion.rationale || ""
+      ).slice(0, 220)}"`
     : "Known opinion: none";
 
-  const topicLine = lastTopic ? `Last topic: ${String(lastTopic).slice(0, 140)}` : "Last topic: none";
+  const topicLine = lastTopic
+    ? `Last topic: ${String(lastTopic).slice(0, 140)}`
+    : "Last topic: none";
 
   const disagreePolicy =
     disagreeLevel === 0
@@ -356,7 +410,6 @@ ${authorityPolicy}`,
   return out;
 }
 
-
 export function chatRoutes() {
   const r = Router();
 
@@ -370,7 +423,12 @@ export function chatRoutes() {
     bumpTurn(sid);
 
     if (!msg) {
-      return res.json({ reply: enforcePiper("Yes, sir?"), emotion: "neutral", intensity: 0.3, proposed: [] });
+      return res.json({
+        reply: enforcePiper("Yes, sir?"),
+        emotion: "neutral",
+        intensity: 0.3,
+        proposed: [],
+      });
     }
 
     // Track conversation for coherence
@@ -381,7 +439,11 @@ export function chatRoutes() {
       const out = handleTitleRequest(msg);
       if (out) {
         setLastIntent(sid, "change", msg);
-        console.log("[chat] title request", { sid, ip: meta.ip, ua: meta.ua.slice(0, 48) });
+        console.log("[chat] title request", {
+          sid,
+          ip: meta.ip,
+          ua: meta.ua.slice(0, 48),
+        });
         return res.json({ ...out, emotion: "confident", intensity: 0.45 });
       }
     }
@@ -391,10 +453,19 @@ export function chatRoutes() {
     // Deterministic restart request
     if (isRestartRequest(msg)) {
       if (!allowActions) {
-        const reply = enforcePiper("I can restart, sir — but actions are disabled in this chat session.");
-        return res.json({ reply, emotion: "serious", intensity: 0.55, proposed: [] });
+        const reply = enforcePiper(
+          "I can restart, sir — but actions are disabled in this chat session."
+        );
+        return res.json({
+          reply,
+          emotion: "serious",
+          intensity: 0.55,
+          proposed: [],
+        });
       }
-      const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + String(Math.random()).slice(2);
+      const id = crypto.randomUUID
+        ? crypto.randomUUID()
+        : String(Date.now()) + "-" + String(Math.random()).slice(2);
       const action = {
         id,
         type: "restart_piper",
@@ -409,10 +480,16 @@ export function chatRoutes() {
       recordEvent(sid, "action_queued", { type: "restart_piper" });
       setLastIntent(sid, "change", msg);
 
-      const reply = enforcePiper("Understood, sir. Restart queued for approval.");
-      return res.json({ reply, emotion: "confident", intensity: 0.5, proposed: [action] });
+      const reply = enforcePiper(
+        "Understood, sir. Restart queued for approval."
+      );
+      return res.json({
+        reply,
+        emotion: "confident",
+        intensity: 0.5,
+        proposed: [action],
+      });
     }
-
 
     // If actions not allowed => pure chat
     if (!allowActions) {
@@ -420,11 +497,19 @@ export function chatRoutes() {
         const disagreeLevel = computeDisagreeLevel(msg);
         const authorityOverride = isAuthorityOverride(msg);
 
-        const strong = maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride);
+        const strong = maybeDeterministicStrongDisagree(
+          msg,
+          disagreeLevel,
+          authorityOverride
+        );
         if (strong) {
           recordEvent(sid, "chat_deterministic", { kind: "strong_disagree" });
           const affect = getAffectSnapshot(sid);
-          const reply = maybeAddExplicitSelfReport(enforcePiper(strong), "serious", 0.7);
+          const reply = maybeAddExplicitSelfReport(
+            enforcePiper(strong),
+            "serious",
+            0.7
+          );
           console.log("[chat] chat-only", {
             sid,
             ms: Date.now() - started,
@@ -438,7 +523,13 @@ export function chatRoutes() {
           });
           setLastIntent(sid, "chat", msg);
           pushConversationTurn(sid, "assistant", reply);
-        return res.json({ reply, emotion: "serious", intensity: 0.7, proposed: [], meta: { affect } });
+          return res.json({
+            reply,
+            emotion: "serious",
+            intensity: 0.7,
+            proposed: [],
+            meta: { affect },
+          });
         }
 
         const affect = getAffectSnapshot(sid);
@@ -451,31 +542,13 @@ export function chatRoutes() {
         // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
         let resolvedTopic = null;
 
-        // Classify the user message for mood/opinion gating.
-        const cls = classifyUserMessage(msg);
-        if (cls?.kind === "SOCIAL_RITUAL" || cls?.kind === "UTILITY") {
-          console.log("[mind] no-affect", { sid, kind: cls.kind, text: msg });
-        } else if (cls?.kind === "PRAISE" || cls?.kind === "INSULT") {
-          const nextAffect = recordSocialSignal(sid, cls.kind, 1.0);
-          console.log("[mind]", cls.kind.toLowerCase(), { sid, mood: nextAffect.mood, text: msg });
-        }
-
-        if (isOpinionQuery2(msg)) {
-          resolvedTopic = extractOpinionTopic2(msg);
+        if (isOpinionQuery(msg)) {
+          resolvedTopic = extractOpinionTopic(msg);
         } else if (isLikelyPreferenceFollowup(msg)) {
           const lastKey = getLastOpinionKey(sid);
           // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
-          if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
-        }
-
-        // Persuasion follow-up that refers to the last opinion topic without restating it
-        // e.g. "Are you sure? it's your UI theme color."
-        if (!resolvedTopic) {
-          const persuasion = parsePersuasionAttempt(msg);
-          if (persuasion?.signal) {
-            const lastKey = getLastOpinionKey(sid);
-            if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
-          }
+          if (lastKey && lastKey.startsWith("topic:"))
+            resolvedTopic = lastKey.slice(6);
         }
 
         if (resolvedTopic) {
@@ -484,47 +557,15 @@ export function chatRoutes() {
           setLastOpinionKey(sid, opinion?.key || null);
         }
 
-        // Deterministic opinion query response (prevents "I can't have opinions" drift from the LLM)
-        if (isOpinionQuery2(msg) && resolvedTopic && isOpinionWorthyTopic(resolvedTopic) && opinion) {
-          const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
-          let reply = deterministicOpinionReply(resolvedTopic, opinion);
-
-          // If the user is actively persuading in the same turn (rare), apply the nudge.
-          const persuasion = parsePersuasionAttempt(msg);
-          const reasonNow = extractReasonClause2(msg);
-          if (persuasion?.signal) {
-            const shifted = adjustOpinionTowardUser(resolvedTopic, persuasion.signal, reasonNow);
-            if (shifted) {
-              opinion = shifted;
-              opinionScore = shifted.score;
-              reply = deterministicOpinionReply(resolvedTopic, opinion);
-              console.log("[mind] persuasion", { sid, topic: resolvedTopic, signal: persuasion.signal, reason: reasonNow });
-            }
-          }
-
-          reply = maybeAddExplicitSelfReport(enforcePiper(reply), picked.emotion, picked.intensity);
-          console.log("[chat] chat-only opinion", {
-            sid,
-            ms: Date.now() - started,
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            disagreeLevel,
-            authorityOverride,
-            opinionKey: opinion?.key || null,
-          });
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          recordEvent(sid, "chat_deterministic", { kind: "opinion_query", topic: resolvedTopic });
-          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
-        }
-
         // If the user expresses a preference about the last topic, allow Piper to shift slightly.
-        const pref = parseUserPreferenceSignal2(msg);
-        const reason = extractReasonClause2(msg);
+        const pref = parseUserPreferenceSignal(msg);
+        const reason = extractReasonClause(msg);
         if (pref && resolvedTopic && opinion) {
-          const shifted = adjustOpinionTowardUser(resolvedTopic, pref.signal, reason);
+          const shifted = adjustOpinionTowardUser(
+            resolvedTopic,
+            pref.signal,
+            reason
+          );
           if (shifted) {
             opinion = shifted;
             opinionScore = shifted.score ?? opinionScore;
@@ -534,7 +575,12 @@ export function chatRoutes() {
         // Deterministic follow-up handling:
         // If the user says "I don't like it" (or similar) right after an opinion topic,
         // respond directly without an LLM call for better coherence + speed.
-        if (pref && resolvedTopic && opinion && isLikelyPreferenceFollowup(msg)) {
+        if (
+          pref &&
+          resolvedTopic &&
+          opinion &&
+          isLikelyPreferenceFollowup(msg)
+        ) {
           const topic = resolvedTopic;
           const isDislike = pref.signal === "dislike";
           const picked = {
@@ -553,7 +599,11 @@ export function chatRoutes() {
               "Used sparingly, it can look sharp instead of chaotic.";
           }
 
-          reply = maybeAddExplicitSelfReport(enforcePiper(reply), picked.emotion, picked.intensity);
+          reply = maybeAddExplicitSelfReport(
+            enforcePiper(reply),
+            picked.emotion,
+            picked.intensity
+          );
 
           console.log("[chat] chat-only pref-followup", {
             sid,
@@ -569,64 +619,49 @@ export function chatRoutes() {
 
           setLastIntent(sid, "chat", msg);
           pushConversationTurn(sid, "assistant", reply);
-          recordEvent(sid, "chat_deterministic", { kind: "pref_followup", topic });
-          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
-        }
-
-        // Deterministic opinion answers (prevents "I can't have opinions" leakage)
-        if (resolvedTopic && isOpinionQuery2(msg) && isOpinionWorthyTopic(resolvedTopic) && opinion) {
-          const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
-          let reply = enforcePiper(deterministicOpinionReply(resolvedTopic, opinion));
-          reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
-          console.log("[chat] chat-only opinion", {
-            sid,
-            ms: Date.now() - started,
+          recordEvent(sid, "chat_deterministic", {
+            kind: "pref_followup",
+            topic,
+          });
+          return res.json({
+            reply,
             emotion: picked.emotion,
             intensity: picked.intensity,
-            mood: affect.mood,
-            fr: affect.frustration.total,
+            proposed: [],
+            meta: { affect },
+          });
+        }
+
+        const raw = await callOllama(
+          buildChatMessages({
+            userMsg: msg,
+            affect,
             disagreeLevel,
             authorityOverride,
-            opinionKey: opinion?.key || null,
-          });
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          recordEvent(sid, "chat_deterministic", { kind: "opinion_query", topic: resolvedTopic });
-          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
-        }
-
-        // Persuasion attempts about the last topic ("you should like it because...")
-        const persu = parsePersuasionAttempt(msg);
-        if (persu && !pref) {
-          const lastKey = getLastOpinionKey(sid);
-          const lastTopic = lastKey && lastKey.startsWith("topic:") ? lastKey.slice(6) : null;
-          const topic = lastTopic || resolvedTopic;
-          if (topic) {
-            const why = extractReasonClause2(msg);
-            const shifted = adjustOpinionTowardUser(topic, persu.signal, why);
-            if (shifted) {
-              const picked = pickEmotion({ msg, affect, opinionScore: shifted.score, disagreeLevel, authorityOverride });
-              let reply = enforcePiper(
-                `Fair point. On ${topic}, I'm shifting slightly in your direction — ${shifted.stance === "like" ? "more favorable" : "more cautious"}.` +
-                  (why ? ` Reason noted: ${why}` : "")
-              );
-              reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
-              console.log("[mind] persuasion", { sid, topic, signal: persu.signal, reason: why });
-              pushConversationTurn(sid, "assistant", reply);
-              return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
-            }
+            opinion,
+            history: getConversationMessages(sid),
+            lastTopic: getLastOpinionKey(sid),
+          }),
+          {
+            model: process.env.OLLAMA_MODEL || "llama3.1",
           }
-        }
-
-        const raw = await callOllama(buildChatMessages({ userMsg: msg, affect, disagreeLevel, authorityOverride, opinion, history: getConversationMessages(sid), lastTopic: getLastOpinionKey(sid) }), {
-          model: process.env.OLLAMA_MODEL || "llama3.1",
-        });
+        );
 
         recordEvent(sid, "llm_success", { mode: "chat" });
 
-        const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+        const picked = pickEmotion({
+          msg,
+          affect,
+          opinionScore,
+          disagreeLevel,
+          authorityOverride,
+        });
         let reply = enforcePiper(raw || "…");
-        reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+        reply = maybeAddExplicitSelfReport(
+          reply,
+          picked.emotion,
+          picked.intensity
+        );
 
         console.log("[chat] chat-only", {
           sid,
@@ -643,10 +678,22 @@ export function chatRoutes() {
         setLastIntent(sid, "chat", msg);
 
         pushConversationTurn(sid, "assistant", reply);
-        return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        return res.json({
+          reply,
+          emotion: picked.emotion,
+          intensity: picked.intensity,
+          proposed: [],
+          meta: { affect },
+        });
       } catch (e) {
-        recordEvent(sid, "llm_fail", { mode: "chat", error: String(e?.message || e) });
-        console.log("[chat] chat-only ERROR", { sid, err: String(e?.message || e) });
+        recordEvent(sid, "llm_fail", {
+          mode: "chat",
+          error: String(e?.message || e),
+        });
+        console.log("[chat] chat-only ERROR", {
+          sid,
+          err: String(e?.message || e),
+        });
         return res.status(500).json({
           reply: enforcePiper("Something went wrong, sir."),
           emotion: "concerned",
@@ -670,10 +717,21 @@ export function chatRoutes() {
         const authorityOverride = isAuthorityOverride(msg);
         const affect = getAffectSnapshot(sid);
 
-        const strong = maybeDeterministicStrongDisagree(msg, disagreeLevel, authorityOverride);
+        const strong = maybeDeterministicStrongDisagree(
+          msg,
+          disagreeLevel,
+          authorityOverride
+        );
         if (strong) {
-          recordEvent(sid, "chat_deterministic", { kind: "strong_disagree", mode: "chat" });
-          const reply = maybeAddExplicitSelfReport(enforcePiper(strong), "serious", 0.7);
+          recordEvent(sid, "chat_deterministic", {
+            kind: "strong_disagree",
+            mode: "chat",
+          });
+          const reply = maybeAddExplicitSelfReport(
+            enforcePiper(strong),
+            "serious",
+            0.7
+          );
           console.log("[chat] chat", {
             sid,
             ms: Date.now() - started,
@@ -688,7 +746,13 @@ export function chatRoutes() {
           sessions.set(sid, { lastIntent: "chat" });
           setLastIntent(sid, "chat", msg);
           pushConversationTurn(sid, "assistant", reply);
-        return res.json({ reply, emotion: "serious", intensity: 0.7, proposed: [], meta: { affect } });
+          return res.json({
+            reply,
+            emotion: "serious",
+            intensity: 0.7,
+            proposed: [],
+            meta: { affect },
+          });
         }
 
         let opinion = null;
@@ -704,7 +768,8 @@ export function chatRoutes() {
         } else if (isLikelyPreferenceFollowup(msg)) {
           const lastKey = getLastOpinionKey(sid);
           // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
-          if (lastKey && lastKey.startsWith("topic:")) resolvedTopic = lastKey.slice(6);
+          if (lastKey && lastKey.startsWith("topic:"))
+            resolvedTopic = lastKey.slice(6);
         }
 
         if (resolvedTopic) {
@@ -717,7 +782,11 @@ export function chatRoutes() {
         const pref = parseUserPreferenceSignal(msg);
         const reason = extractReasonClause(msg);
         if (pref && resolvedTopic && opinion) {
-          const shifted = adjustOpinionTowardUser(resolvedTopic, pref.signal, reason);
+          const shifted = adjustOpinionTowardUser(
+            resolvedTopic,
+            pref.signal,
+            reason
+          );
           if (shifted) {
             opinion = shifted;
             opinionScore = shifted.score ?? opinionScore;
@@ -725,8 +794,16 @@ export function chatRoutes() {
         }
 
         // Deterministic follow-up handling (same as chat-only path)
-        if (pref && resolvedTopic && opinion && isLikelyPreferenceFollowup(msg)) {
-          recordEvent(sid, "opinion_followup", { topic: opinion.key, signal: pref.signal });
+        if (
+          pref &&
+          resolvedTopic &&
+          opinion &&
+          isLikelyPreferenceFollowup(msg)
+        ) {
+          recordEvent(sid, "opinion_followup", {
+            topic: opinion.key,
+            signal: pref.signal,
+          });
           const picked = pickEmotion({
             msg,
             affect,
@@ -748,7 +825,11 @@ export function chatRoutes() {
           }
 
           reply = enforcePiper(reply);
-          reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+          reply = maybeAddExplicitSelfReport(
+            reply,
+            picked.emotion,
+            picked.intensity
+          );
 
           console.log("[chat] chat", {
             sid,
@@ -766,18 +847,45 @@ export function chatRoutes() {
           sessions.set(sid, { lastIntent: "chat" });
           setLastIntent(sid, "chat", msg);
           pushConversationTurn(sid, "assistant", reply);
-          return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+          return res.json({
+            reply,
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            proposed: [],
+            meta: { affect },
+          });
         }
 
-        const raw = await callOllama(buildChatMessages({ userMsg: msg, affect, disagreeLevel, authorityOverride, opinion, history: getConversationMessages(sid), lastTopic: getLastOpinionKey(sid) }), {
-          model: process.env.OLLAMA_MODEL || "llama3.1",
-        });
+        const raw = await callOllama(
+          buildChatMessages({
+            userMsg: msg,
+            affect,
+            disagreeLevel,
+            authorityOverride,
+            opinion,
+            history: getConversationMessages(sid),
+            lastTopic: getLastOpinionKey(sid),
+          }),
+          {
+            model: process.env.OLLAMA_MODEL || "llama3.1",
+          }
+        );
 
         recordEvent(sid, "llm_success", { mode: "chat" });
 
-        const picked = pickEmotion({ msg, affect, opinionScore, disagreeLevel, authorityOverride });
+        const picked = pickEmotion({
+          msg,
+          affect,
+          opinionScore,
+          disagreeLevel,
+          authorityOverride,
+        });
         let reply = enforcePiper(raw || "…");
-        reply = maybeAddExplicitSelfReport(reply, picked.emotion, picked.intensity);
+        reply = maybeAddExplicitSelfReport(
+          reply,
+          picked.emotion,
+          picked.intensity
+        );
 
         console.log("[chat] chat", {
           sid,
@@ -794,11 +902,133 @@ export function chatRoutes() {
         sessions.set(sid, { lastIntent: "chat" });
         setLastIntent(sid, "chat", msg);
         pushConversationTurn(sid, "assistant", reply);
-        return res.json({ reply, emotion: picked.emotion, intensity: picked.intensity, proposed: [], meta: { affect } });
+        return res.json({
+          reply,
+          emotion: picked.emotion,
+          intensity: picked.intensity,
+          proposed: [],
+          meta: { affect },
+        });
       }
 
       // --- PLAN / CHANGE ---
-      const snapshot = await buildSnapshot({ message: msg, lastIntent: sessions.get(sid)?.lastIntent || "chat" });
+
+      // --- DETERMINISTIC QUICK ACTIONS (no LLM) ---
+      // These are small, high-confidence edits that should ALWAYS produce an approval-gated action.
+      {
+        const s = String(msg || "").trim();
+
+        // Change page title: e.g. "change the page title to \"Piper Hub\""
+        const mTitle = s.match(
+          /\b(?:change|set|update)\s+(?:the\s+)?(?:page\s+)?title\s+to\s+["“]([^"”]{1,80})["”]/i
+        );
+        if (mTitle) {
+          const desiredTitle = mTitle[1].trim();
+          const a = {
+            id: crypto.randomUUID(),
+            type: "set_html_title",
+            title: `Set page title to "${desiredTitle}"`,
+            reason: "User requested title change",
+            payload: { path: "public/index.html", title: desiredTitle },
+            status: "pending",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          const saved = addAction(a);
+          sessions.set(sid, { lastIntent: "change" });
+          setLastIntent(sid, "change", msg);
+
+          console.log("[chat] plan", {
+            sid,
+            ms: Date.now() - started,
+            proposed: 1,
+            mood: getAffectSnapshot(sid).mood,
+            fr: getAffectSnapshot(sid).frustration.total,
+            deterministic: "set_html_title",
+          });
+
+          const affect = getAffectSnapshot(sid);
+          const picked = pickEmotion({
+            msg,
+            affect,
+            opinionScore: null,
+            disagreeLevel: 0,
+            authorityOverride: false,
+          });
+
+          return res.json({
+            reply: enforcePiper(
+              `Action proposed: Update page title to "${desiredTitle}".`
+            ),
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            proposed: [{ id: saved.id, title: a.title }],
+            meta: { affect },
+          });
+        }
+
+        // Red background for chat input box (the message textbox)
+        const wantsRedBox =
+          /\b(red)\b/i.test(s) &&
+          /(background|bg|colour|color)/i.test(s) &&
+          /(chat\s*(?:response|reply)?\s*box|response\s*box|reply\s*box|chat\s*box|input\s*box|message\s*box|text\s*box)/i.test(
+            s
+          );
+
+        if (wantsRedBox) {
+          const find = "background: rgba(0,0,0,20); color: var(--text);";
+          const replace = "background: var(--bad); color: #fff;";
+          const a = {
+            id: crypto.randomUUID(),
+            type: "apply_patch",
+            title: "Make chat input background red",
+            reason: "User requested red chat input background",
+            payload: {
+              path: "public/styles.css",
+              edits: [{ find, replace, mode: "once" }],
+            },
+            status: "pending",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          const saved = addAction(a);
+          sessions.set(sid, { lastIntent: "change" });
+          setLastIntent(sid, "change", msg);
+
+          const affect = getAffectSnapshot(sid);
+          const picked = pickEmotion({
+            msg,
+            affect,
+            opinionScore: null,
+            disagreeLevel: 0,
+            authorityOverride: false,
+          });
+
+          console.log("[chat] plan", {
+            sid,
+            ms: Date.now() - started,
+            proposed: 1,
+            mood: affect.mood,
+            fr: affect.frustration.total,
+            deterministic: "red_chat_input",
+          });
+
+          return res.json({
+            reply: enforcePiper(
+              "Action proposed: Make the chat input background red."
+            ),
+            emotion: picked.emotion,
+            intensity: picked.intensity,
+            proposed: [{ id: saved.id, title: a.title }],
+            meta: { affect },
+          });
+        }
+      }
+
+      const snapshot = await buildSnapshot({
+        message: msg,
+        lastIntent: sessions.get(sid)?.lastIntent || "chat",
+      });
 
       const planned = await llmRespondAndPlan({
         message: msg,
@@ -810,8 +1040,8 @@ export function chatRoutes() {
 
       const proposed = [];
       for (const a of compiled.actions || []) {
-        const id = addAction(a);
-        proposed.push({ id, ...a.summary });
+        const saved = addAction(a);
+        proposed.push({ id: saved.id, ...a.summary });
       }
 
       sessions.set(sid, { lastIntent: "change" });
@@ -821,7 +1051,13 @@ export function chatRoutes() {
       recordEvent(sid, "task_success", { proposed: proposed.length });
 
       const affect = getAffectSnapshot(sid);
-      const picked = pickEmotion({ msg, affect, opinionScore: null, disagreeLevel: 0, authorityOverride: false });
+      const picked = pickEmotion({
+        msg,
+        affect,
+        opinionScore: null,
+        disagreeLevel: 0,
+        authorityOverride: false,
+      });
 
       console.log("[chat] plan", {
         sid,

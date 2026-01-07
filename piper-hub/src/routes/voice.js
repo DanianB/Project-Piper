@@ -47,7 +47,12 @@ export function voiceRoutes() {
   // ---- Speak ----
   r.post("/voice/speak", async (req, res) => {
     try {
-      const { text = "", emotion = "neutral", intensity = 0.4, sessionId = null } = req.body || {};
+      const {
+        text = "",
+        emotion = "neutral",
+        intensity = 0.4,
+        sessionId = null,
+      } = req.body || {};
 
       // If using Chatterbox and autostart is enabled, ensure the process is running before speaking.
       const cfg = getVoiceConfig();
@@ -58,7 +63,12 @@ export function voiceRoutes() {
         if (autostart) {
           const r0 = await startChatterboxProcess();
           if (!r0?.ok) {
-            return res.status(500).json({ ok: false, error: `Chatterbox failed to start: ${r0?.error || "unknown"}` });
+            return res
+              .status(500)
+              .json({
+                ok: false,
+                error: `Chatterbox failed to start: ${r0?.error || "unknown"}`,
+              });
           }
         }
         // Still verify server endpoint is reachable (covers the case where port is blocked / dying).
@@ -67,11 +77,19 @@ export function voiceRoutes() {
 
       await speakQueued(String(text || ""), { emotion, intensity });
 
-      if (sessionId) recordEvent(sessionId, "tts_success", { emotion, intensity, chars: String(text || "").length });
+      if (sessionId)
+        recordEvent(sessionId, "tts_success", {
+          emotion,
+          intensity,
+          chars: String(text || "").length,
+        });
 
       res.json({ ok: true });
     } catch (e) {
-      res.status(500).json({ ok: false, error: String(e?.message || e) });
+      // Don’t hard-fail the UI—report error but keep HTTP 200.
+      return res
+        .status(200)
+        .json({ ok: false, error: String(e?.message || e) });
     }
   });
 

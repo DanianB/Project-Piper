@@ -60,6 +60,9 @@ const DEFAULT_MIND = {
   // Optional preferences
   prefs: {},
 
+  // Long-term shaping: what the user tends to like/dislike (topic-keyed counters)
+  userTaste: { likes: {}, dislikes: {} },
+
   // Global mood baseline (slow drift). -1..+1
   moodBaseline: 0.0,
 
@@ -84,6 +87,9 @@ function loadMind() {
       _mind = { ...DEFAULT_MIND, ...(j || {}) };
       _mind.opinions = _mind.opinions || {};
       _mind.prefs = _mind.prefs || {};
+      _mind.userTaste = { ...DEFAULT_MIND.userTaste, ...(_mind.userTaste || {}) };
+      _mind.userTaste.likes = _mind.userTaste.likes || {};
+      _mind.userTaste.dislikes = _mind.userTaste.dislikes || {};
       _mind.frustration = { ...DEFAULT_MIND.frustration, ...(_mind.frustration || {}) };
       return _mind;
     }
@@ -129,6 +135,9 @@ export function getSessionState(sessionId = "default") {
     convo: [],
     // Track last opinion topic discussed so follow-ups like "I don't like it" resolve.
     lastOpinionKey: null,
+
+    // Rolling session summary (in-RAM). Used to keep long chats coherent.
+    summary: { bullets: [], updatedAt: 0 },
   };
 
   _sessions.set(id, s);
@@ -139,6 +148,7 @@ export function getSessionState(sessionId = "default") {
 export function bumpTurn(sessionId) {
   const s = getSessionState(sessionId);
   s.turns += 1;
+  try { maybeUpdateSessionSummary(sessionId); } catch {}
   return s.turns;
 }
 
@@ -178,6 +188,87 @@ export function getLastOpinionKey(sessionId) {
   const s = getSessionState(sessionId);
   return s.lastOpinionKey ? String(s.lastOpinionKey) : null;
 }
+
+// ---------------- Long-term taste shaping ----------------
+
+function tasteWeightFor(key, mind) {
+  const likes = Number(mind?.userTaste?.likes?.[key] || 0);
+  const dislikes = Number(mind?.userTaste?.dislikes?.[key] || 0);
+  // Convert counts to a small bias in [-0.25, +0.25]
+  const net = likes - dislikes;
+  const capped = clamp(net, -6, 6) / 6; // [-1,1]
+  return capped * 0.25;
+}
+
+export function recordUserTaste(rawTopic, signal, strength = 0.5) {
+  const mind = getMind();
+  const key = buildOpinionKey(rawTopic);
+  if (!key) return;
+
+  const s = String(signal || "").toLowerCase();
+  const w = clamp(Number(strength) || 0.5, 0.2, 1.0);
+
+  // Use fractional counters to allow gentle weighting.
+  if (s === "like") {
+    mind.userTaste.likes[key] = (Number(mind.userTaste.likes[key]) || 0) + w;
+  } else if (s === "dislike") {
+    mind.userTaste.dislikes[key] = (Number(mind.userTaste.dislikes[key]) || 0) + w;
+  } else {
+    return;
+  }
+
+  saveMind();
+}
+
+// ---------------- Session summary ----------------
+
+function uniqTop(items, max = 3) {
+  const out = [];
+  for (const it of items) {
+    const s = String(it || "").trim();
+    if (!s) continue;
+    if (!out.includes(s)) out.push(s);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+export function getSessionSummary(sessionId) {
+  const s = getSessionState(sessionId);
+  return Array.isArray(s.summary?.bullets) ? s.summary.bullets.slice() : [];
+}
+
+export function maybeUpdateSessionSummary(sessionId) {
+  const s = getSessionState(sessionId);
+  const every = Number(process.env.PIPER_SUMMARY_EVERY_N_TURNS || "6");
+  if (!Number.isFinite(every) || every <= 0) return;
+
+  // Update every N turns to keep it lightweight.
+  if (s.turns % every !== 0 && s.summary.updatedAt) return;
+
+  const bullets = [];
+
+  const lastOp = getLastOpinionKey(sessionId);
+  if (lastOp) bullets.push(`Current topic: ${lastOp.replace(/^topic:/, "")}`);
+
+  // Pull recent user preference statements from convo memory
+  const recent = (s.convo || []).slice(-12).filter(x => x && x.role === "user").map(x => x.content);
+  const likes = [];
+  const dislikes = [];
+  for (const line of recent) {
+    const l = String(line).toLowerCase();
+    if (/(i\s+)?(really\s+)?(love|adore|like)\b/.test(l)) likes.push(line);
+    if (/(i\s+)?(really\s+)?(hate|despise|don'?t\s+like|do not like)\b/.test(l)) dislikes.push(line);
+  }
+  const l3 = uniqTop(likes, 2);
+  const d3 = uniqTop(dislikes, 2);
+  if (l3.length) bullets.push(`User likes: ${l3[0].slice(0, 80)}`);
+  if (d3.length) bullets.push(`User dislikes: ${d3[0].slice(0, 80)}`);
+
+  // Keep to 5 bullets
+  s.summary = { bullets: bullets.slice(0, 5), updatedAt: nowMs() };
+}
+
 
 /**
  * Adjust an existing opinion score slightly based on user's stated preference or argument.
@@ -289,29 +380,6 @@ export function recordEvent(sessionId, type, detail = {}) {
 
   saveMind();
   return { mind, session: s, detail, at: now };
-}
-
-// ---------------- Social signal → mood ----------------
-// These are intentionally stronger than normal drift, and are NOT triggered by
-// social rituals/utility queries (handled by the classifier).
-export function recordSocialSignal(sessionId, kind, strength = 1.0) {
-  const mind = getMind();
-  const s = getSessionState(sessionId);
-  const k = clamp(Number(strength) || 1.0, 0, 1);
-
-  const t = String(kind || "").toUpperCase();
-  if (t === "PRAISE") {
-    s.sessionMood = clamp(s.sessionMood + 0.18 * k, -1, 1);
-    mind.moodBaseline = clamp(mind.moodBaseline + 0.03 * k, -1, 1);
-  } else if (t === "INSULT") {
-    s.sessionMood = clamp(s.sessionMood - 0.22 * k, -1, 1);
-    mind.moodBaseline = clamp(mind.moodBaseline - 0.04 * k, -1, 1);
-  } else {
-    return getAffectSnapshot(sessionId);
-  }
-
-  saveMind();
-  return getAffectSnapshot(sessionId);
 }
 
 function normalizeTopic(raw) {

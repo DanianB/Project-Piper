@@ -1,14 +1,14 @@
 {
   "version": 1,
   "createdAt": 1767697124060,
-  "updatedAt": 1767758016251,
+  "updatedAt": 1767770365256,
   "opinions": {
     "topic:the color red": {
-      "score": 0.04502950000000003,
+      "score": 0.14502950000000003,
       "stance": "mixed",
       "rationale": "It attracts the wrong kind of complexity.",
       "createdAt": 1767697189270,
-      "updatedAt": 1767757125836
+      "updatedAt": 1767770321576
     },
     "topic:neon green ui": {
       "score": 0.09033149999999995,
@@ -53,15 +53,44 @@
       "updatedAt": 1767757665278
     },
     "topic:them": {
-      "score": 0.09865800000000008,
-      "stance": "I’m neutral on it—context matters.",
+      "score": 0.2986580000000001,
+      "stance": "mixed",
       "rationale": "It’s powerful, but easy to overdo.",
       "createdAt": 1767757802879,
-      "updatedAt": 1767757802879
+      "updatedAt": 1767759968103
+    },
+    "topic:pineapple on pizza": {
+      "score": 0.6919305,
+      "stance": "like",
+      "rationale": "User argument considered: it’s sweet-salty contrast and it works.",
+      "createdAt": 1767759681786,
+      "updatedAt": 1767759810612
+    },
+    "topic:the color blue": {
+      "score": 0.024585000000000024,
+      "stance": "It depends.",
+      "rationale": "It shines in the right context and fights you in the wrong one.",
+      "createdAt": 1767763346020,
+      "updatedAt": 1767763346020
+    },
+    "topic:red": {
+      "score": 0.10488549999999994,
+      "stance": "mixed",
+      "rationale": "It’s powerful, but easy to overdo.",
+      "createdAt": 1767763402893,
+      "updatedAt": 1767763402894
     }
   },
   "prefs": {},
-  "moodBaseline": 0.2079999999999998,
+  "userTaste": {
+    "likes": {
+      "topic:pineapple on pizza": 0.55,
+      "topic:them": 1.1
+    },
+    "dislikes": {},
+    "updatedAt": 0
+  },
+  "moodBaseline": 0.38499999999999995,
   "frustration": {
     "llm": 0,
     "tts": 0,
