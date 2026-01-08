@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-07T11:16:10.858Z",
+  "generatedAt": "2026-01-08T08:04:34.595Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -1713,6 +1713,73 @@
           "padding",
           "font-size"
         ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sourcesBox",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin-top",
+          "padding-top",
+          "border-top",
+          "font-size",
+          "opacity"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sourcesHead",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "font-weight",
+          "margin-bottom",
+          "opacity"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sourcesList",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin",
+          "padding-left"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sourcesList li",
+        "specificity": [
+          0,
+          1,
+          1
+        ],
+        "properties": [
+          "margin"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".sourcesMore",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin-top"
+        ]
       }
     ]
   },
@@ -1826,14 +1893,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 7,
             "column": 0,
-            "index": 129
+            "index": 157
           },
           "end": {
-            "line": 8,
+            "line": 9,
             "column": 1,
-            "index": 190
+            "index": 218
           }
         }
       },
@@ -2778,14 +2845,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 466,
+            "line": 615,
             "column": 0,
-            "index": 13723
+            "index": 17804
           },
           "end": {
-            "line": 1347,
+            "line": 1556,
             "column": 1,
-            "index": 41201
+            "index": 49398
           }
         }
       },
@@ -2965,14 +3032,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 90,
+            "line": 94,
             "column": 0,
-            "index": 3763
+            "index": 4022
           },
           "end": {
-            "line": 145,
+            "line": 156,
             "column": 1,
-            "index": 5544
+            "index": 5914
           }
         }
       },
@@ -4162,14 +4229,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 469,
+            "line": 618,
             "column": 2,
-            "index": 13779
+            "index": 17860
           },
           "end": {
-            "line": 1344,
+            "line": 1553,
             "column": 4,
-            "index": 41185
+            "index": 49382
           }
         }
       },
@@ -4872,6 +4939,22 @@
         }
       },
       {
+        "file": "src/tools/index.js",
+        "source": "./builtins/web.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 128
+          },
+          "end": {
+            "line": 5,
+            "column": 27,
+            "index": 155
+          }
+        }
+      },
+      {
         "file": "src/tools/builtins/repo.js",
         "source": "fs",
         "loc": {
@@ -4964,6 +5047,22 @@
             "line": 3,
             "column": 56,
             "index": 109
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/web.js",
+        "source": "../registry.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 29
+          },
+          "end": {
+            "line": 2,
+            "column": 56,
+            "index": 85
           }
         }
       },

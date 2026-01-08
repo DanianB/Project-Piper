@@ -108,6 +108,7 @@
     padding: 12px 14px; border-radius: 12px;
     border: 1px solid rgba(255,255,255,10);
     color: var(--text);
+    background-color: #2a2a2a;
     cursor: pointer;
     transition: transform .04s ease, background .12s ease, border-color .12s ease;
   }
@@ -297,3 +298,11 @@
 .locMatchesList li{ margin: 4px 0; }
 .locMatchesMore{ margin-top: 6px; }
 .btn-small{ padding: 4px 8px; font-size: 12px; }
+
+
+/* --- Web sources (Phase 2.1) --- */
+.sourcesBox{ margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; opacity: 0.95; }
+.sourcesHead{ font-weight: 600; margin-bottom: 6px; opacity: 0.9; }
+.sourcesList{ margin: 0; padding-left: 18px; }
+.sourcesList li{ margin: 4px 0; }
+.sourcesMore{ margin-top: 6px; }

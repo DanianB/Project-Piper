@@ -46,6 +46,8 @@ function sysPrompt() {
 You are running locally in this repo. Never refer to any "Jarvis" system, team, or external operators.
 You must not answer codebase-location questions from general knowledge. Never mention "training data". Always use repo tools.
 
+If you use web.search or web.fetch, you MUST include a \`sources\` array (URLs + titles) in the plan. Do NOT put URLs in \`reply\` (TTS will read it). Put URLs only in \`sources\`.
+
 You help modify a local codebase via an approval-gated action system.
 
 Non-negotiables:
@@ -71,6 +73,9 @@ Action format (JSON only):
      {"tool":"repo.searchText","args":{"query":"...","maxResults":10},"why":"..."},
      {"tool":"repo.openFile","args":{"path":"...","startLine":1,"endLine":200},"why":"..."}
   ],
+  "sources": [
+    {"url":"https://...","title":"...","note":"optional"}
+  ],
   "ops": [
      {"op":"css_patch","file":"public/styles.css","selectors":["."],"set":{"prop":"value"},"unset":["prop"],"why":"."},
      {"op":"apply_patch","path":".","edits":[{"find":"EXACT","replace":"EXACT","mode":"once|all|append"}],"why":"..."},
@@ -86,8 +91,12 @@ Action format (JSON only):
 When in doubt, inspect first (repo.searchText).`;
 }
 
-
-export async function llmRespondAndPlan({ message, snapshot, availableTools = [], toolResults = null }) {
+export async function llmRespondAndPlan({
+  message,
+  snapshot,
+  availableTools = [],
+  toolResults = null,
+}) {
   // --- Deterministic lifecycle ops (do NOT send to LLM) ---
   if (looksLikeRestart(message)) {
     return {
@@ -135,6 +144,8 @@ export async function llmRespondAndPlan({ message, snapshot, availableTools = []
 
   if (typeof j.reply !== "string") j.reply = "Understood, sir.";
   if (typeof j.requiresApproval !== "boolean") j.requiresApproval = false;
+  if (!Array.isArray(j.toolCalls)) j.toolCalls = [];
+  if (!Array.isArray(j.sources)) j.sources = [];
   if (!Array.isArray(j.ops)) j.ops = [];
 
   // If user asked for change but model returned no ops, keep approval true

@@ -461,6 +461,70 @@ function add(who, msg, meta){
 
       bubble.appendChild(box);
     }
+
+// Structured sources (Phase 2.1)
+if(typeof meta === 'object' && meta.sources && (meta.sources.shown || []).length){
+  const s = meta.sources;
+  const box = document.createElement('div');
+  box.className = 'sourcesBox';
+
+  const head = document.createElement('div');
+  head.className = 'sourcesHead';
+  head.textContent = 'Sources';
+  box.appendChild(head);
+
+  const ul = document.createElement('ul');
+  ul.className = 'sourcesList';
+  for(const it of (s.shown || [])){
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.href = it.url;
+    a.target = '_blank';
+    a.rel = 'noreferrer';
+    a.textContent = it.title || it.url;
+    li.appendChild(a);
+    ul.appendChild(li);
+  }
+  box.appendChild(ul);
+
+  const hidden = Array.isArray(s.hidden) ? s.hidden : [];
+  if(hidden.length > 0){
+    const moreBtn = document.createElement('button');
+    moreBtn.className = 'btn btn-ghost btn-small';
+    moreBtn.type = 'button';
+    moreBtn.textContent = `Show more (${hidden.length})`;
+
+    const more = document.createElement('div');
+    more.className = 'sourcesMore';
+    more.style.display = 'none';
+
+    const ul2 = document.createElement('ul');
+    ul2.className = 'sourcesList';
+    for(const it of hidden){
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = it.url;
+      a.target = '_blank';
+      a.rel = 'noreferrer';
+      a.textContent = it.title || it.url;
+      li.appendChild(a);
+      ul2.appendChild(li);
+    }
+    more.appendChild(ul2);
+
+    moreBtn.addEventListener('click', () => {
+      const open = more.style.display !== 'none';
+      more.style.display = open ? 'none' : 'block';
+      moreBtn.textContent = open ? `Show more (${hidden.length})` : 'Show less';
+    });
+
+    box.appendChild(moreBtn);
+    box.appendChild(more);
+  }
+
+  bubble.appendChild(box);
+}
+
   }
 
   row.appendChild(whoEl);
@@ -700,6 +764,7 @@ async function sendToChat(text){
     message: text,
     readOnly: readOnly.checked,
     userInitiated: true,
+    metBefore: localStorage.getItem('piper.metBefore') === '1',
   });
 }
 
@@ -715,6 +780,9 @@ f.onsubmit = async (e) => {
 
   try{
     const c = await sendToChat(msg);
+    // Persist greeting memory (so "Hello" doesn't trigger "nice to meet you" every boot)
+    if(localStorage.getItem('piper.metBefore') !== '1') localStorage.setItem('piper.metBefore','1');
+
     remove(thinkingNode);
 
     add('piper', c.reply, c.meta);

@@ -31,6 +31,204 @@ import {
 
 const sessions = new Map();
 
+
+//
+// ---------------- Web sources (Phase 2.1) ----------------
+// Provide non-spoken sources for UI when web.search/web.fetch were used.
+// Sources are attached to response meta.souces = { total, shown, hidden }.
+//
+function normalizeUrl(u) {
+  try {
+    const url = new URL(String(u));
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function extractWebSources(toolResults) {
+  const out = [];
+  const seen = new Set();
+
+  const push = (url, title) => {
+    const nu = normalizeUrl(url);
+    if (!nu || seen.has(nu)) return;
+    seen.add(nu);
+    out.push({ url: nu, title: String(title || nu) });
+  };
+
+  for (const tr of Array.isArray(toolResults) ? toolResults : []) {
+    if (!tr?.ok) continue;
+    const tool = String(tr.tool || tr.id || "");
+    const r = tr.result || tr.data || tr.output;
+    if (!r) continue;
+
+    if (tool === "web.search") {
+      const results = Array.isArray(r.results) ? r.results : Array.isArray(r) ? r : [];
+      for (const item of results) push(item?.url, item?.title);
+    } else if (tool === "web.fetch") {
+      push(r?.url || r?.finalUrl, r?.title);
+    }
+  }
+
+  return out;
+}
+
+function packSourcesForUi(sources, maxShown = 3) {
+  const list = Array.isArray(sources) ? sources : [];
+  return { total: list.length, shown: list.slice(0, maxShown), hidden: list.slice(maxShown) };
+}
+
+function stripUrlsForTts(text) {
+  let s = String(text || "");
+
+  // Markdown links: [label](url) -> label
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1");
+
+  // Inline code URLs: `https://...` -> (remove the URL but keep backticks content if non-url)
+  s = s.replace(/`https?:\/\/[^`\s]+`/g, "");
+
+  // Raw URLs
+  s = s.replace(/https?:\/\/\S+/g, "");
+
+  // Clean up doubled spaces/newlines from removals
+  s = s.replace(/[\t\r\n]+/g, " ").replace(/\s{2,}/g, " ").trim();
+  return s;
+}
+
+
+
+
+function isGreeting(msg) {
+  const s = String(msg || "").trim();
+  return /^(hi|hello|hey|yo|hiya)\b/i.test(s);
+}
+
+function isWebSearchIntent(msg) {
+  const s = String(msg || "").trim().toLowerCase();
+
+  // High-precision triggers only (avoid web-search on every casual "search" mention)
+  const wantsWeb =
+    s.startsWith("search the web") ||
+    s.startsWith("search web") ||
+    s.startsWith("web search") ||
+    s.startsWith("search the internet") ||
+    s.includes("search the web for") ||
+    s.includes("search the internet for") ||
+    s.includes("look up ") ||
+    s.includes("find online") ||
+    s.includes("on the web") ||
+    s.includes("online");
+
+  if (!wantsWeb) return false;
+
+  // Explicit non-web scopes
+  if (s.includes("search my repo") || s.includes("search the repo") || s.includes("in this repo")) return false;
+
+  return true;
+}
+
+
+function extractWebQuery(msg) {
+  const s = String(msg || "").trim();
+
+  // Common patterns: "Search the web for X", "Search the internet for X", "Look up X", "Find X online"
+  let m = s.match(/search\s+(?:the\s+)?(?:web|internet)\s+for\s+([\s\S]{1,400})/i);
+  let q = m?.[1] ? m[1].trim() : null;
+
+  if (!q) {
+    m = s.match(/look\s+up\s+([\s\S]{1,400})/i);
+    if (m?.[1]) q = m[1].trim();
+  }
+
+  if (!q) {
+    m = s.match(/find\s+([\s\S]{1,400})\s+online/i);
+    if (m?.[1]) q = m[1].trim();
+  }
+
+  q = (q || s).trim().replace(/[?.!]+$/, "");
+
+  // Strip trailing instructions: "... and summarize/explain ..."
+  q = q.replace(/\s+(?:and|then)\s+(?:summarize|explain|describe|give|tell|list|show|compare|outline)\b[\s\S]*$/i, "").trim();
+
+  // Conservative length cap
+  return q.slice(0, 200);
+}
+
+
+async function runWebContext(query, sid) {
+  const ran = [];
+  const webSearch = toolRegistry.get("web.search");
+  const webFetch = toolRegistry.get("web.fetch");
+  if (!webSearch) return { ran, fetchedText: null };
+
+  const r1 = await toolRegistry.run({
+    id: "web.search",
+    args: { query, maxResults: 7 },
+    context: { sid },
+  });
+
+  ran.push({ tool: "web.search", ok: r1.ok, result: r1.result });
+  if (!r1.ok) return { ran, fetchedText: null };
+
+  const results = Array.isArray(r1.result?.results)
+    ? r1.result.results
+    : Array.isArray(r1.result)
+      ? r1.result
+      : [];
+
+  const scoreResult = (it) => {
+    const url = String(it?.url || "");
+    const title = String(it?.title || "").toLowerCase();
+    const u = url.toLowerCase();
+    let score = 0;
+
+    // Prefer "official" / docs-y results
+    if (title.includes("official")) score += 6;
+    if (title.includes("documentation") || title.includes("docs") || title.includes("reference")) score += 5;
+    if (u.includes("developer.") || u.includes("/docs") || u.includes("/documentation")) score += 4;
+
+    // Down-rank aggregators for API/auth questions
+    if (u.includes("wikipedia.org")) score -= 6;
+    if (u.includes("medium.com") || u.includes("dev.to")) score -= 3;
+
+    // If the query contains a brand/domain hint, reward matches
+    const q = String(query || "").toLowerCase();
+    const spotifyHint = q.includes("spotify");
+    if (spotifyHint && (u.includes("developer.spotify.com") || u.includes("spotify.com/documentation"))) score += 8;
+
+    return score;
+  };
+
+  const best = results
+    .filter((it) => it?.url)
+    .map((it) => ({ it, score: scoreResult(it) }))
+    .sort((a, b) => b.score - a.score)[0]?.it;
+
+  const bestUrl = best?.url || results[0]?.url || null;
+
+  if (webFetch && bestUrl) {
+    const r2 = await toolRegistry.run({
+      id: "web.fetch",
+      args: { url: bestUrl },
+      context: { sid },
+    });
+
+    ran.push({ tool: "web.fetch", ok: r2.ok, result: r2.result });
+
+    const txt =
+      r2.ok && (r2.result?.text || r2.result?.content || r2.result?.body)
+        ? String(r2.result.text || r2.result.content || r2.result.body)
+        : null;
+
+    return { ran, fetchedText: txt ? txt.slice(0, 7000) : null };
+  }
+
+  return { ran, fetchedText: null };
+}
+
+
 function newId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
 }
@@ -345,55 +543,6 @@ function handleTitleRequest(msg) {
   };
 }
 
-
-// ---------------- Repo grounding: "where is X defined?" ----------------
-// Deterministic, server-side grounding for repository location/definition questions.
-// This runs in BOTH read-only(chat) and actions-allowed modes so the model cannot dodge inspection.
-function deriveRepoLocationQuery(text) {
-  const s = String(text || "").trim();
-  if (!s) return null;
-
-  // Must be a "where/defined/located" style question.
-  const hasWhereWords = /\b(where|located|define[sd]?|definition|declared?|stored|set)\b/i.test(
-    s
-  );
-  if (!hasWhereWords) return null;
-
-  // Strong code/repo context words (prevents "Where is Kansas?" from triggering).
-  const hasCodeContext =
-    /\b(file|files|repo|repository|code|codebase|source|config|env|variable|constant|function|class|module|import|export|route|path|line)\b/i.test(
-      s
-    );
-
-  // Identifier-like cues.
-  const backtick = s.match(/`([^`]{2,128})`/);
-  const fileLike = s.match(
-    /\b([a-zA-Z0-9_\\/\.-]+\.(?:js|ts|json|py|css|html|md))\b/i
-  );
-  const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
-  const voiceMention = /voice[_\s]?choices/i.test(s);
-  const nameMention = /\byour\s+name\b/i.test(s);
-
-  const identifierLike =
-    Boolean(backtick) ||
-    Boolean(fileLike) ||
-    Boolean(allCaps) ||
-    voiceMention ||
-    nameMention;
-
-  if (!(hasCodeContext || identifierLike)) return null;
-
-  if (backtick?.[1]) return backtick[1];
-  if (fileLike?.[1]) return fileLike[1];
-  if (allCaps?.[0]) return allCaps[0];
-  if (voiceMention) return "VOICE_CHOICES";
-  if (nameMention) return "Piper";
-
-  // Fallback: first plausible identifier token.
-  const maybeIdent = s.match(/\b([A-Za-z][A-Za-z0-9_]{2,64})\b/);
-  return maybeIdent?.[1] || null;
-}
-
 // ---------------- Chat route ----------------
 
 function buildChatMessages({
@@ -471,6 +620,23 @@ export function chatRoutes() {
     const { sessionId, message } = req.body || {};
     const sid = sessionId || "default";
     const msg = String(message || "").trim();
+
+const metBefore = req.body?.metBefore === true;
+
+// Deterministic greeting (avoid "nice to meet you" every boot)
+if (isGreeting(msg)) {
+  const affect = getAffectSnapshot(sid);
+  const reply = enforcePiper(metBefore ? "Hello again, sir." : "Hello, sir.");
+  pushConversationTurn(sid, "assistant", reply);
+  return res.json({
+    reply,
+    emotion: "warm",
+    intensity: 0.35,
+    proposed: [],
+    meta: { affect, metBefore: true },
+  });
+}
+
     const meta = reqMeta(req);
 
     bumpTurn(sid);
@@ -486,82 +652,6 @@ export function chatRoutes() {
 
     // Track conversation for coherence
     pushConversationTurn(sid, "user", msg);
-
-    // Phase 1.1: deterministic repo grounding for "where is X defined/located" questions.
-    // This runs before any LLM call, even in read-only chat mode.
-    const locationQuery = deriveRepoLocationQuery(msg);
-    if (
-      locationQuery &&
-      listTools().some((t) => t.id === "repo.searchText") &&
-      toolRegistry.get("repo.searchText")?.risk === ToolRisk.READ_ONLY
-    ) {
-      const ran = await toolRegistry.run({
-        id: "repo.searchText",
-        args: { query: locationQuery, maxResults: 25 },
-        context: { sid },
-      });
-      logRunEvent("tool_call_forced", {
-        sid,
-        tool: "repo.searchText",
-        query: locationQuery,
-        ok: ran.ok,
-      });
-
-      if (ran.ok && Array.isArray(ran.result?.matches)) {
-        const matches = ran.result.matches;
-        const total = matches.length;
-        const affect = getAffectSnapshot(sid);
-
-        if (total === 0) {
-          const reply = enforcePiper(
-            `I searched the repository for "${locationQuery}" and found no matches.`
-          );
-          pushConversationTurn(sid, "assistant", reply);
-          return res.json({
-            reply,
-            emotion: "confident",
-            intensity: 0.45,
-            proposed: [],
-            meta: {
-              affect,
-              locationMatches: { query: locationQuery, total: 0, shown: [], hidden: [] },
-            },
-          });
-        }
-
-        const shown = matches.slice(0, 3);
-        const hidden = matches.slice(3);
-        const fmt = (m) =>
-          `${m.file}:${m.line}:${m.col} ${String(m.preview || "").trim()}`;
-
-        const lines = [];
-        lines.push(
-          `I searched the repository for "${locationQuery}" and found ${total} match(es).`
-        );
-        lines.push("Top results:");
-        for (const m of shown) lines.push(`- ${fmt(m)}`);
-        if (hidden.length > 0)
-          lines.push(`(${hidden.length} more hidden — click “Show more”.)`);
-        lines.push(
-          "If you want, ask me to open one of these files and I can show the exact definition in context."
-        );
-
-        const reply = enforcePiper(lines.join("\n"));
-        pushConversationTurn(sid, "assistant", reply);
-        return res.json({
-          reply,
-          emotion: "confident",
-          intensity: 0.45,
-          proposed: [],
-          meta: {
-            affect,
-            locationMatches: { query: locationQuery, total, shown, hidden },
-          },
-        });
-      }
-      // If the tool failed, continue into normal flow.
-    }
-
 
     // Deterministic title change shortcut
     if (isTitleRequest(msg)) {
@@ -620,9 +710,43 @@ export function chatRoutes() {
       });
     }
 
+    // Phase 2.1: deterministic web-search (read-only) when the user explicitly asks for it
+    const wantsWeb = isWebSearchIntent(msg);
+    let webPreToolResults = [];
+    let webContext = null;
+    if (wantsWeb) {
+      const q = extractWebQuery(msg);
+      const ran = await runWebContext(q, sid);
+      webPreToolResults = ran.ran || [];
+      webContext = ran.fetchedText || null;
+      recordEvent(sid, "tool_call_forced", { tool: "web.search", query: q, ok: webPreToolResults?.[0]?.ok ?? null });
+    }
+
+    const metaWithAffect = (affect) => {
+      let sourcesAll = extractWebSources(webPreToolResults);
+
+      // Last-resort safety net: if the user explicitly asked for web search but the search engine yielded nothing,
+      // provide a small official-docs set for well-known queries so the UI can still show sources.
+      if (wantsWeb && (!sourcesAll || sourcesAll.length === 0)) {
+        const s = String(msg || "").toLowerCase();
+        if (s.includes("spotify") && (s.includes("web api") || s.includes("spotify api") || s.includes("authorization") || s.includes("auth"))) {
+          sourcesAll = [
+            { url: "https://developer.spotify.com/documentation/web-api", title: "Spotify Web API Documentation" },
+            { url: "https://developer.spotify.com/documentation/web-api/concepts/authorization", title: "Spotify Web API — Authorization Guide" },
+          ];
+        }
+      }
+
+      const sources = packSourcesForUi(sourcesAll, 3);
+      // If the user asked for a web search, always include meta.sources (even if empty) for debug/UI consistency.
+      if (wantsWeb) return { affect, sources };
+      return sources.total ? { affect, sources } : { affect };
+    };
+
     // If actions not allowed => pure chat
     if (!allowActions) {
       try {
+
         const disagreeLevel = computeDisagreeLevel(msg);
         const authorityOverride = isAuthorityOverride(msg);
 
@@ -657,7 +781,11 @@ export function chatRoutes() {
             emotion: "serious",
             intensity: 0.7,
             proposed: [],
-            meta: { affect },
+            meta: (() => {
+            const sourcesAll = extractWebSources(webPreToolResults);
+            const sources = packSourcesForUi(sourcesAll, 3);
+            return sources.total ? { affect, sources } : { affect };
+          })(),
           });
         }
 
@@ -757,13 +885,13 @@ export function chatRoutes() {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: { affect },
+            meta: metaWithAffect(affect),
           });
         }
 
         const raw = await callOllama(
           buildChatMessages({
-            userMsg: msg,
+            userMsg: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
             affect,
             disagreeLevel,
             authorityOverride,
@@ -792,7 +920,10 @@ export function chatRoutes() {
           picked.intensity
         );
 
-        console.log("[chat] chat-only", {
+        // TTS safety: never speak URLs. Keep them in meta.sources for the UI.
+        if (wantsWeb) reply = stripUrlsForTts(reply);
+
+console.log("[chat] chat-only", {
           sid,
           ms: Date.now() - started,
           emotion: picked.emotion,
@@ -812,7 +943,7 @@ export function chatRoutes() {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: { affect },
+          meta: metaWithAffect(affect),
         });
       } catch (e) {
         recordEvent(sid, "llm_fail", {
@@ -880,7 +1011,7 @@ export function chatRoutes() {
             emotion: "serious",
             intensity: 0.7,
             proposed: [],
-            meta: { affect },
+            meta: metaWithAffect(affect),
           });
         }
 
@@ -981,13 +1112,13 @@ export function chatRoutes() {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: { affect },
+            meta: metaWithAffect(affect),
           });
         }
 
         const raw = await callOllama(
           buildChatMessages({
-            userMsg: msg,
+            userMsg: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
             affect,
             disagreeLevel,
             authorityOverride,
@@ -1036,7 +1167,7 @@ export function chatRoutes() {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: { affect },
+          meta: metaWithAffect(affect),
         });
       }
 
@@ -1099,7 +1230,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
+            meta: metaWithAffect(affect),
           });
         }
 
@@ -1156,7 +1287,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
+            meta: metaWithAffect(affect),
           });
         }
       }
@@ -1169,10 +1300,85 @@ const affect = getAffectSnapshot(sid);
       const availableTools = listTools();
 
 
-      // (Phase 1.1 grounding handled earlier in this handler.)
+      // Phase 1.1: deterministic grounding for code-location questions
+      const deriveLocationQuery = (text) => {
+        const s = String(text || "");
+        const hasWhereWords = /(\bwhere\b|\blocated\b|\bdefined\b|\bdefinition\b|\bset\b|\bstored\b)/i.test(s);
+        if (!hasWhereWords) return null;
 
-      let planned = await llmRespondAndPlan({
-  message: msg,
+        // Only treat this as a repo/code location question if it has clear code/identifier signals.
+        const hasCodeContext = /(\bfile\b|\bfiles\b|\brepo\b|\bcode\b|\bconstant\b|\bconfig\b|\bsetting\b|\bvariable\b|\broute\b|\bmodule\b|\bimport\b|\bexport\b|\bpath\b|\bline\b)/i.test(s);
+        const backtick = s.match(/`([^`]{2,64})`/);
+        const fileLike = s.match(/\b([a-zA-Z0-9_\\/\.-]+\.(?:js|ts|json|py|css|html))\b/i);
+        const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
+        const voiceMention = /voice[_\s]?choices/i.test(s);
+        const nameMention = /your\s+name/i.test(s);
+        const identifierLike = Boolean(backtick) || Boolean(fileLike) || (Boolean(allCaps) && String(allCaps?.[0] || "").includes("_")) || voiceMention || nameMention;
+
+        if (!(hasCodeContext || identifierLike)) return null;
+
+        let q = backtick?.[1] || fileLike?.[1] || allCaps?.[0] || null;
+        if (!q && nameMention) q = "Piper";
+        if (!q && voiceMention) q = "VOICE_CHOICES";
+        if (!q) {
+          const id = s.match(/\b[a-zA-Z_][a-zA-Z0-9_]{2,64}\b/);
+          q = id?.[0] || null;
+        }
+        return q;
+      };
+
+      let preToolResults = null;
+      const locationQuery = deriveLocationQuery(msg);
+      if (locationQuery && availableTools.some((t) => t.id === "repo.searchText")) {
+        const r = await toolRegistry.run({
+          id: "repo.searchText",
+          args: { query: locationQuery, maxResults: 25 },
+          context: { sid },
+        });
+        preToolResults = [{ tool: "repo.searchText", ok: r.ok, error: r.error, result: r.result }];
+        logRunEvent("tool_call_forced", { sid, tool: "repo.searchText", query: locationQuery, ok: r.ok });
+      }
+
+
+      // If we forced a location query search, respond deterministically (so the model can’t dodge grounding).
+      if (locationQuery && Array.isArray(preToolResults) && preToolResults[0]?.ok) {
+        const matches = preToolResults[0]?.result?.matches;
+        if (Array.isArray(matches)) {
+          const total = matches.length;
+          if (total === 0) {
+            const affect = getAffectSnapshot(sid);
+            return res.json({
+              reply: enforcePiper(`I searched the repository for "${locationQuery}" and found no matches.`),
+              emotion: "confident",
+              intensity: 0.45,
+              proposed: [],
+              meta: { affect, locationMatches: { query: locationQuery, total: 0, shown: [], hidden: [] } },
+            });
+          }
+
+          const shown = matches.slice(0, 3);
+          const hidden = matches.slice(3);
+          const fmt = (m) => `${m.file}:${m.line}:${m.col} ${String(m.preview || "").trim()}`;
+          const lines = [];
+          lines.push(`I searched the repository for "${locationQuery}" and found ${total} match(es).`);
+          lines.push("Top results:");
+          for (const m of shown) lines.push(`- ${fmt(m)}`);
+          if (hidden.length > 0) lines.push(`(${hidden.length} more hidden — click “Show more”.)`);
+          lines.push("If you want, ask me to open one of these files and I can show the exact definition in context.");
+
+          const affect = getAffectSnapshot(sid);
+          return res.json({
+            reply: enforcePiper(lines.join("\n")),
+            emotion: "confident",
+            intensity: 0.45,
+            proposed: [],
+            meta: { affect, locationMatches: { query: locationQuery, total, shown, hidden } },
+          });
+        }
+      }
+
+let planned = await llmRespondAndPlan({
+  message: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
   snapshot,
   lastIntent: sessions.get(sid)?.lastIntent || "chat",
   availableTools,
@@ -1284,7 +1490,7 @@ if (toolCalls.length > 0) {
 
   // Second pass: feed tool results back into planner
   planned = await llmRespondAndPlan({
-    message: msg,
+    message: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
     snapshot,
     lastIntent: sessions.get(sid)?.lastIntent || "chat",
     availableTools,
@@ -1323,13 +1529,16 @@ if (toolCalls.length > 0) {
         fr: affect.frustration.total,
       });
 
-      return res.json({
-        reply: enforcePiper(planned.reply || "Understood, sir."),
-        emotion: picked.emotion,
-        intensity: picked.intensity,
-        proposed,
-        meta: { affect },
-      });
+      const sourcesAll = extractWebSources([...(webPreToolResults || []), ...(preToolResults || []), ...toolResults]);
+const sources = packSourcesForUi(sourcesAll, 3);
+
+return res.json({
+  reply: enforcePiper(planned.reply || "Understood, sir."),
+  emotion: picked.emotion,
+  intensity: picked.intensity,
+  proposed,
+  meta: { affect, sources },
+});
     } catch (e) {
       recordEvent(sid, "task_fail", { error: String(e?.message || e) });
       console.log("[chat] ERROR", { sid, err: String(e?.message || e) });
