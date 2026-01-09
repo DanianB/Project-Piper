@@ -780,9 +780,6 @@ f.onsubmit = async (e) => {
 
   try{
     const c = await sendToChat(msg);
-    // Persist greeting memory (so "Hello" doesn't trigger "nice to meet you" every boot)
-    if(localStorage.getItem('piper.metBefore') !== '1') localStorage.setItem('piper.metBefore','1');
-
     remove(thinkingNode);
 
     add('piper', c.reply, c.meta);

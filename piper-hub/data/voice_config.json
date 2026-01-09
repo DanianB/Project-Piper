@@ -1,6 +1,6 @@
 {
-  "provider": "chatterbox",
-  "voice": "default",
+  "provider": "piper",
+  "voice": "alba",
   "autoStartChatterbox": true,
   "chatterbox": {
     "cfg_weight": 0.35,

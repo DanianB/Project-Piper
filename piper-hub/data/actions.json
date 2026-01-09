@@ -1,5 +1,109 @@
 [
   {
+    "id": "359bfb54-3cf5-499f-b5ed-3314901c379e",
+    "sid": "8007ade2-90da-4019-b44e-54ce685e48d4",
+    "status": "rejected",
+    "type": "restart_piper",
+    "title": "Restart Piper",
+    "reason": "User requested restart",
+    "payload": {},
+    "risk": "action",
+    "createdAt": 1767928521027,
+    "updatedAt": 1767928529746,
+    "note": ""
+  },
+  {
+    "id": "act_0d84f55c-0b00-4fe8-aa41-79c05e6da0fa",
+    "sid": "8007ade2-90da-4019-b44e-54ce685e48d4",
+    "status": "done",
+    "type": "write_text_file",
+    "title": "Create file: Kinds of Worms.txt",
+    "reason": "User asked to create a text file in the last opened folder.",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\worms\\Kinds of Worms.txt",
+      "content": "Here is the content for \"Kinds of Worms.txt\":\n\n**Common Types of Worms**\n\n1. Earthworm (Lumbricus terrestris) - a segmented worm found in soil and compost\n2. Red Wigglers (Eisenia fetida) - a species of earthworm used in vermicomposting\n3. Flatworms (Platyhelminthes) - a class of worms that includes tapeworms and liver flukes\n4. Roundworms (Nematodes) - a phylum of worms that includes hookworms and ascarids\n5. Hookworms (Ancylostoma duodenale, Necator americanus) - parasitic worms that infect humans and animals\n6. Tapeworms (Cestodes) - parasitic flatworms that infect the digestive system\n7. Liver Flukes (Trematodes) - parasitic flatworms that infect the liver and bile ducts\n8. Gastrointestinal Worms (Nematodes, Cestodes, Trematodes) - worms that infect the digestive system of animals and humans\n9. Hairworms (Secernentea) - a family of nematode worms that infect insects and other invertebrates\n10. Planarian Worms (Platyhelminthes) - a type of flatworm often used in biological research\n\nPlease note: This list is not exhaustive, and there are many more species of worms found in various environments around the world."
+    },
+    "preview": "Here is the content for \"Kinds of Worms.txt\":\n\n**Common Types of Worms**\n\n1. Earthworm (Lumbricus terrestris) - a segmented worm found in soil and compost\n2. Red Wigglers (Eisenia fetida) - a species of earthworm used in vermicomposting\n3. Flatworms (Platyhelminthes) - a class of worms that includes tapeworms and liver flukes\n4. Roundworms (Nematodes) - a phylum of worms that includes hookworms and ascarids\n5. Hookworms (Ancylostoma duodenale, Necator americanus) - parasitic worms that infect humans and animals\n6. Tapeworms (Cestodes) - parasitic flatworms that infect the digestive system\n7. L",
+    "risk": "action",
+    "createdAt": 1767927655804,
+    "updatedAt": 1767927660463,
+    "result": {
+      "ok": true
+    }
+  },
+  {
+    "id": "act_9ccca88e-d683-4a29-9077-73729b7f8f44",
+    "sid": "8007ade2-90da-4019-b44e-54ce685e48d4",
+    "status": "done",
+    "type": "open_path",
+    "title": "Open Desktop folder: worms",
+    "reason": "User asked to open a Desktop folder (worms).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\worms"
+    },
+    "risk": "action",
+    "createdAt": 1767927639839,
+    "updatedAt": 1767927643764,
+    "result": {
+      "ok": true
+    }
+  },
+  {
+    "id": "act_c187640b-a2db-4912-acd8-13863f7ec8fb",
+    "sid": "8007ade2-90da-4019-b44e-54ce685e48d4",
+    "status": "done",
+    "type": "open_path",
+    "title": "Open Desktop folder: worms",
+    "reason": "User asked to open a Desktop folder (worms).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\worms"
+    },
+    "risk": "action",
+    "createdAt": 1767926098976,
+    "updatedAt": 1767926104244,
+    "result": {
+      "ok": true
+    }
+  },
+  {
+    "id": "act_05d5dde5-2b77-469f-a33b-20d1f0efd06b",
+    "type": "open_path",
+    "title": "Open Desktop folder: Worms",
+    "reason": "User asked to open a Desktop folder (Worms).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\Worms"
+    },
+    "status": "failed",
+    "createdAt": 1767863694824,
+    "updatedAt": 1767863703590,
+    "result": {
+      "ok": false,
+      "result": {
+        "type": "open_path",
+        "error": "Unknown action type: open_path"
+      }
+    }
+  },
+  {
+    "id": "act_7f6bcfcd-cb92-4f33-aed3-ba7a9f8ad76d",
+    "type": "launch_app",
+    "title": "Launch app: spotify",
+    "reason": "User requested launching allowlisted app \"spotify\".",
+    "payload": {
+      "appId": "spotify"
+    },
+    "status": "failed",
+    "createdAt": 1767863671906,
+    "updatedAt": 1767863677553,
+    "result": {
+      "ok": false,
+      "result": {
+        "type": "launch_app",
+        "error": "Unknown action type: launch_app"
+      }
+    }
+  },
+  {
     "id": "2797422f-93c9-4c0a-8d2c-822417b3421a",
     "type": "set_html_title",
     "title": "Set page title to \"Piper Hub\"",
@@ -3389,6 +3493,30 @@
         "path": "C:\\Users\\Danian\\Downloads\\piper_test.txt",
         "backup": null
       }
+    }
+  },
+  {
+    "type": "open_path",
+    "title": "Open Desktop folder: worms",
+    "reason": "User asked to open a Desktop folder (worms).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\worms"
+    }
+  },
+  {
+    "type": "open_path",
+    "title": "Open Desktop folder: undefined",
+    "reason": "User asked to open a Desktop folder (undefined).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\the"
+    }
+  },
+  {
+    "type": "open_path",
+    "title": "Open Desktop folder: undefined",
+    "reason": "User asked to open a Desktop folder (undefined).",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\the"
     }
   }
 ]

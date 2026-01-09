@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-08T08:04:34.595Z",
+  "generatedAt": "2026-01-09T03:00:18.754Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -2799,9 +2799,9 @@
             "index": 14962
           },
           "end": {
-            "line": 553,
+            "line": 558,
             "column": 1,
-            "index": 16085
+            "index": 16296
           }
         }
       },
@@ -2845,14 +2845,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 615,
+            "line": 763,
             "column": 0,
-            "index": 17804
+            "index": 23044
           },
           "end": {
-            "line": 1556,
+            "line": 1893,
             "column": 1,
-            "index": 49398
+            "index": 61090
           }
         }
       },
@@ -3657,35 +3657,35 @@
       },
       {
         "file": "src/actions/executor.js",
-        "name": "restoreBackup",
+        "name": "executeAction",
         "kind": "function",
         "loc": {
           "start": {
-            "line": 87,
+            "line": 147,
             "column": 0,
-            "index": 2271
+            "index": 5262
           },
           "end": {
-            "line": 102,
+            "line": 149,
             "column": 1,
-            "index": 2848
+            "index": 5356
           }
         }
       },
       {
         "file": "src/actions/executor.js",
-        "name": "executeAction",
+        "name": "restoreBackup",
         "kind": "function",
         "loc": {
           "start": {
-            "line": 130,
+            "line": 151,
             "column": 0,
-            "index": 3685
+            "index": 5358
           },
           "end": {
-            "line": 336,
+            "line": 153,
             "column": 1,
-            "index": 9497
+            "index": 5439
           }
         }
       },
@@ -4229,14 +4229,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 618,
+            "line": 766,
             "column": 2,
-            "index": 17860
+            "index": 23100
           },
           "end": {
-            "line": 1553,
+            "line": 1890,
             "column": 4,
-            "index": 49382
+            "index": 61074
           }
         }
       },
@@ -5067,6 +5067,70 @@
         }
       },
       {
+        "file": "src/tools/builtins/win.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 325
+          },
+          "end": {
+            "line": 10,
+            "column": 20,
+            "index": 345
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/win.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 346
+          },
+          "end": {
+            "line": 11,
+            "column": 24,
+            "index": 370
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/win.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 371
+          },
+          "end": {
+            "line": 12,
+            "column": 38,
+            "index": 409
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/win.js",
+        "source": "../registry.js",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 410
+          },
+          "end": {
+            "line": 13,
+            "column": 56,
+            "index": 466
+          }
+        }
+      },
+      {
         "file": "src/services/apps.js",
         "source": "fs",
         "loc": {
@@ -5660,17 +5724,49 @@
       },
       {
         "file": "src/routes/chat.js",
-        "source": "../planner/triage.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 211
+          },
+          "end": {
+            "line": 6,
+            "column": 20,
+            "index": 231
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "path",
         "loc": {
           "start": {
             "line": 7,
             "column": 0,
-            "index": 212
+            "index": 232
           },
           "end": {
             "line": 7,
+            "column": 24,
+            "index": 256
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../planner/triage.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 258
+          },
+          "end": {
+            "line": 9,
             "column": 58,
-            "index": 270
+            "index": 316
           }
         }
       },
@@ -5679,14 +5775,14 @@
         "source": "../planner/snapshot.js",
         "loc": {
           "start": {
-            "line": 8,
+            "line": 10,
             "column": 0,
-            "index": 271
+            "index": 317
           },
           "end": {
-            "line": 8,
+            "line": 10,
             "column": 55,
-            "index": 326
+            "index": 372
           }
         }
       },
@@ -5695,14 +5791,14 @@
         "source": "../planner/planner.js",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 11,
             "column": 0,
-            "index": 327
+            "index": 373
           },
           "end": {
-            "line": 9,
+            "line": 11,
             "column": 58,
-            "index": 385
+            "index": 431
           }
         }
       },
@@ -5711,14 +5807,14 @@
         "source": "../planner/compiler.js",
         "loc": {
           "start": {
-            "line": 10,
+            "line": 12,
             "column": 0,
-            "index": 386
+            "index": 432
           },
           "end": {
-            "line": 10,
+            "line": 12,
             "column": 62,
-            "index": 448
+            "index": 494
           }
         }
       },
@@ -5727,14 +5823,30 @@
         "source": "../actions/store.js",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 13,
             "column": 0,
-            "index": 449
+            "index": 495
           },
           "end": {
-            "line": 11,
-            "column": 48,
-            "index": 497
+            "line": 13,
+            "column": 75,
+            "index": 570
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../actions/executor.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 571
+          },
+          "end": {
+            "line": 14,
+            "column": 55,
+            "index": 626
           }
         }
       },
@@ -5743,14 +5855,14 @@
         "source": "../utils/runlog.js",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 15,
             "column": 0,
-            "index": 498
+            "index": 627
           },
           "end": {
-            "line": 12,
+            "line": 15,
             "column": 49,
-            "index": 547
+            "index": 676
           }
         }
       },
@@ -5759,14 +5871,14 @@
         "source": "../tools/index.js",
         "loc": {
           "start": {
-            "line": 14,
+            "line": 17,
             "column": 0,
-            "index": 549
+            "index": 678
           },
           "end": {
-            "line": 14,
+            "line": 17,
             "column": 46,
-            "index": 595
+            "index": 724
           }
         }
       },
@@ -5775,14 +5887,14 @@
         "source": "../tools/registry.js",
         "loc": {
           "start": {
-            "line": 15,
+            "line": 18,
             "column": 0,
-            "index": 596
+            "index": 725
           },
           "end": {
-            "line": 15,
+            "line": 18,
             "column": 62,
-            "index": 658
+            "index": 787
           }
         }
       },
@@ -5791,14 +5903,14 @@
         "source": "../services/mind.js",
         "loc": {
           "start": {
-            "line": 17,
+            "line": 20,
             "column": 0,
-            "index": 660
+            "index": 789
           },
           "end": {
-            "line": 30,
+            "line": 33,
             "column": 29,
-            "index": 957
+            "index": 1086
           }
         }
       },
@@ -6351,14 +6463,14 @@
         "source": "fs",
         "loc": {
           "start": {
-            "line": 2,
+            "line": 5,
             "column": 0,
-            "index": 27
+            "index": 161
           },
           "end": {
-            "line": 2,
+            "line": 5,
             "column": 20,
-            "index": 47
+            "index": 181
           }
         }
       },
@@ -6367,30 +6479,14 @@
         "source": "path",
         "loc": {
           "start": {
-            "line": 3,
+            "line": 6,
             "column": 0,
-            "index": 48
+            "index": 182
           },
           "end": {
-            "line": 3,
+            "line": 6,
             "column": 24,
-            "index": 72
-          }
-        }
-      },
-      {
-        "file": "src/actions/executor.js",
-        "source": "crypto",
-        "loc": {
-          "start": {
-            "line": 4,
-            "column": 0,
-            "index": 73
-          },
-          "end": {
-            "line": 4,
-            "column": 28,
-            "index": 101
+            "index": 206
           }
         }
       },
@@ -6399,62 +6495,14 @@
         "source": "child_process",
         "loc": {
           "start": {
-            "line": 5,
-            "column": 0,
-            "index": 102
-          },
-          "end": {
-            "line": 5,
-            "column": 47,
-            "index": 149
-          }
-        }
-      },
-      {
-        "file": "src/actions/executor.js",
-        "source": "util",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 150
-          },
-          "end": {
-            "line": 6,
-            "column": 33,
-            "index": 183
-          }
-        }
-      },
-      {
-        "file": "src/actions/executor.js",
-        "source": "../config/paths.js",
-        "loc": {
-          "start": {
             "line": 7,
             "column": 0,
-            "index": 184
+            "index": 207
           },
           "end": {
             "line": 7,
-            "column": 42,
-            "index": 226
-          }
-        }
-      },
-      {
-        "file": "src/actions/executor.js",
-        "source": "../utils/fsx.js",
-        "loc": {
-          "start": {
-            "line": 8,
-            "column": 0,
-            "index": 227
-          },
-          "end": {
-            "line": 12,
-            "column": 25,
-            "index": 316
+            "column": 38,
+            "index": 245
           }
         }
       },

@@ -538,10 +538,15 @@ export function speakQueued(text, meta = {}) {
         ),
         voice: cfg.voice || "default",
       });
-      wavPath = await runChatterboxToWav(spoken, cfg.voice || "default", {
-        emotion,
-        intensity,
-      });
+      try {
+        wavPath = await runChatterboxToWav(spoken, cfg.voice || "default", {
+          emotion,
+          intensity,
+        });
+      } catch (e) {
+        console.warn(`[tts] chatterbox failed, fallback to piper: ${String(e?.message || e)}`);
+        wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
+      }
     } else {
       wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
     }

@@ -1,7 +1,0 @@
-PHASE 2.1 WEB TOOL FIX
-
-Fixes toolRegistry handler signature mismatch that caused q=undefined and zero sources.
-
-Install: unzip into repo root (E:\AI\piper-hub) and overwrite src/tools/builtins/web.js. Restart server.
-
-Verify: ask 'Search the web for the official Spotify Web API docs'. Check server console for [WEB] search logs and /chat response meta.sources.total > 0.

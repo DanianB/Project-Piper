@@ -3,12 +3,15 @@ import { Router } from "express";
 import crypto from "crypto";
 import { callOllama } from "../services/ollama.js";
 import { enforcePiper, piperSystemPrompt } from "../services/persona.js";
+import fs from "fs";
+import path from "path";
 
 import { triageNeedsPlanner } from "../planner/triage.js";
 import { buildSnapshot } from "../planner/snapshot.js";
 import { llmRespondAndPlan } from "../planner/planner.js";
 import { compilePlanToActions } from "../planner/compiler.js";
-import { addAction } from "../actions/store.js";
+import { addAction, listActions, updateAction } from "../actions/store.js";
+import { executeAction } from "../actions/executor.js";
 import { logRunEvent } from "../utils/runlog.js";
 
 import { listTools } from "../tools/index.js";
@@ -75,29 +78,209 @@ function extractWebSources(toolResults) {
   return out;
 }
 
+// --- Phase 3: deterministic app/file actions (approval-gated) ---
+
+const _lastOpenedFolderBySid = new Map();
+
+function newActionId() {
+  return "act_" + crypto.randomUUID();
+}
+
+function addPendingAction(sid, core) {
+  const now = Date.now();
+  const action = {
+    id: core?.id || newActionId(),
+    sid,
+    status: core?.status || "pending",
+    type: core?.type,
+    title: core?.title,
+    reason: core?.reason,
+    payload: core?.payload || {},
+    preview: core?.preview,
+    risk: core?.risk || "action",
+    createdAt: core?.createdAt || now,
+    updatedAt: core?.updatedAt || now,
+  };
+
+  addAction(action);
+  return action;
+}
+
+function getLatestPendingActionForSid(sid) {
+  const all = listActions();
+  for (const a of all) {
+    if (a?.sid === sid && a?.status === "pending") return a;
+  }
+  return null;
+}
+
+function isApproveIntent(msg) {
+  const t = String(msg || "").trim().toLowerCase();
+  if (!t) return false;
+  return (
+    /^approve\b/.test(t) ||
+    /^approved\b/.test(t) ||
+    /^yes\b.*\bapprove\b/.test(t) ||
+    /^do it\b/.test(t) ||
+    /^execute\b/.test(t)
+  );
+}
+
+function isRejectIntent(msg) {
+  const t = String(msg || "").trim().toLowerCase();
+  return /^reject\b/.test(t) || /^cancel\b/.test(t) || /^no\b/.test(t);
+}
+
+
+function readAppsAllowlist() {
+  try {
+    const p = path.resolve(process.cwd(), "data", "apps.json");
+    const raw = fs.readFileSync(p, "utf-8");
+    const obj = JSON.parse(raw);
+    return obj && typeof obj === "object" ? obj : {};
+  } catch {
+    return {};
+  }
+}
+
+function listAllowlistedAppIds() {
+  const apps = readAppsAllowlist();
+  return Object.keys(apps || {}).filter(Boolean).sort();
+}
+
+function isListAppsIntent(msg) {
+  const t = String(msg || "").trim().toLowerCase();
+  if (!t) return false;
+  // allow polite fillers
+  const s = t.replace(/\b(please|pls|sir|piper|hey|hi|hello|can you|could you|would you)\b/g, " ").replace(/\s+/g, " ").trim();
+  return /\b(list|show|what|which)\b/.test(s) && /\b(app|apps|applications)\b/.test(s);
+}
+
+function parseOpenAllowlistedApp(msg) {
+  const t = String(msg || "").trim().toLowerCase();
+  const m = t.match(/\b(open|launch|start)\s+([a-z0-9_-]{2,})\b/i);
+  if (!m) return null;
+  const appId = m[2];
+  const apps = readAppsAllowlist();
+  if (!Object.prototype.hasOwnProperty.call(apps, appId)) return null;
+  return {
+    type: "launch_app",
+    title: `Launch app: ${appId}`,
+    reason: `User asked to open allowlisted app "${appId}".`,
+    payload: { appId },
+  };
+}
+
+function parseOpenDesktopFolder(msg) {
+  const raw = String(msg || "").trim();
+  const t = raw.toLowerCase();
+
+  // "open the folder on my desktop called worms"
+  let m =
+    t.match(/\bopen\s+(?:the\s+)?folder\s+on\s+my\s+desktop\s+(?:called|named)\s+["']?([^"']+?)["']?\b/i) ||
+    t.match(/\bopen\s+(?:the\s+)?folder\s+(?:called|named)\s+["']?([^"']+?)["']?\s+on\s+my\s+desktop\b/i);
+
+  // "open the worms folder on my desktop"
+  if (!m) m = t.match(/\bopen\s+(?:the\s+)?(.+?)\s+folder\s+on\s+my\s+desktop\b/i);
+
+  if (!m) return null;
+
+  const folderName = String(m[1] || "").trim().replace(/^["']|["']$/g, "");
+  if (!folderName) return null;
+
+  const base = process.env.USERPROFILE ? path.join(process.env.USERPROFILE, "Desktop") : null;
+  const folderPath = base ? path.join(base, folderName) : folderName;
+
+  return {
+    type: "open_path",
+    title: `Open Desktop folder: ${folderName}`,
+    folderName,
+    reason: `User asked to open a Desktop folder (${folderName}).`,
+    payload: { path: folderPath },
+    _folderName: folderName,
+    _folderPath: folderPath,
+  };
+}
+
+function parseWriteTextInThere(msg) {
+  const raw = String(msg || "").trim();
+
+  // Examples:
+  // "put a text document in there called Bone Worms that tells me what a bone worm is"
+  // "create a txt file in there named 'Bone Worms' about giraffes"
+  // "make a text file in there called Bone Worms: <content request>"
+  const re =
+    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)|text\s+file|txt\s+file|textfile|txtfile|file)\s+in\s+(?:there|here)\s+(?:called|named)\s+["\']?([^"\']+?)["\']?(?:\s+(?:that|which)\s+|:\s*)([\s\S]+)$/i;
+
+  const m = raw.match(re);
+  if (!m) return null;
+
+  const name = String(m[1] || "").trim();
+  const bodyRequest = String(m[2] || "").trim();
+  if (!name || !bodyRequest) return null;
+
+  const filename = name.toLowerCase().endsWith(".txt") ? name : `${name}.txt`;
+  return { filename, bodyRequest };
+}
+
+
+function parseWriteTextInNamedFolder(msg) {
+  const raw = String(msg || "").trim();
+
+  // Supported examples:
+  // - put a txt document called "Kinds of Worms" in the worms folder that lists 10 kinds of worms
+  // - create a text file named Notes in the Projects folder: meeting notes
+  // - put a txt file in the worms folder called Kinds of Worms that ...
+  //
+  // We intentionally accept a few common word orders.
+
+  const patterns = [
+    // called/named BEFORE folder: "... called X in the Y folder ..."
+    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)?|text\s+file|txt\s+file|file)\s+(?:called|named)\s+["']?([^"']+?)["']?\s+in\s+(?:the\s+)?["']?([^"']+?)["']?\s+folder\b(?:\s+(?:that|which)\s+|:\s*|\s+)([\s\S]+)$/i,
+    // called/named AFTER folder: "... in the Y folder called X ..."
+    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)?|text\s+file|txt\s+file|file)\s+in\s+(?:the\s+)?["']?([^"']+?)["']?\s+folder\s+(?:called|named)\s+["']?([^"']+?)["']?\b(?:\s+(?:that|which)\s+|:\s*|\s+)([\s\S]+)$/i,
+  ];
+
+  let m = null;
+  let name = "";
+  let folderName = "";
+  let bodyRequest = "";
+
+  for (const re of patterns) {
+    const mm = raw.match(re);
+    if (!mm) continue;
+
+    if (re === patterns[0]) {
+      name = String(mm[1] || "").trim();
+      folderName = String(mm[2] || "").trim();
+      bodyRequest = String(mm[3] || "").trim();
+    } else {
+      folderName = String(mm[1] || "").trim();
+      name = String(mm[2] || "").trim();
+      bodyRequest = String(mm[3] || "").trim();
+    }
+    m = mm;
+    break;
+  }
+
+  if (!m) return null;
+
+  name = name.replace(/^["']|["']$/g, "");
+  folderName = folderName.replace(/^["']|["']$/g, "");
+  if (!name || !folderName || !bodyRequest) return null;
+
+  const filename = name.toLowerCase().endsWith(".txt") ? name : `${name}.txt`;
+  return { filename, folderName, bodyRequest };
+}
+
+
+
+
+
 function packSourcesForUi(sources, maxShown = 3) {
   const list = Array.isArray(sources) ? sources : [];
   return { total: list.length, shown: list.slice(0, maxShown), hidden: list.slice(maxShown) };
 }
-
-function stripUrlsForTts(text) {
-  let s = String(text || "");
-
-  // Markdown links: [label](url) -> label
-  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1");
-
-  // Inline code URLs: `https://...` -> (remove the URL but keep backticks content if non-url)
-  s = s.replace(/`https?:\/\/[^`\s]+`/g, "");
-
-  // Raw URLs
-  s = s.replace(/https?:\/\/\S+/g, "");
-
-  // Clean up doubled spaces/newlines from removals
-  s = s.replace(/[\t\r\n]+/g, " ").replace(/\s{2,}/g, " ").trim();
-  return s;
-}
-
-
 
 
 function isGreeting(msg) {
@@ -106,56 +289,61 @@ function isGreeting(msg) {
 }
 
 function isWebSearchIntent(msg) {
-  const s = String(msg || "").trim().toLowerCase();
-
-  // High-precision triggers only (avoid web-search on every casual "search" mention)
-  const wantsWeb =
-    s.startsWith("search the web") ||
-    s.startsWith("search web") ||
-    s.startsWith("web search") ||
-    s.startsWith("search the internet") ||
-    s.includes("search the web for") ||
-    s.includes("search the internet for") ||
-    s.includes("look up ") ||
-    s.includes("find online") ||
-    s.includes("on the web") ||
-    s.includes("online");
-
-  if (!wantsWeb) return false;
-
-  // Explicit non-web scopes
-  if (s.includes("search my repo") || s.includes("search the repo") || s.includes("in this repo")) return false;
-
-  return true;
+  const s = String(msg || "").trim();
+  // Allow polite prefixes: "can you", "please", etc.
+  // Trigger only when the user explicitly requests a web lookup.
+  return /\b(search\s+(?:the\s+)?web|web\s+search|search\s+online|look\s+it\s+up\s+online|look\s+up\s+on\s+the\s+web)\b/i.test(s);
 }
-
 
 function extractWebQuery(msg) {
   const s = String(msg || "").trim();
-
-  // Common patterns: "Search the web for X", "Search the internet for X", "Look up X", "Find X online"
-  let m = s.match(/search\s+(?:the\s+)?(?:web|internet)\s+for\s+([\s\S]{1,400})/i);
-  let q = m?.[1] ? m[1].trim() : null;
-
-  if (!q) {
-    m = s.match(/look\s+up\s+([\s\S]{1,400})/i);
-    if (m?.[1]) q = m[1].trim();
-  }
-
-  if (!q) {
-    m = s.match(/find\s+([\s\S]{1,400})\s+online/i);
-    if (m?.[1]) q = m[1].trim();
-  }
-
-  q = (q || s).trim().replace(/[?.!]+$/, "");
-
-  // Strip trailing instructions: "... and summarize/explain ..."
-  q = q.replace(/\s+(?:and|then)\s+(?:summarize|explain|describe|give|tell|list|show|compare|outline)\b[\s\S]*$/i, "").trim();
-
-  // Conservative length cap
-  return q.slice(0, 200);
+  // Common patterns: "Search the web for X", "Look up X", "Find X online"
+  let m = s.match(/search\s+(?:the\s+)?web\s+for\s+([\s\S]{1,200})/i);
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  m = s.match(/look\s+up\s+([\s\S]{1,200})/i);
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  m = s.match(/find\s+([\s\S]{1,200})\s+online/i);
+  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  return s.slice(0, 200);
 }
 
+
+const _webBudgetBySid = new Map();
+
+function checkWebBudget(sid, { perMinute = 8, perDay = 60 } = {}) {
+  const now = Date.now();
+  const minuteMs = 60_000;
+  const dayMs = 24 * 60_000 * 60;
+
+  const b = _webBudgetBySid.get(sid) || {
+    minuteStart: now,
+    minuteCount: 0,
+    dayStart: now,
+    dayCount: 0,
+  };
+
+  if (now - b.minuteStart >= minuteMs) {
+    b.minuteStart = now;
+    b.minuteCount = 0;
+  }
+  if (now - b.dayStart >= dayMs) {
+    b.dayStart = now;
+    b.dayCount = 0;
+  }
+
+  if (b.minuteCount >= perMinute) {
+    const retryMs = minuteMs - (now - b.minuteStart);
+    return { ok: false, error: `Web rate limit: too many requests. Try again in ${Math.ceil(retryMs / 1000)}s.` };
+  }
+  if (b.dayCount >= perDay) {
+    return { ok: false, error: "Web rate limit: daily cap reached." };
+  }
+
+  b.minuteCount += 1;
+  b.dayCount += 1;
+  _webBudgetBySid.set(sid, b);
+  return { ok: true };
+}
 
 async function runWebContext(query, sid) {
   const ran = [];
@@ -163,71 +351,31 @@ async function runWebContext(query, sid) {
   const webFetch = toolRegistry.get("web.fetch");
   if (!webSearch) return { ran, fetchedText: null };
 
-  const r1 = await toolRegistry.run({
-    id: "web.search",
-    args: { query, maxResults: 7 },
-    context: { sid },
-  });
+  const budget = checkWebBudget(sid, { perMinute: 8, perDay: 60 });
+  if (!budget.ok) {
+    ran.push({ tool: "web.limit", ok: false, result: { error: budget.error } });
+    return { ran, fetchedText: null, error: budget.error };
+  }
 
+
+  const r1 = await toolRegistry.run({ id: "web.search", args: { query, maxResults: 5 }, context: { sid } });
   ran.push({ tool: "web.search", ok: r1.ok, result: r1.result });
   if (!r1.ok) return { ran, fetchedText: null };
 
-  const results = Array.isArray(r1.result?.results)
-    ? r1.result.results
-    : Array.isArray(r1.result)
-      ? r1.result
-      : [];
+  const firstUrl =
+    (Array.isArray(r1.result?.results) && r1.result.results[0]?.url) ||
+    (Array.isArray(r1.result) && r1.result[0]?.url) ||
+    null;
 
-  const scoreResult = (it) => {
-    const url = String(it?.url || "");
-    const title = String(it?.title || "").toLowerCase();
-    const u = url.toLowerCase();
-    let score = 0;
-
-    // Prefer "official" / docs-y results
-    if (title.includes("official")) score += 6;
-    if (title.includes("documentation") || title.includes("docs") || title.includes("reference")) score += 5;
-    if (u.includes("developer.") || u.includes("/docs") || u.includes("/documentation")) score += 4;
-
-    // Down-rank aggregators for API/auth questions
-    if (u.includes("wikipedia.org")) score -= 6;
-    if (u.includes("medium.com") || u.includes("dev.to")) score -= 3;
-
-    // If the query contains a brand/domain hint, reward matches
-    const q = String(query || "").toLowerCase();
-    const spotifyHint = q.includes("spotify");
-    if (spotifyHint && (u.includes("developer.spotify.com") || u.includes("spotify.com/documentation"))) score += 8;
-
-    return score;
-  };
-
-  const best = results
-    .filter((it) => it?.url)
-    .map((it) => ({ it, score: scoreResult(it) }))
-    .sort((a, b) => b.score - a.score)[0]?.it;
-
-  const bestUrl = best?.url || results[0]?.url || null;
-
-  if (webFetch && bestUrl) {
-    const r2 = await toolRegistry.run({
-      id: "web.fetch",
-      args: { url: bestUrl },
-      context: { sid },
-    });
-
+  if (webFetch && firstUrl) {
+    const r2 = await toolRegistry.run({ id: "web.fetch", args: { url: firstUrl }, context: { sid } });
     ran.push({ tool: "web.fetch", ok: r2.ok, result: r2.result });
-
-    const txt =
-      r2.ok && (r2.result?.text || r2.result?.content || r2.result?.body)
-        ? String(r2.result.text || r2.result.content || r2.result.body)
-        : null;
-
-    return { ran, fetchedText: txt ? txt.slice(0, 7000) : null };
+    const txt = (r2.ok && (r2.result?.text || r2.result?.content || r2.result?.body)) ? String(r2.result.text || r2.result.content || r2.result.body) : null;
+    return { ran, fetchedText: txt ? txt.slice(0, 6000) : null };
   }
 
   return { ran, fetchedText: null };
 }
-
 
 function newId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
@@ -637,7 +785,222 @@ if (isGreeting(msg)) {
   });
 }
 
-    const meta = reqMeta(req);
+
+// --- Phase 3: voice approve/reject (no UI click needed) ---
+try {
+  if (isApproveIntent(msg)) {
+    const affect = getAffectSnapshot(sid);
+    const pending = getLatestPendingActionForSid(sid);
+    if (!pending) {
+      const reply = enforcePiper("There's nothing pending to approve, sir.");
+      return res.json({ reply, emotion: "neutral", intensity: 0.35, proposed: [], meta: { affect } });
+    }
+
+    updateAction(pending.id, { status: "approved", updatedAt: Date.now() });
+    console.log("[phase3] approve_action", { sid, id: pending.id, type: pending.type, title: pending.title });
+
+    const execRes = await executeAction(pending);
+    const status = execRes?.ok ? "executed" : "failed";
+    updateAction(pending.id, { status, result: execRes, updatedAt: Date.now() });
+
+    if (execRes?.ok) {
+      const reply = enforcePiper("Approved.");
+      return res.json({ reply, emotion: "confident", intensity: 0.45, proposed: [], meta: { affect } });
+    }
+    const reply = enforcePiper(`I couldn't complete that action: ${String(execRes?.error || "Unknown error")}`);
+    return res.json({ reply, emotion: "concerned", intensity: 0.6, proposed: [], meta: { affect } });
+  }
+
+  if (isRejectIntent(msg)) {
+    const affect = getAffectSnapshot(sid);
+    const pending = getLatestPendingActionForSid(sid);
+    if (pending) {
+      updateAction(pending.id, { status: "rejected", updatedAt: Date.now() });
+      console.log("[phase3] reject_action", { sid, id: pending.id, type: pending.type, title: pending.title });
+    }
+    const reply = enforcePiper("Understood. I won't execute it.");
+    return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect } });
+  }
+} catch (e) {
+  console.log("[phase3] approve/reject ERROR", e);
+}
+
+// --- Phase 3 deterministic intents ---
+// Priority order: approvals handled earlier, then list/open/write.
+
+try {
+  // List allowlisted apps
+  if (isListAppsIntent(msg)) {
+    const affect = getAffectSnapshot(sid);
+    const ids = listAllowlistedAppIds();
+    console.log("[phase3] list_apps", { sid, count: ids.length });
+    const reply = enforcePiper(
+      `I can open these allowlisted apps: ${ids.join(", ")}. Say "open <app>" (e.g., "open vscode").`
+    );
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect } });
+  }
+
+  // Open allowlisted app
+  const app = parseOpenAllowlistedApp(msg);
+  if (app) {
+    const affect = getAffectSnapshot(sid);
+
+    const action = addPendingAction(sid, {
+      type: "launch_app",
+      title: `Launch app: ${app.appId}`,
+      reason: `User asked to open ${app.appId}.`,
+      payload: { appId: app.appId, args: [] },
+    });
+
+    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title });
+
+    const reply = enforcePiper(`Proposed: open ${app.appId}. Approve to execute.`);
+    return res.json({
+      reply,
+      emotion: "warm",
+      intensity: 0.45,
+      proposed: [action],
+      meta: { affect },
+    });
+  }
+
+  // Open a Desktop folder (best-effort, doesn't check existence here)
+  const desk = parseOpenDesktopFolder(msg);
+  if (desk) {
+    const affect = getAffectSnapshot(sid);
+
+    _lastOpenedFolderBySid.set(sid, desk._folderPath);
+
+    const deskName = desk._folderName || desk.folderName || path.basename(String(desk._folderPath || "")) || "folder";
+
+    const action = addPendingAction(sid, {
+      type: "open_path",
+      title: `Open Desktop folder: ${deskName}`,
+      reason: `User asked to open a Desktop folder (${deskName}).`,
+      payload: { path: desk._folderPath },
+    });
+
+    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title });
+
+    const reply = enforcePiper(`Proposed: open the "${desk._folderName}" folder on your Desktop. Approve to execute.`);
+    return res.json({
+      reply,
+      emotion: "warm",
+      intensity: 0.45,
+      proposed: [action],
+      meta: { affect },
+    });
+  }
+
+  
+// Create a text document in a specifically named folder ("in the X folder") — approval-gated.
+const wtn = parseWriteTextInNamedFolder(msg);
+if (wtn) {
+  const affect = getAffectSnapshot(sid);
+
+  // Try to resolve folder. Prefer last opened folder if its basename matches.
+  let folder = _lastOpenedFolderBySid.get(sid) || null;
+  const baseName = folder ? path.basename(folder).toLowerCase() : "";
+  const wanted = String(wtn.folderName || "").trim().toLowerCase();
+
+  if (!folder || baseName !== wanted) {
+    const base = process.env.USERPROFILE ? path.join(process.env.USERPROFILE, "Desktop") : null;
+    folder = base ? path.join(base, wtn.folderName) : null;
+  }
+
+  if (!folder) {
+    const reply = enforcePiper('Which folder do you mean, sir? Open the folder first, then say: "put a text document in there called ..."');
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect } });
+  }
+
+  // Generate content using the LLM, but the write itself is approval-gated.
+  const contentPrompt = `Write the contents for a text file named "${wtn.filename}". The user asked: ${wtn.bodyRequest}. Be concise and factual.`;
+  const llmText = await callOllama(
+    [
+      { role: "system", content: piperSystemPrompt() },
+      { role: "user", content: contentPrompt },
+    ],
+    { temperature: 0.4 }
+  );
+
+  const fileContent = String(llmText || "").trim() || `Notes: ${wtn.bodyRequest}`;
+  const filePath = path.join(folder, wtn.filename);
+
+  const action = addPendingAction(sid, {
+    type: "write_text_file",
+    title: `Create file: ${wtn.filename}`,
+    reason: `User asked to create a text file in the "${wtn.folderName}" folder.`,
+    payload: { path: filePath, content: fileContent },
+    preview: fileContent.slice(0, 600),
+  });
+
+  console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, filePath });
+
+  const reply = enforcePiper(`Proposed: create "${wtn.filename}" in the "${wtn.folderName}" folder. Approve to execute.`);
+  return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect } });
+}
+
+// Create a text document in the last opened folder ("in there") — approval-gated.
+  const wt = parseWriteTextInThere(msg);
+  if (wt) {
+    const affect = getAffectSnapshot(sid);
+    const folder = _lastOpenedFolderBySid.get(sid);
+
+    if (!folder) {
+      const reply = enforcePiper(
+        'Which folder do you mean, sir? Open the folder first, then say "put a text document in there..."'
+      );
+      return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect } });
+    }
+
+    // Generate content (no tools) — user can still edit after creation.
+    const contentPrompt = [
+      `Create the content for a plain text file named "${wt.filename}".`,
+      `User request: ${wt.bodyRequest}`,
+      "",
+      "Rules:",
+      "- Keep it concise (<= 220 words).",
+      "- Be factual and avoid making up medical/scientific claims; if the request is speculative, say so.",
+      "- No URLs in the text.",
+      "- Use simple headings if helpful.",
+    ].join("\n");
+
+    const llmText = await callOllama(
+      [
+        { role: "system", content: piperSystemPrompt() },
+        { role: "user", content: contentPrompt },
+      ],
+      { temperature: 0.4 }
+    );
+
+    const fileContent = String(llmText || "").trim() || `Notes: ${wt.bodyRequest}`;
+    const filePath = path.join(folder, wt.filename);
+
+    const action = addPendingAction(sid, {
+      type: "write_text_file",
+      title: `Create file: ${wt.filename}`,
+      reason: `User asked to create a text file in the last opened folder.`,
+      payload: { path: filePath, content: fileContent },
+      preview: fileContent.slice(0, 600),
+    });
+
+    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, filePath });
+
+    const reply = enforcePiper(`Proposed: create "${wt.filename}" in that folder. Approve to execute.`);
+    return res.json({
+      reply,
+      emotion: "warm",
+      intensity: 0.45,
+      proposed: [action],
+      meta: { affect },
+    });
+  }
+} catch (e) {
+  console.log("[phase3] deterministic intents ERROR", e);
+}
+
+
+const meta = reqMeta(req);
 
     bumpTurn(sid);
 
@@ -695,7 +1058,7 @@ if (isGreeting(msg)) {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      addAction(action);
+      addPendingAction(sid, action);
       recordEvent(sid, "action_queued", { type: "restart_piper" });
       setLastIntent(sid, "change", msg);
 
@@ -710,42 +1073,19 @@ if (isGreeting(msg)) {
       });
     }
 
-    // Phase 2.1: deterministic web-search (read-only) when the user explicitly asks for it
-    const wantsWeb = isWebSearchIntent(msg);
-    let webPreToolResults = [];
-    let webContext = null;
-    if (wantsWeb) {
-      const q = extractWebQuery(msg);
-      const ran = await runWebContext(q, sid);
-      webPreToolResults = ran.ran || [];
-      webContext = ran.fetchedText || null;
-      recordEvent(sid, "tool_call_forced", { tool: "web.search", query: q, ok: webPreToolResults?.[0]?.ok ?? null });
-    }
-
-    const metaWithAffect = (affect) => {
-      let sourcesAll = extractWebSources(webPreToolResults);
-
-      // Last-resort safety net: if the user explicitly asked for web search but the search engine yielded nothing,
-      // provide a small official-docs set for well-known queries so the UI can still show sources.
-      if (wantsWeb && (!sourcesAll || sourcesAll.length === 0)) {
-        const s = String(msg || "").toLowerCase();
-        if (s.includes("spotify") && (s.includes("web api") || s.includes("spotify api") || s.includes("authorization") || s.includes("auth"))) {
-          sourcesAll = [
-            { url: "https://developer.spotify.com/documentation/web-api", title: "Spotify Web API Documentation" },
-            { url: "https://developer.spotify.com/documentation/web-api/concepts/authorization", title: "Spotify Web API — Authorization Guide" },
-          ];
-        }
-      }
-
-      const sources = packSourcesForUi(sourcesAll, 3);
-      // If the user asked for a web search, always include meta.sources (even if empty) for debug/UI consistency.
-      if (wantsWeb) return { affect, sources };
-      return sources.total ? { affect, sources } : { affect };
-    };
-
     // If actions not allowed => pure chat
     if (!allowActions) {
       try {
+
+// Phase 2.1: web search in chat-only mode (read-only tools allowed even when actions are disabled)
+let preToolResults = [];
+let webContext = null;
+if (isWebSearchIntent(msg)) {
+  const q = extractWebQuery(msg);
+  const ran = await runWebContext(q, sid);
+  preToolResults = ran.ran || [];
+  webContext = ran.fetchedText || null;
+}
 
         const disagreeLevel = computeDisagreeLevel(msg);
         const authorityOverride = isAuthorityOverride(msg);
@@ -782,7 +1122,7 @@ if (isGreeting(msg)) {
             intensity: 0.7,
             proposed: [],
             meta: (() => {
-            const sourcesAll = extractWebSources(webPreToolResults);
+            const sourcesAll = extractWebSources(preToolResults);
             const sources = packSourcesForUi(sourcesAll, 3);
             return sources.total ? { affect, sources } : { affect };
           })(),
@@ -885,7 +1225,7 @@ if (isGreeting(msg)) {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: metaWithAffect(affect),
+            meta: { affect },
           });
         }
 
@@ -920,10 +1260,7 @@ if (isGreeting(msg)) {
           picked.intensity
         );
 
-        // TTS safety: never speak URLs. Keep them in meta.sources for the UI.
-        if (wantsWeb) reply = stripUrlsForTts(reply);
-
-console.log("[chat] chat-only", {
+        console.log("[chat] chat-only", {
           sid,
           ms: Date.now() - started,
           emotion: picked.emotion,
@@ -943,7 +1280,7 @@ console.log("[chat] chat-only", {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: metaWithAffect(affect),
+          meta: { affect },
         });
       } catch (e) {
         recordEvent(sid, "llm_fail", {
@@ -1011,7 +1348,7 @@ console.log("[chat] chat-only", {
             emotion: "serious",
             intensity: 0.7,
             proposed: [],
-            meta: metaWithAffect(affect),
+            meta: { affect },
           });
         }
 
@@ -1112,13 +1449,13 @@ console.log("[chat] chat-only", {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: metaWithAffect(affect),
+            meta: { affect },
           });
         }
 
         const raw = await callOllama(
           buildChatMessages({
-            userMsg: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
+            userMsg: msg,
             affect,
             disagreeLevel,
             authorityOverride,
@@ -1167,7 +1504,7 @@ console.log("[chat] chat-only", {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: metaWithAffect(affect),
+          meta: { affect },
         });
       }
 
@@ -1194,7 +1531,7 @@ console.log("[chat] chat-only", {
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          const saved = addAction(a);
+          const saved = addPendingAction(sid, a);
           sessions.set(sid, { lastIntent: "change" });
           setLastIntent(sid, "change", msg);
 
@@ -1230,7 +1567,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: metaWithAffect(affect),
+            meta: { affect },
           });
         }
 
@@ -1258,7 +1595,7 @@ const affect = getAffectSnapshot(sid);
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          const saved = addAction(a);
+          const saved = addPendingAction(sid, a);
           sessions.set(sid, { lastIntent: "change" });
           setLastIntent(sid, "change", msg);
 
@@ -1287,7 +1624,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: metaWithAffect(affect),
+            meta: { affect },
           });
         }
       }
@@ -1378,7 +1715,7 @@ const affect = getAffectSnapshot(sid);
       }
 
 let planned = await llmRespondAndPlan({
-  message: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
+  message: msg,
   snapshot,
   lastIntent: sessions.get(sid)?.lastIntent || "chat",
   availableTools,
@@ -1490,7 +1827,7 @@ if (toolCalls.length > 0) {
 
   // Second pass: feed tool results back into planner
   planned = await llmRespondAndPlan({
-    message: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
+    message: msg,
     snapshot,
     lastIntent: sessions.get(sid)?.lastIntent || "chat",
     availableTools,
@@ -1502,7 +1839,7 @@ if (toolCalls.length > 0) {
 
       const proposed = [];
       for (const a of compiled.actions || []) {
-        const saved = addAction(a);
+        const saved = addPendingAction(sid, a);
         proposed.push({ id: saved.id, ...a.summary });
       }
 
@@ -1529,7 +1866,7 @@ if (toolCalls.length > 0) {
         fr: affect.frustration.total,
       });
 
-      const sourcesAll = extractWebSources([...(webPreToolResults || []), ...(preToolResults || []), ...toolResults]);
+      const sourcesAll = extractWebSources([...(preToolResults || []), ...toolResults]);
 const sources = packSourcesForUi(sourcesAll, 3);
 
 return res.json({
