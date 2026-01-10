@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-10T03:57:51.846Z",
+  "generatedAt": "2026-01-10T06:54:16.966Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -531,6 +531,75 @@
         "id": "runlogList",
         "classes": [],
         "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "planWrap",
+        "classes": [
+          "section",
+          "panel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "sectionHeader"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "h3",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "hint"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "planBody",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "planBtns"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "planApproveBtn",
+        "classes": [
+          "btn-primary"
+        ],
+        "text": "Approve plan"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "planAbortBtn",
+        "classes": [
+          "btn-secondary"
+        ],
+        "text": "Abort plan"
       }
     ]
   },
@@ -1780,6 +1849,135 @@
         "properties": [
           "margin-top"
         ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planWrap",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin",
+          "padding",
+          "border",
+          "border-radius",
+          "background"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planHeader",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "justify-content",
+          "gap",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planTitle",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "font-weight",
+          "font-size",
+          "margin-bottom"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planMeta",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "opacity",
+          "font-size"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planButtons",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "gap",
+          "align-items"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planRisks",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin-top",
+          "font-size",
+          "opacity"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".planSteps",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "margin-top",
+          "padding-left"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".pillMini",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "display",
+          "padding",
+          "border-radius",
+          "border",
+          "margin-left",
+          "font-size",
+          "opacity"
+        ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".btnDanger",
+        "specificity": [
+          0,
+          1,
+          0
+        ],
+        "properties": [
+          "border-color"
+        ]
       }
     ]
   },
@@ -2976,6 +3174,91 @@
         }
       },
       {
+        "file": "src/services/plan/schema.js",
+        "name": "normalizePlanDraft",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 143
+          },
+          "end": {
+            "line": 24,
+            "column": 1,
+            "index": 1039
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/schema.js",
+        "name": "validatePlan",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 26,
+            "column": 0,
+            "index": 1041
+          },
+          "end": {
+            "line": 33,
+            "column": 1,
+            "index": 1465
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/store.js",
+        "name": "getCurrentPlan",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 0,
+            "index": 685
+          },
+          "end": {
+            "line": 32,
+            "column": 1,
+            "index": 818
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/store.js",
+        "name": "upsertPlan",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 34,
+            "column": 0,
+            "index": 820
+          },
+          "end": {
+            "line": 49,
+            "column": 1,
+            "index": 1314
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/store.js",
+        "name": "setPlanStatus",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 51,
+            "column": 0,
+            "index": 1316
+          },
+          "end": {
+            "line": 60,
+            "column": 1,
+            "index": 1583
+          }
+        }
+      },
+      {
         "file": "src/routes/actions.js",
         "name": "actionRoutes",
         "kind": "function",
@@ -3010,23 +3293,6 @@
         }
       },
       {
-        "file": "src/routes/chat.js",
-        "name": "chatRoutes",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 612,
-            "column": 0,
-            "index": 17945
-          },
-          "end": {
-            "line": 1610,
-            "column": 1,
-            "index": 52320
-          }
-        }
-      },
-      {
         "file": "src/routes/devices.js",
         "name": "deviceRoutes",
         "kind": "function",
@@ -3040,6 +3306,23 @@
             "line": 22,
             "column": 1,
             "index": 623
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "name": "planRoutes",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 132
+          },
+          "end": {
+            "line": 5,
+            "column": 35,
+            "index": 167
           }
         }
       },
@@ -3112,6 +3395,125 @@
         }
       },
       {
+        "file": "src/routes/chat/constants.js",
+        "name": "EMPTY_SOURCES",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 88
+          },
+          "end": {
+            "line": 4,
+            "column": 65,
+            "index": 153
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "name": "chatHandler",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 74,
+            "column": 0,
+            "index": 2226
+          },
+          "end": {
+            "line": 1060,
+            "column": 1,
+            "index": 35767
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/index.js",
+        "name": "chatRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 107
+          },
+          "end": {
+            "line": 9,
+            "column": 1,
+            "index": 205
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/index.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 207
+          },
+          "end": {
+            "line": 11,
+            "column": 26,
+            "index": 233
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "name": "buildChatRouter",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 451,
+            "column": 0,
+            "index": 13008
+          },
+          "end": {
+            "line": 1478,
+            "column": 1,
+            "index": 48382
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "name": "chatRoutes",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 1480,
+            "column": 0,
+            "index": 48384
+          },
+          "end": {
+            "line": 1480,
+            "column": 42,
+            "index": 48426
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 1482,
+            "column": 0,
+            "index": 48428
+          },
+          "end": {
+            "line": 1482,
+            "column": 31,
+            "index": 48459
+          }
+        }
+      },
+      {
         "file": "src/routes/chat/phase3.js",
         "name": "handlePhase3Deterministic",
         "kind": "function",
@@ -3159,6 +3561,380 @@
             "line": 57,
             "column": 1,
             "index": 1676
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "name": "isAbortPlanCommand",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 408
+          },
+          "end": {
+            "line": 21,
+            "column": 1,
+            "index": 622
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "name": "isApprovePlanCommand",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 23,
+            "column": 0,
+            "index": 624
+          },
+          "end": {
+            "line": 30,
+            "column": 1,
+            "index": 804
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "name": "looksLikeHighLevelProject",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 32,
+            "column": 0,
+            "index": 806
+          },
+          "end": {
+            "line": 39,
+            "column": 1,
+            "index": 1232
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "name": "maybeHandlePlanMode",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 77,
+            "column": 0,
+            "index": 2681
+          },
+          "end": {
+            "line": 114,
+            "column": 1,
+            "index": 4453
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "name": "runPlannerFlow",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 20,
+            "column": 0,
+            "index": 676
+          },
+          "end": {
+            "line": 325,
+            "column": 1,
+            "index": 10162
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 327,
+            "column": 0,
+            "index": 10164
+          },
+          "end": {
+            "line": 327,
+            "column": 30,
+            "index": 10194
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/webFlow.js",
+        "name": "maybeFetchWebContext",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 285
+          },
+          "end": {
+            "line": 17,
+            "column": 1,
+            "index": 631
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/webFlow.js",
+        "name": "augmentUserMessageWithWebContext",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 633
+          },
+          "end": {
+            "line": 22,
+            "column": 1,
+            "index": 783
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/webFlow.js",
+        "name": "buildSourcesMeta",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 24,
+            "column": 0,
+            "index": 785
+          },
+          "end": {
+            "line": 29,
+            "column": 1,
+            "index": 1150
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/webIntent.js",
+        "name": "isWebSearchIntent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 107
+          },
+          "end": {
+            "line": 16,
+            "column": 1,
+            "index": 497
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/webIntent.js",
+        "name": "extractWebQuery",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 499
+          },
+          "end": {
+            "line": 25,
+            "column": 1,
+            "index": 838
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "name": "readAppsAllowlist",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 97
+          },
+          "end": {
+            "line": 14,
+            "column": 1,
+            "index": 371
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "name": "listAllowlistedAppIds",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 16,
+            "column": 0,
+            "index": 373
+          },
+          "end": {
+            "line": 19,
+            "column": 1,
+            "index": 509
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "name": "isListAppsIntent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 21,
+            "column": 0,
+            "index": 511
+          },
+          "end": {
+            "line": 33,
+            "column": 1,
+            "index": 903
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "name": "parseOpenAllowlistedApp",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 35,
+            "column": 0,
+            "index": 905
+          },
+          "end": {
+            "line": 48,
+            "column": 1,
+            "index": 1386
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/filesystem.js",
+        "name": "setLastOpenedFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 181
+          },
+          "end": {
+            "line": 11,
+            "column": 1,
+            "index": 346
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/filesystem.js",
+        "name": "getLastOpenedFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 348
+          },
+          "end": {
+            "line": 15,
+            "column": 1,
+            "index": 449
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/filesystem.js",
+        "name": "parseOpenDesktopFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 0,
+            "index": 451
+          },
+          "end": {
+            "line": 53,
+            "column": 1,
+            "index": 1565
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/filesystem.js",
+        "name": "parseWriteTextInThere",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 55,
+            "column": 0,
+            "index": 1567
+          },
+          "end": {
+            "line": 71,
+            "column": 1,
+            "index": 2214
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/greetings.js",
+        "name": "isGreeting",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 47
+          },
+          "end": {
+            "line": 6,
+            "column": 1,
+            "index": 167
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/webIntent.js",
+        "name": "isWebSearchIntent",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 47
+          },
+          "end": {
+            "line": 14,
+            "column": 1,
+            "index": 395
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/webIntent.js",
+        "name": "extractWebQuery",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 16,
+            "column": 0,
+            "index": 397
+          },
+          "end": {
+            "line": 26,
+            "column": 1,
+            "index": 916
           }
         }
       },
@@ -4072,14 +4848,14 @@
         "path": "/shutdown",
         "loc": {
           "start": {
-            "line": 75,
+            "line": 76,
             "column": 0,
-            "index": 2131
+            "index": 2178
           },
           "end": {
-            "line": 81,
+            "line": 82,
             "column": 2,
-            "index": 2339
+            "index": 2386
           }
         }
       },
@@ -4444,24 +5220,6 @@
         }
       },
       {
-        "file": "src/routes/chat.js",
-        "object": "r",
-        "method": "POST",
-        "path": "/chat",
-        "loc": {
-          "start": {
-            "line": 615,
-            "column": 2,
-            "index": 18001
-          },
-          "end": {
-            "line": 1607,
-            "column": 4,
-            "index": 52304
-          }
-        }
-      },
-      {
         "file": "src/routes/devices.js",
         "object": "r",
         "method": "POST",
@@ -4494,6 +5252,60 @@
             "line": 19,
             "column": 3,
             "index": 604
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "object": "planRoutes",
+        "method": "GET",
+        "path": "/current",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 169
+          },
+          "end": {
+            "line": 11,
+            "column": 2,
+            "index": 339
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "object": "planRoutes",
+        "method": "POST",
+        "path": "/approve",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 342
+          },
+          "end": {
+            "line": 19,
+            "column": 2,
+            "index": 688
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "object": "planRoutes",
+        "method": "POST",
+        "path": "/abort",
+        "loc": {
+          "start": {
+            "line": 21,
+            "column": 0,
+            "index": 691
+          },
+          "end": {
+            "line": 27,
+            "column": 2,
+            "index": 1032
           }
         }
       },
@@ -4676,6 +5488,42 @@
             "index": 3423
           }
         }
+      },
+      {
+        "file": "src/routes/chat/index.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/chat",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 2,
+            "index": 162
+          },
+          "end": {
+            "line": 7,
+            "column": 30,
+            "index": 190
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "object": "r",
+        "method": "POST",
+        "path": "/chat",
+        "loc": {
+          "start": {
+            "line": 454,
+            "column": 2,
+            "index": 13069
+          },
+          "end": {
+            "line": 1475,
+            "column": 4,
+            "index": 48366
+          }
+        }
       }
     ],
     "imports": [
@@ -4793,7 +5641,7 @@
       },
       {
         "file": "src/server.js",
-        "source": "./routes/voice.js",
+        "source": "./routes/plan.js",
         "loc": {
           "start": {
             "line": 8,
@@ -4802,8 +5650,24 @@
           },
           "end": {
             "line": 8,
+            "column": 46,
+            "index": 355
+          }
+        }
+      },
+      {
+        "file": "src/server.js",
+        "source": "./routes/voice.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 356
+          },
+          "end": {
+            "line": 9,
             "column": 48,
-            "index": 357
+            "index": 404
           }
         }
       },
@@ -4812,14 +5676,14 @@
         "source": "./routes/actions.js",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 10,
             "column": 0,
-            "index": 358
+            "index": 405
           },
           "end": {
-            "line": 9,
+            "line": 10,
             "column": 51,
-            "index": 409
+            "index": 456
           }
         }
       },
@@ -4828,14 +5692,14 @@
         "source": "./routes/runlog.js",
         "loc": {
           "start": {
-            "line": 10,
+            "line": 11,
             "column": 0,
-            "index": 410
+            "index": 457
           },
           "end": {
-            "line": 10,
+            "line": 11,
             "column": 50,
-            "index": 460
+            "index": 507
           }
         }
       },
@@ -4844,14 +5708,14 @@
         "source": "./routes/tools.js",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 12,
             "column": 0,
-            "index": 461
+            "index": 508
           },
           "end": {
-            "line": 11,
+            "line": 12,
             "column": 48,
-            "index": 509
+            "index": 556
           }
         }
       },
@@ -4860,14 +5724,14 @@
         "source": "./routes/devices.js",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 13,
             "column": 0,
-            "index": 510
+            "index": 557
           },
           "end": {
-            "line": 12,
+            "line": 13,
             "column": 51,
-            "index": 561
+            "index": 608
           }
         }
       },
@@ -4876,14 +5740,14 @@
         "source": "./routes/blocks.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 14,
             "column": 0,
-            "index": 562
+            "index": 609
           },
           "end": {
-            "line": 13,
+            "line": 14,
             "column": 50,
-            "index": 612
+            "index": 659
           }
         }
       },
@@ -4892,14 +5756,14 @@
         "source": "./indexer/indexer.js",
         "loc": {
           "start": {
-            "line": 14,
+            "line": 15,
             "column": 0,
-            "index": 613
+            "index": 660
           },
           "end": {
-            "line": 14,
+            "line": 15,
             "column": 58,
-            "index": 671
+            "index": 718
           }
         }
       },
@@ -4908,14 +5772,14 @@
         "source": "./services/chatterbox_manager.js",
         "loc": {
           "start": {
-            "line": 15,
+            "line": 16,
             "column": 0,
-            "index": 672
+            "index": 719
           },
           "end": {
-            "line": 15,
+            "line": 16,
             "column": 97,
-            "index": 769
+            "index": 816
           }
         }
       },
@@ -5704,6 +6568,54 @@
         }
       },
       {
+        "file": "src/services/plan/store.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 30
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 50
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/store.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 51
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 75
+          }
+        }
+      },
+      {
+        "file": "src/services/plan/store.js",
+        "source": "./schema.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 76
+          },
+          "end": {
+            "line": 4,
+            "column": 63,
+            "index": 139
+          }
+        }
+      },
+      {
         "file": "src/routes/actions.js",
         "source": "express",
         "loc": {
@@ -5912,262 +6824,6 @@
         }
       },
       {
-        "file": "src/routes/chat.js",
-        "source": "express",
-        "loc": {
-          "start": {
-            "line": 2,
-            "column": 0,
-            "index": 22
-          },
-          "end": {
-            "line": 2,
-            "column": 33,
-            "index": 55
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "crypto",
-        "loc": {
-          "start": {
-            "line": 3,
-            "column": 0,
-            "index": 56
-          },
-          "end": {
-            "line": 3,
-            "column": 28,
-            "index": 84
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../services/ollama.js",
-        "loc": {
-          "start": {
-            "line": 4,
-            "column": 0,
-            "index": 85
-          },
-          "end": {
-            "line": 4,
-            "column": 51,
-            "index": 136
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../services/persona.js",
-        "loc": {
-          "start": {
-            "line": 5,
-            "column": 0,
-            "index": 137
-          },
-          "end": {
-            "line": 5,
-            "column": 73,
-            "index": 210
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "fs",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 211
-          },
-          "end": {
-            "line": 6,
-            "column": 20,
-            "index": 231
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "path",
-        "loc": {
-          "start": {
-            "line": 7,
-            "column": 0,
-            "index": 232
-          },
-          "end": {
-            "line": 7,
-            "column": 24,
-            "index": 256
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../planner/triage.js",
-        "loc": {
-          "start": {
-            "line": 9,
-            "column": 0,
-            "index": 258
-          },
-          "end": {
-            "line": 9,
-            "column": 58,
-            "index": 316
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../planner/snapshot.js",
-        "loc": {
-          "start": {
-            "line": 10,
-            "column": 0,
-            "index": 317
-          },
-          "end": {
-            "line": 10,
-            "column": 55,
-            "index": 372
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../planner/planner.js",
-        "loc": {
-          "start": {
-            "line": 11,
-            "column": 0,
-            "index": 373
-          },
-          "end": {
-            "line": 11,
-            "column": 58,
-            "index": 431
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../planner/compiler.js",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 432
-          },
-          "end": {
-            "line": 12,
-            "column": 62,
-            "index": 494
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../actions/store.js",
-        "loc": {
-          "start": {
-            "line": 13,
-            "column": 0,
-            "index": 495
-          },
-          "end": {
-            "line": 13,
-            "column": 48,
-            "index": 543
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../utils/runlog.js",
-        "loc": {
-          "start": {
-            "line": 14,
-            "column": 0,
-            "index": 544
-          },
-          "end": {
-            "line": 14,
-            "column": 49,
-            "index": 593
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../services/web/webContext.js",
-        "loc": {
-          "start": {
-            "line": 16,
-            "column": 0,
-            "index": 595
-          },
-          "end": {
-            "line": 20,
-            "column": 39,
-            "index": 701
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../tools/index.js",
-        "loc": {
-          "start": {
-            "line": 22,
-            "column": 0,
-            "index": 703
-          },
-          "end": {
-            "line": 22,
-            "column": 46,
-            "index": 749
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../tools/registry.js",
-        "loc": {
-          "start": {
-            "line": 23,
-            "column": 0,
-            "index": 750
-          },
-          "end": {
-            "line": 23,
-            "column": 62,
-            "index": 812
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../services/mind.js",
-        "loc": {
-          "start": {
-            "line": 25,
-            "column": 0,
-            "index": 814
-          },
-          "end": {
-            "line": 38,
-            "column": 29,
-            "index": 1111
-          }
-        }
-      },
-      {
         "file": "src/routes/devices.js",
         "source": "express",
         "loc": {
@@ -6196,6 +6852,38 @@
             "line": 2,
             "column": 69,
             "index": 104
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 22
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 55
+          }
+        }
+      },
+      {
+        "file": "src/routes/plan.js",
+        "source": "../services/plan/store.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 56
+          },
+          "end": {
+            "line": 3,
+            "column": 74,
+            "index": 130
           }
         }
       },
@@ -6376,6 +7064,854 @@
         }
       },
       {
+        "file": "src/routes/chat/handler.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 30
+          },
+          "end": {
+            "line": 2,
+            "column": 28,
+            "index": 58
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 59
+          },
+          "end": {
+            "line": 3,
+            "column": 54,
+            "index": 113
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 114
+          },
+          "end": {
+            "line": 4,
+            "column": 76,
+            "index": 190
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../planner/triage.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 192
+          },
+          "end": {
+            "line": 6,
+            "column": 61,
+            "index": 253
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../planner/snapshot.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 254
+          },
+          "end": {
+            "line": 7,
+            "column": 58,
+            "index": 312
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../planner/planner.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 313
+          },
+          "end": {
+            "line": 8,
+            "column": 61,
+            "index": 374
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../planner/compiler.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 375
+          },
+          "end": {
+            "line": 9,
+            "column": 65,
+            "index": 440
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 441
+          },
+          "end": {
+            "line": 10,
+            "column": 52,
+            "index": 493
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../services/web/webContext.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 495
+          },
+          "end": {
+            "line": 16,
+            "column": 42,
+            "index": 604
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../tools/index.js",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 606
+          },
+          "end": {
+            "line": 18,
+            "column": 49,
+            "index": 655
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../tools/registry.js",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 656
+          },
+          "end": {
+            "line": 19,
+            "column": 65,
+            "index": 721
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../services/mind.js",
+        "loc": {
+          "start": {
+            "line": 21,
+            "column": 0,
+            "index": 723
+          },
+          "end": {
+            "line": 34,
+            "column": 32,
+            "index": 1023
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/apps.js",
+        "loc": {
+          "start": {
+            "line": 36,
+            "column": 0,
+            "index": 1025
+          },
+          "end": {
+            "line": 41,
+            "column": 27,
+            "index": 1154
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/filesystem.js",
+        "loc": {
+          "start": {
+            "line": 42,
+            "column": 0,
+            "index": 1155
+          },
+          "end": {
+            "line": 47,
+            "column": 33,
+            "index": 1294
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/conversation.js",
+        "loc": {
+          "start": {
+            "line": 48,
+            "column": 0,
+            "index": 1295
+          },
+          "end": {
+            "line": 48,
+            "column": 89,
+            "index": 1384
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/web.js",
+        "loc": {
+          "start": {
+            "line": 49,
+            "column": 0,
+            "index": 1385
+          },
+          "end": {
+            "line": 49,
+            "column": 70,
+            "index": 1455
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/opinions.js",
+        "loc": {
+          "start": {
+            "line": 50,
+            "column": 0,
+            "index": 1456
+          },
+          "end": {
+            "line": 56,
+            "column": 31,
+            "index": 1619
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./policies/actions.js",
+        "loc": {
+          "start": {
+            "line": 58,
+            "column": 0,
+            "index": 1621
+          },
+          "end": {
+            "line": 58,
+            "column": 68,
+            "index": 1689
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./policies/authority.js",
+        "loc": {
+          "start": {
+            "line": 59,
+            "column": 0,
+            "index": 1690
+          },
+          "end": {
+            "line": 63,
+            "column": 33,
+            "index": 1815
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./utils/ids.js",
+        "loc": {
+          "start": {
+            "line": 65,
+            "column": 0,
+            "index": 1817
+          },
+          "end": {
+            "line": 65,
+            "column": 39,
+            "index": 1856
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./utils/logMode.js",
+        "loc": {
+          "start": {
+            "line": 66,
+            "column": 0,
+            "index": 1857
+          },
+          "end": {
+            "line": 66,
+            "column": 45,
+            "index": 1902
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./utils/emotion.js",
+        "loc": {
+          "start": {
+            "line": 67,
+            "column": 0,
+            "index": 1903
+          },
+          "end": {
+            "line": 67,
+            "column": 58,
+            "index": 1961
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/titleFlow.js",
+        "loc": {
+          "start": {
+            "line": 69,
+            "column": 0,
+            "index": 1963
+          },
+          "end": {
+            "line": 69,
+            "column": 62,
+            "index": 2025
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/messages.js",
+        "loc": {
+          "start": {
+            "line": 70,
+            "column": 0,
+            "index": 2026
+          },
+          "end": {
+            "line": 70,
+            "column": 60,
+            "index": 2086
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/pendingActions.js",
+        "loc": {
+          "start": {
+            "line": 71,
+            "column": 0,
+            "index": 2087
+          },
+          "end": {
+            "line": 71,
+            "column": 65,
+            "index": 2152
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/selfReport.js",
+        "loc": {
+          "start": {
+            "line": 72,
+            "column": 0,
+            "index": 2153
+          },
+          "end": {
+            "line": 72,
+            "column": 71,
+            "index": 2224
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/index.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 28
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 61
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/index.js",
+        "source": "./handler.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 62
+          },
+          "end": {
+            "line": 3,
+            "column": 43,
+            "index": 105
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "express",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 29
+          },
+          "end": {
+            "line": 2,
+            "column": 33,
+            "index": 62
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 63
+          },
+          "end": {
+            "line": 3,
+            "column": 28,
+            "index": 91
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 92
+          },
+          "end": {
+            "line": 4,
+            "column": 54,
+            "index": 146
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 147
+          },
+          "end": {
+            "line": 5,
+            "column": 76,
+            "index": 223
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 224
+          },
+          "end": {
+            "line": 6,
+            "column": 20,
+            "index": 244
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 245
+          },
+          "end": {
+            "line": 7,
+            "column": 24,
+            "index": 269
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./constants.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 425
+          },
+          "end": {
+            "line": 11,
+            "column": 47,
+            "index": 472
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./utils/ids.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 473
+          },
+          "end": {
+            "line": 12,
+            "column": 39,
+            "index": 512
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./utils/logMode.js",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 513
+          },
+          "end": {
+            "line": 13,
+            "column": 45,
+            "index": 558
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./deterministic/appsAllowlist.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 559
+          },
+          "end": {
+            "line": 19,
+            "column": 42,
+            "index": 703
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./deterministic/filesystem.js",
+        "loc": {
+          "start": {
+            "line": 20,
+            "column": 0,
+            "index": 704
+          },
+          "end": {
+            "line": 25,
+            "column": 39,
+            "index": 849
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./deterministic/greetings.js",
+        "loc": {
+          "start": {
+            "line": 26,
+            "column": 0,
+            "index": 850
+          },
+          "end": {
+            "line": 26,
+            "column": 58,
+            "index": 908
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./deterministic/webIntent.js",
+        "loc": {
+          "start": {
+            "line": 27,
+            "column": 0,
+            "index": 909
+          },
+          "end": {
+            "line": 27,
+            "column": 82,
+            "index": 991
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "./policies/actions.js",
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 0,
+            "index": 992
+          },
+          "end": {
+            "line": 28,
+            "column": 68,
+            "index": 1060
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../planner/triage.js",
+        "loc": {
+          "start": {
+            "line": 30,
+            "column": 0,
+            "index": 1062
+          },
+          "end": {
+            "line": 30,
+            "column": 61,
+            "index": 1123
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../planner/snapshot.js",
+        "loc": {
+          "start": {
+            "line": 31,
+            "column": 0,
+            "index": 1124
+          },
+          "end": {
+            "line": 31,
+            "column": 58,
+            "index": 1182
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../planner/planner.js",
+        "loc": {
+          "start": {
+            "line": 32,
+            "column": 0,
+            "index": 1183
+          },
+          "end": {
+            "line": 32,
+            "column": 61,
+            "index": 1244
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../planner/compiler.js",
+        "loc": {
+          "start": {
+            "line": 33,
+            "column": 0,
+            "index": 1245
+          },
+          "end": {
+            "line": 33,
+            "column": 65,
+            "index": 1310
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 34,
+            "column": 0,
+            "index": 1311
+          },
+          "end": {
+            "line": 34,
+            "column": 51,
+            "index": 1362
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 35,
+            "column": 0,
+            "index": 1363
+          },
+          "end": {
+            "line": 35,
+            "column": 52,
+            "index": 1415
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../services/plan/store.js",
+        "loc": {
+          "start": {
+            "line": 37,
+            "column": 0,
+            "index": 1417
+          },
+          "end": {
+            "line": 37,
+            "column": 89,
+            "index": 1506
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../services/web/webContext.js",
+        "loc": {
+          "start": {
+            "line": 39,
+            "column": 0,
+            "index": 1508
+          },
+          "end": {
+            "line": 43,
+            "column": 42,
+            "index": 1617
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../tools/index.js",
+        "loc": {
+          "start": {
+            "line": 45,
+            "column": 0,
+            "index": 1619
+          },
+          "end": {
+            "line": 45,
+            "column": 49,
+            "index": 1668
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../tools/registry.js",
+        "loc": {
+          "start": {
+            "line": 46,
+            "column": 0,
+            "index": 1669
+          },
+          "end": {
+            "line": 46,
+            "column": 65,
+            "index": 1734
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/legacy.js",
+        "source": "../../services/mind.js",
+        "loc": {
+          "start": {
+            "line": 48,
+            "column": 0,
+            "index": 1736
+          },
+          "end": {
+            "line": 61,
+            "column": 32,
+            "index": 2036
+          }
+        }
+      },
+      {
         "file": "src/routes/chat/phase3.js",
         "source": "crypto",
         "loc": {
@@ -6516,6 +8052,310 @@
             "line": 19,
             "column": 52,
             "index": 696
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/pendingActions.js",
+        "source": "../../../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 47
+          },
+          "end": {
+            "line": 2,
+            "column": 54,
+            "index": 101
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/pendingActions.js",
+        "source": "../utils/ids.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 102
+          },
+          "end": {
+            "line": 3,
+            "column": 40,
+            "index": 142
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "source": "../constants.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 210
+          },
+          "end": {
+            "line": 5,
+            "column": 48,
+            "index": 258
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/planModeFlow.js",
+        "source": "../../../services/plan/store.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 259
+          },
+          "end": {
+            "line": 6,
+            "column": 92,
+            "index": 351
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 44
+          },
+          "end": {
+            "line": 2,
+            "column": 28,
+            "index": 72
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../planner/snapshot.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 74
+          },
+          "end": {
+            "line": 4,
+            "column": 61,
+            "index": 135
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../planner/planner.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 136
+          },
+          "end": {
+            "line": 5,
+            "column": 64,
+            "index": 200
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../planner/compiler.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 201
+          },
+          "end": {
+            "line": 6,
+            "column": 68,
+            "index": 269
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../tools/index.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 271
+          },
+          "end": {
+            "line": 8,
+            "column": 52,
+            "index": 323
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../tools/registry.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 324
+          },
+          "end": {
+            "line": 9,
+            "column": 68,
+            "index": 392
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 394
+          },
+          "end": {
+            "line": 11,
+            "column": 54,
+            "index": 448
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 449
+          },
+          "end": {
+            "line": 12,
+            "column": 55,
+            "index": 504
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/webFlow.js",
+        "source": "../../../services/web/webContext.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 40
+          },
+          "end": {
+            "line": 2,
+            "column": 105,
+            "index": 145
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/webFlow.js",
+        "source": "../parsers/webIntent.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 146
+          },
+          "end": {
+            "line": 3,
+            "column": 77,
+            "index": 223
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/apps.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 35
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 55
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/apps.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 56
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 80
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 50
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 70
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/appsAllowlist.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 71
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 95
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/filesystem.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 47
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 71
           }
         }
       },

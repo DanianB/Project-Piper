@@ -5,6 +5,7 @@ import { DEFAULT_PORT, LIMITS, OFF_EXIT_CODE } from "./config/constants.js";
 import { ROOT, OFF_FLAG_PATH } from "./config/paths.js";
 import { systemRoutes } from "./routes/system.js";
 import { chatRoutes } from "./routes/chat.js";
+import { planRoutes } from "./routes/plan.js";
 import { voiceRoutes } from "./routes/voice.js";
 import { actionRoutes } from "./routes/actions.js";
 import { runlogRoutes } from "./routes/runlog.js";

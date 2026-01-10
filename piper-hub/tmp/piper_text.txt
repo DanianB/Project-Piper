@@ -1,2 +1,1 @@
-I've created two new text documents in the specified folder: 1. "bone worms.txt"
-2. (another identical copy of) "bone worms.txt" Let me know if you need anything else!
+Let's start by creating a new file for Discord integration.

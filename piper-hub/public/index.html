@@ -117,6 +117,13 @@ const actionsList = document.getElementById("actionsList");
 const historyList = document.getElementById("historyList");
 const runlogList = document.getElementById("runlogList");
 
+const planWrap = document.getElementById('planWrap');
+const planBody = document.getElementById('planBody');
+const planApproveBtn = document.getElementById('planApproveBtn');
+const planAbortBtn = document.getElementById('planAbortBtn');
+let currentPlanId = null;
+
+
 // Voice UI
 const voiceBtn = document.getElementById("voiceBtn");
 const voicePanel = document.getElementById("voicePanel");
@@ -248,6 +255,8 @@ async function speak(text, emotion, intensity){
 }
 
 // ---- Voice UI logic ----
+function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
+
 async function api(path, body){
   const r = await fetch(path,{
     method:"POST",
@@ -757,6 +766,87 @@ async function refreshActions(force){
   }
 }
 
+
+function renderPlanPanel(plan){
+  if(!plan || typeof plan !== 'object'){
+    planWrap.style.display = 'none';
+    currentPlanId = null;
+    return;
+  }
+  currentPlanId = plan.planId || null;
+  planWrap.style.display = currentPlanId ? '' : 'none';
+
+  planBody.innerHTML = '';
+  const title = document.createElement('div');
+  title.className = 'planGoal';
+  title.textContent = plan.goal || 'Plan';
+  planBody.appendChild(title);
+
+  const meta = document.createElement('div');
+  meta.className = 'planMeta';
+  meta.textContent = `Status: ${plan.status || 'proposed'} • Steps: ${(plan.steps||[]).length}`;
+  planBody.appendChild(meta);
+
+  if(Array.isArray(plan.risks) && plan.risks.length){
+    const risks = document.createElement('div');
+    risks.className = 'planRisks';
+    risks.innerHTML = '<b>Risks:</b> ' + plan.risks.map(r => `<span class="pillMini">${escapeHtml(String(r))}</span>`).join(' ');
+    planBody.appendChild(risks);
+  }
+
+  const ol = document.createElement('ol');
+  ol.className = 'planSteps';
+  for(const s of (plan.steps || [])){
+    const li = document.createElement('li');
+    const line = document.createElement('div');
+    line.className = 'planStepLine';
+    line.innerHTML = `<span class="planType">${escapeHtml(String(s.type||'step'))}</span> <span class="planTarget">${escapeHtml(String(s.target||''))}</span>`;
+    li.appendChild(line);
+
+    if(s.reason){
+      const why = document.createElement('div');
+      why.className = 'planWhy';
+      why.textContent = s.reason;
+      li.appendChild(why);
+    }
+    ol.appendChild(li);
+  }
+  planBody.appendChild(ol);
+}
+
+planApproveBtn.onclick = async () => {
+  if(!currentPlanId) return;
+  planApproveBtn.disabled = true;
+  try{
+    const res = await api('/plan/approve', { planId: currentPlanId });
+    if(res && res.ok){
+      await refreshActions(true);
+      // keep plan visible, but update status if returned
+      if(res.plan) renderPlanPanel(res.plan);
+    }else{
+      alert(res && res.error ? res.error : 'Failed to approve plan');
+    }
+  }finally{
+    planApproveBtn.disabled = false;
+  }
+};
+
+planAbortBtn.onclick = async () => {
+  if(!currentPlanId) return;
+  planAbortBtn.disabled = true;
+  try{
+    const res = await api('/plan/abort', { planId: currentPlanId, reason: 'User aborted in UI' });
+    if(res && res.ok){
+      renderPlanPanel(res.plan);
+    }else{
+      alert(res && res.error ? res.error : 'Failed to abort plan');
+    }
+  }finally{
+    planAbortBtn.disabled = false;
+  }
+};
+
+
 // ---- Chat ----
 async function sendToChat(text){
   return await api("/chat", {
@@ -783,6 +873,11 @@ f.onsubmit = async (e) => {
     remove(thinkingNode);
 
     add('piper', c.reply, c.meta);
+
+    if(c.meta && typeof c.meta === 'object' && c.meta.plan){
+      renderPlanPanel(c.meta.plan);
+    }
+
 
     if(debugEmotion.checked){
       console.log('[chat] reply meta', { emotion: c.emotion, intensity: c.intensity, meta: c.meta });
@@ -931,3 +1026,16 @@ setInterval(()=>refreshActions(false), 1200);
 </script>
 </body>
 </html>
+    <div id="planWrap" class="section panel" style="display:none">
+      <div class="sectionHeader">
+        <h3>Proposed Plan</h3>
+        <div class="hint">Approve to generate pending actions.</div>
+      </div>
+      <div id="planBody"></div>
+      <div class="planBtns">
+        <button id="planApproveBtn" class="btn-primary" type="button">Approve plan</button>
+        <button id="planAbortBtn" class="btn-secondary" type="button">Abort plan</button>
+      </div>
+    </div>
+
+

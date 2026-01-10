@@ -1,0 +1,267 @@
+{
+  "plans": {
+    "6e8bc50e-683b-467d-8b36-80e4908ba159": {
+      "planId": "6e8bc50e-683b-467d-8b36-80e4908ba159",
+      "sessionId": "8007ade2-90da-4019-b44e-54ce685e48d4",
+      "status": "aborted",
+      "createdAt": 1768020944611,
+      "updatedAt": 1768021235586,
+      "goal": "Let’s set up Discord integration.",
+      "assumptions": [],
+      "risks": [],
+      "steps": [
+        {
+          "type": "inspect",
+          "target": "existing routing + executor registry",
+          "reason": "Inspect current hub integration points",
+          "approvalRequired": false,
+          "expectedOutput": "Known registration point(s)",
+          "op": null
+        },
+        {
+          "type": "research",
+          "target": "Discord bot setup requirements",
+          "reason": "Gather requirements and minimal permissions",
+          "approvalRequired": false,
+          "expectedOutput": "Requirements summary + risks",
+          "op": null
+        },
+        {
+          "type": "mkdir",
+          "target": "src/capabilities/discord",
+          "reason": "Create capability folder",
+          "approvalRequired": true,
+          "expectedOutput": "Folder created at src/capabilities/discord",
+          "op": {
+            "op": "mkdir",
+            "path": "src/capabilities/discord",
+            "why": "Create capability folder"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/README.md",
+          "reason": "Add capability README",
+          "approvalRequired": true,
+          "expectedOutput": "README created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/README.md",
+            "why": "Document the capability",
+            "content": "# discord capability\n\nPhase 4 module skeleton.\n\n## Next\n- add routes\n- add executors\n- add self-check\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/index.js",
+          "reason": "Add capability entrypoint",
+          "approvalRequired": true,
+          "expectedOutput": "index.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/index.js",
+            "why": "Capability entrypoint",
+            "content": "// src/capabilities/discord/index.js\nexport function register(app) {\n  // TODO: mount routes for discord\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/routes.js",
+          "reason": "Add routes placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "routes.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/routes.js",
+            "why": "Routes placeholder",
+            "content": "// src/capabilities/discord/routes.js\nimport { Router } from \"express\";\n\nexport function buildRoutes() {\n  const r = Router();\n  // TODO: add routes\n  return r;\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/executors.js",
+          "reason": "Add executors placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "executors.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/executors.js",
+            "why": "Executors placeholder",
+            "content": "// src/capabilities/discord/executors.js\nexport async function run(op, ctx) {\n  // TODO: implement executors\n  return { ok: false, error: \"Not implemented\" };\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/selfcheck.js",
+          "reason": "Add self-check placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "selfcheck.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/selfcheck.js",
+            "why": "Self-check placeholder",
+            "content": "// src/capabilities/discord/selfcheck.js\nexport async function selfcheck() {\n  return { ok: true, checks: [] };\n}\n"
+          }
+        }
+      ],
+      "artifacts": [],
+      "rollback": "If a change goes wrong, use the action backup/restore flow (each file-edit action creates a backup).",
+      "cursor": 0,
+      "abortReason": "User aborted in UI"
+    },
+    "9fa4bb02-43e0-4ad6-b23a-1160dd534167": {
+      "planId": "9fa4bb02-43e0-4ad6-b23a-1160dd534167",
+      "sessionId": "8007ade2-90da-4019-b44e-54ce685e48d4",
+      "status": "aborted",
+      "createdAt": 1768021244633,
+      "updatedAt": 1768021475432,
+      "goal": "Let’s set up Discord integration.",
+      "assumptions": [],
+      "risks": [
+        "Edits files on disk."
+      ],
+      "steps": [
+        {
+          "type": "css_patch",
+          "target": "public/styles.css",
+          "reason": "Update CSS for Discord integration setup",
+          "approvalRequired": true,
+          "expectedOutput": "",
+          "op": {
+            "op": "css_patch",
+            "file": "public/styles.css",
+            "selectors": [
+              ".wrap"
+            ],
+            "set": {
+              "prop": "value"
+            },
+            "unset": [],
+            "why": "Update CSS for Discord integration setup"
+          }
+        }
+      ],
+      "artifacts": [
+        "public/styles.css"
+      ],
+      "rollback": "If a change goes wrong, use the action backup/restore flow (each file-edit action creates a backup).",
+      "cursor": 0,
+      "abortReason": "User aborted in UI"
+    },
+    "2a050b99-d482-4418-901c-1760fa3105f7": {
+      "planId": "2a050b99-d482-4418-901c-1760fa3105f7",
+      "sessionId": "8007ade2-90da-4019-b44e-54ce685e48d4",
+      "status": "proposed",
+      "createdAt": 1768021974614,
+      "updatedAt": 1768021974614,
+      "goal": "lets set up discord intergration",
+      "assumptions": [],
+      "risks": [],
+      "steps": [
+        {
+          "type": "inspect",
+          "target": "existing routing + executor registry",
+          "reason": "Inspect current hub integration points",
+          "approvalRequired": false,
+          "expectedOutput": "Known registration point(s)",
+          "op": null
+        },
+        {
+          "type": "research",
+          "target": "Discord bot setup requirements",
+          "reason": "Gather requirements and minimal permissions",
+          "approvalRequired": false,
+          "expectedOutput": "Requirements summary + risks",
+          "op": null
+        },
+        {
+          "type": "mkdir",
+          "target": "src/capabilities/discord",
+          "reason": "Create capability folder",
+          "approvalRequired": true,
+          "expectedOutput": "Folder created at src/capabilities/discord",
+          "op": {
+            "op": "mkdir",
+            "path": "src/capabilities/discord",
+            "why": "Create capability folder"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/README.md",
+          "reason": "Add capability README",
+          "approvalRequired": true,
+          "expectedOutput": "README created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/README.md",
+            "why": "Document the capability",
+            "content": "# discord capability\n\nPhase 4 module skeleton.\n\n## Next\n- add routes\n- add executors\n- add self-check\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/index.js",
+          "reason": "Add capability entrypoint",
+          "approvalRequired": true,
+          "expectedOutput": "index.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/index.js",
+            "why": "Capability entrypoint",
+            "content": "// src/capabilities/discord/index.js\nexport function register(app) {\n  // TODO: mount routes for discord\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/routes.js",
+          "reason": "Add routes placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "routes.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/routes.js",
+            "why": "Routes placeholder",
+            "content": "// src/capabilities/discord/routes.js\nimport { Router } from \"express\";\n\nexport function buildRoutes() {\n  const r = Router();\n  // TODO: add routes\n  return r;\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/executors.js",
+          "reason": "Add executors placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "executors.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/executors.js",
+            "why": "Executors placeholder",
+            "content": "// src/capabilities/discord/executors.js\nexport async function run(op, ctx) {\n  // TODO: implement executors\n  return { ok: false, error: \"Not implemented\" };\n}\n"
+          }
+        },
+        {
+          "type": "write_file",
+          "target": "src/capabilities/discord/selfcheck.js",
+          "reason": "Add self-check placeholder",
+          "approvalRequired": true,
+          "expectedOutput": "selfcheck.js created",
+          "op": {
+            "op": "write_file",
+            "path": "src/capabilities/discord/selfcheck.js",
+            "why": "Self-check placeholder",
+            "content": "// src/capabilities/discord/selfcheck.js\nexport async function selfcheck() {\n  return { ok: true, checks: [] };\n}\n"
+          }
+        }
+      ],
+      "artifacts": [],
+      "rollback": "If a change goes wrong, use the action backup/restore flow (each file-edit action creates a backup).",
+      "cursor": 0
+    }
+  },
+  "bySession": {
+    "8007ade2-90da-4019-b44e-54ce685e48d4": [
+      "2a050b99-d482-4418-901c-1760fa3105f7",
+      "9fa4bb02-43e0-4ad6-b23a-1160dd534167",
+      "6e8bc50e-683b-467d-8b36-80e4908ba159"
+    ]
+  }
+}

@@ -305,3 +305,14 @@
 .sourcesList{ margin: 0; padding-left: 18px; }
 .sourcesList li{ margin: 4px 0; }
 .sourcesMore{ margin-top: 6px; }
+
+/* Phase 4 Plan panel */
+.planWrap{ margin:12px 0; padding:12px; border:1px solid rgba(255,255,255,0.12); border-radius:12px; background: rgba(0,0,0,0.15); }
+.planHeader{ display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+.planTitle{ font-weight:700; font-size:16px; margin-bottom:4px; }
+.planMeta{ opacity:0.8; font-size:12px; }
+.planButtons{ display:flex; gap:8px; align-items:center; }
+.planRisks{ margin-top:10px; font-size:12px; opacity:0.9; }
+.planSteps{ margin-top:10px; padding-left:18px; }
+.pillMini{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,0.16); margin-left:6px; font-size:11px; opacity:0.9; }
+.btnDanger{ border-color: rgba(255,80,80,0.4) !important; }
