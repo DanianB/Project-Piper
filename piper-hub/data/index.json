@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-09T03:00:18.754Z",
+  "generatedAt": "2026-01-10T03:57:51.846Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -2687,6 +2687,176 @@
         }
       },
       {
+        "file": "src/services/sources.js",
+        "name": "initSources",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 141
+          },
+          "end": {
+            "line": 8,
+            "column": 1,
+            "index": 220
+          }
+        }
+      },
+      {
+        "file": "src/services/sources.js",
+        "name": "extractWebSources",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 438
+          },
+          "end": {
+            "line": 37,
+            "column": 1,
+            "index": 1117
+          }
+        }
+      },
+      {
+        "file": "src/services/sources.js",
+        "name": "mergeSources",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 39,
+            "column": 0,
+            "index": 1119
+          },
+          "end": {
+            "line": 47,
+            "column": 1,
+            "index": 1535
+          }
+        }
+      },
+      {
+        "file": "src/services/sources.js",
+        "name": "toolCallRecord",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 52,
+            "column": 0,
+            "index": 1615
+          },
+          "end": {
+            "line": 54,
+            "column": 1,
+            "index": 1740
+          }
+        }
+      },
+      {
+        "file": "src/services/webContext.js",
+        "name": "runWebContext",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 265
+          },
+          "end": {
+            "line": 48,
+            "column": 1,
+            "index": 1703
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "name": "webSearch",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 57,
+            "column": 0,
+            "index": 1965
+          },
+          "end": {
+            "line": 93,
+            "column": 1,
+            "index": 3160
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "name": "webFetchText",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 102,
+            "column": 0,
+            "index": 3352
+          },
+          "end": {
+            "line": 115,
+            "column": 1,
+            "index": 3835
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "name": "extractWebSources",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 129,
+            "column": 0,
+            "index": 4253
+          },
+          "end": {
+            "line": 201,
+            "column": 1,
+            "index": 6552
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "name": "packSourcesForUi",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 206,
+            "column": 0,
+            "index": 6689
+          },
+          "end": {
+            "line": 228,
+            "column": 1,
+            "index": 7661
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "name": "runWebContext",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 231,
+            "column": 0,
+            "index": 7756
+          },
+          "end": {
+            "line": 293,
+            "column": 1,
+            "index": 10175
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "name": "transcribeAudioBuffer",
         "kind": "function",
@@ -2818,7 +2988,7 @@
           "end": {
             "line": 282,
             "column": 1,
-            "index": 7936
+            "index": 8041
           }
         }
       },
@@ -2845,14 +3015,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 763,
+            "line": 612,
             "column": 0,
-            "index": 23044
+            "index": 17945
           },
           "end": {
-            "line": 1893,
+            "line": 1610,
             "column": 1,
-            "index": 61090
+            "index": 52320
           }
         }
       },
@@ -2938,6 +3108,57 @@
             "line": 117,
             "column": 1,
             "index": 3439
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "name": "handlePhase3Deterministic",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 249,
+            "column": 0,
+            "index": 7580
+          },
+          "end": {
+            "line": 403,
+            "column": 1,
+            "index": 12499
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/webSources.js",
+        "name": "extractWebSources",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 309
+          },
+          "end": {
+            "line": 52,
+            "column": 1,
+            "index": 1466
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/webSources.js",
+        "name": "packSourcesForUi",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 54,
+            "column": 0,
+            "index": 1468
+          },
+          "end": {
+            "line": 57,
+            "column": 1,
+            "index": 1676
           }
         }
       },
@@ -3661,14 +3882,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 147,
+            "line": 184,
             "column": 0,
-            "index": 5262
+            "index": 6831
           },
           "end": {
-            "line": 149,
+            "line": 186,
             "column": 1,
-            "index": 5356
+            "index": 6925
           }
         }
       },
@@ -3678,14 +3899,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 151,
+            "line": 188,
             "column": 0,
-            "index": 5358
+            "index": 6927
           },
           "end": {
-            "line": 153,
+            "line": 190,
             "column": 1,
-            "index": 5439
+            "index": 7008
           }
         }
       },
@@ -3751,9 +3972,9 @@
             "index": 196
           },
           "end": {
-            "line": 37,
+            "line": 47,
             "column": 1,
-            "index": 792
+            "index": 1219
           }
         }
       },
@@ -3763,14 +3984,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 39,
+            "line": 49,
             "column": 0,
-            "index": 794
+            "index": 1221
           },
           "end": {
-            "line": 41,
+            "line": 51,
             "column": 1,
-            "index": 903
+            "index": 1330
           }
         }
       },
@@ -3780,14 +4001,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 43,
+            "line": 53,
             "column": 0,
-            "index": 905
+            "index": 1332
           },
           "end": {
-            "line": 46,
+            "line": 56,
             "column": 1,
-            "index": 973
+            "index": 1400
           }
         }
       },
@@ -3797,14 +4018,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 48,
+            "line": 58,
             "column": 0,
-            "index": 975
+            "index": 1402
           },
           "end": {
-            "line": 60,
+            "line": 70,
             "column": 1,
-            "index": 1305
+            "index": 1732
           }
         }
       },
@@ -3814,14 +4035,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 62,
+            "line": 72,
             "column": 0,
-            "index": 1307
+            "index": 1734
           },
           "end": {
-            "line": 82,
+            "line": 92,
             "column": 1,
-            "index": 1822
+            "index": 2249
           }
         }
       },
@@ -3831,14 +4052,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 84,
+            "line": 94,
             "column": 0,
-            "index": 1824
+            "index": 2251
           },
           "end": {
-            "line": 87,
+            "line": 97,
             "column": 1,
-            "index": 1929
+            "index": 2356
           }
         }
       }
@@ -4090,9 +4311,9 @@
             "index": 847
           },
           "end": {
-            "line": 36,
-            "column": 3,
-            "index": 933
+            "line": 37,
+            "column": 4,
+            "index": 1014
           }
         }
       },
@@ -4103,14 +4324,14 @@
         "path": "/action/preview/:id.json",
         "loc": {
           "start": {
-            "line": 41,
+            "line": 42,
             "column": 2,
-            "index": 1023
+            "index": 1104
           },
           "end": {
-            "line": 55,
+            "line": 56,
             "column": 4,
-            "index": 1542
+            "index": 1623
           }
         }
       },
@@ -4121,14 +4342,14 @@
         "path": "/action/preview/:id",
         "loc": {
           "start": {
-            "line": 60,
+            "line": 61,
             "column": 2,
-            "index": 1632
+            "index": 1713
           },
           "end": {
-            "line": 82,
+            "line": 83,
             "column": 4,
-            "index": 2345
+            "index": 2426
           }
         }
       },
@@ -4139,14 +4360,14 @@
         "path": "/action/reject",
         "loc": {
           "start": {
-            "line": 87,
+            "line": 88,
             "column": 2,
-            "index": 2427
+            "index": 2508
           },
           "end": {
-            "line": 101,
+            "line": 102,
             "column": 4,
-            "index": 2872
+            "index": 2953
           }
         }
       },
@@ -4157,14 +4378,14 @@
         "path": "/action/rollback",
         "loc": {
           "start": {
-            "line": 106,
+            "line": 107,
             "column": 2,
-            "index": 2956
+            "index": 3037
           },
           "end": {
-            "line": 139,
+            "line": 140,
             "column": 4,
-            "index": 3984
+            "index": 4065
           }
         }
       },
@@ -4175,14 +4396,14 @@
         "path": "/action/approve",
         "loc": {
           "start": {
-            "line": 144,
+            "line": 145,
             "column": 2,
-            "index": 4090
+            "index": 4171
           },
           "end": {
             "line": 256,
             "column": 4,
-            "index": 7253
+            "index": 7358
           }
         }
       },
@@ -4195,12 +4416,12 @@
           "start": {
             "line": 261,
             "column": 2,
-            "index": 7368
+            "index": 7473
           },
           "end": {
             "line": 279,
             "column": 4,
-            "index": 7920
+            "index": 8025
           }
         }
       },
@@ -4229,14 +4450,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 766,
+            "line": 615,
             "column": 2,
-            "index": 23100
+            "index": 18001
           },
           "end": {
-            "line": 1890,
+            "line": 1607,
             "column": 4,
-            "index": 61074
+            "index": 52304
           }
         }
       },
@@ -5291,6 +5512,38 @@
         }
       },
       {
+        "file": "src/services/webContext.js",
+        "source": "./sources.js",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 92,
+            "index": 92
+          }
+        }
+      },
+      {
+        "file": "src/services/web/webContext.js",
+        "source": "../../tools/registry.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 476
+          },
+          "end": {
+            "line": 14,
+            "column": 55,
+            "index": 531
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "source": "fs",
         "loc": {
@@ -5829,24 +6082,8 @@
           },
           "end": {
             "line": 13,
-            "column": 75,
-            "index": 570
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat.js",
-        "source": "../actions/executor.js",
-        "loc": {
-          "start": {
-            "line": 14,
-            "column": 0,
-            "index": 571
-          },
-          "end": {
-            "line": 14,
-            "column": 55,
-            "index": 626
+            "column": 48,
+            "index": 543
           }
         }
       },
@@ -5855,14 +6092,30 @@
         "source": "../utils/runlog.js",
         "loc": {
           "start": {
-            "line": 15,
+            "line": 14,
             "column": 0,
-            "index": 627
+            "index": 544
           },
           "end": {
-            "line": 15,
+            "line": 14,
             "column": 49,
-            "index": 676
+            "index": 593
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "source": "../services/web/webContext.js",
+        "loc": {
+          "start": {
+            "line": 16,
+            "column": 0,
+            "index": 595
+          },
+          "end": {
+            "line": 20,
+            "column": 39,
+            "index": 701
           }
         }
       },
@@ -5871,14 +6124,14 @@
         "source": "../tools/index.js",
         "loc": {
           "start": {
-            "line": 17,
+            "line": 22,
             "column": 0,
-            "index": 678
+            "index": 703
           },
           "end": {
-            "line": 17,
+            "line": 22,
             "column": 46,
-            "index": 724
+            "index": 749
           }
         }
       },
@@ -5887,14 +6140,14 @@
         "source": "../tools/registry.js",
         "loc": {
           "start": {
-            "line": 18,
+            "line": 23,
             "column": 0,
-            "index": 725
+            "index": 750
           },
           "end": {
-            "line": 18,
+            "line": 23,
             "column": 62,
-            "index": 787
+            "index": 812
           }
         }
       },
@@ -5903,14 +6156,14 @@
         "source": "../services/mind.js",
         "loc": {
           "start": {
-            "line": 20,
+            "line": 25,
             "column": 0,
-            "index": 789
+            "index": 814
           },
           "end": {
-            "line": 33,
+            "line": 38,
             "column": 29,
-            "index": 1086
+            "index": 1111
           }
         }
       },
@@ -6119,6 +6372,150 @@
             "line": 13,
             "column": 50,
             "index": 414
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 308
+          },
+          "end": {
+            "line": 9,
+            "column": 28,
+            "index": 336
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 337
+          },
+          "end": {
+            "line": 10,
+            "column": 20,
+            "index": 357
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 358
+          },
+          "end": {
+            "line": 11,
+            "column": 24,
+            "index": 382
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "os",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 383
+          },
+          "end": {
+            "line": 12,
+            "column": 20,
+            "index": 403
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "../../services/ollama.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 405
+          },
+          "end": {
+            "line": 14,
+            "column": 54,
+            "index": 459
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "../../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 460
+          },
+          "end": {
+            "line": 15,
+            "column": 57,
+            "index": 517
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "../../actions/store.js",
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 0,
+            "index": 519
+          },
+          "end": {
+            "line": 17,
+            "column": 65,
+            "index": 584
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "../../actions/executor.js",
+        "loc": {
+          "start": {
+            "line": 18,
+            "column": 0,
+            "index": 585
+          },
+          "end": {
+            "line": 18,
+            "column": 58,
+            "index": 643
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/phase3.js",
+        "source": "../../utils/runlog.js",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 644
+          },
+          "end": {
+            "line": 19,
+            "column": 52,
+            "index": 696
           }
         }
       },

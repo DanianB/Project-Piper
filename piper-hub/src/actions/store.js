@@ -21,6 +21,16 @@ export function loadActions() {
     const raw = fs.readFileSync(ACTIONS_FILE, "utf8");
     const parsed = safeParseJson(raw);
     actions = Array.isArray(parsed) ? parsed : [];
+    // Sanitize: drop null/invalid entries that can break the UI
+    actions = (actions || []).filter((a) => a && typeof a === "object" && typeof a.id === "string");
+    // Normalize missing fields
+    actions = actions.map((a) => ({
+      status: a.status || "pending",
+      createdAt: a.createdAt || Date.now(),
+      updatedAt: a.updatedAt || a.createdAt || Date.now(),
+      result: a.result ?? null,
+      ...a,
+    }));
   } catch {
     actions = [];
   }

@@ -31,9 +31,10 @@ export function actionRoutes() {
   /* =========================
    * LIST ACTIONS
    * ========================= */
-  r.get("/actions", (req, res) =>
-    res.json({ ok: true, actions: listActions() })
-  );
+  r.get("/actions", (req, res) => {
+    const actions = (listActions() || []).filter((a) => a && typeof a === "object");
+    return res.json({ ok: true, actions });
+  });
 
   /* =========================
    * PREVIEW (JSON)
@@ -152,8 +153,7 @@ No preview available for <b>${String(action.type)}</b>.
       return res.json({ ok: true, action: a, message: "Already processed" });
 
     updateAction(id, { status: "running", updatedAt: Date.now() });
-
-    console.log(`[executor] execute type="${a.type}" id="${a.id}"`);
+    console.log(`[actions] approve id="${a.id}" type="${a.type}" dryRun=${Boolean(dryRun)}`);
 
     logRunEvent({ kind: "action_approve", id: a.id, type: a.type, dryRun: Boolean(dryRun) });
 

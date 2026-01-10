@@ -115,6 +115,33 @@ function parseDuckDuckGoHtml(html, maxResults) {
   return out;
 }
 
+async function wikiTitleSearch(query, maxResults) {
+  // Lightweight fallback when DDG HTML parsing yields no results.
+  // Uses Wikipedia REST API (no key) and returns title/url/snippet.
+  const q = encodeURIComponent(String(query || "").trim());
+  const limit = clampInt(maxResults, 1, 10, 5);
+  const url = `https://en.wikipedia.org/w/rest.php/v1/search/title?q=${q}&limit=${limit}`;
+  const r = await fetchWithLimits(url, { timeoutMs: 12000, maxBytes: 800_000 });
+  if (!r.ok) return [];
+  let data;
+  try {
+    data = JSON.parse(r.text);
+  } catch {
+    return [];
+  }
+  const pages = Array.isArray(data?.pages) ? data.pages : [];
+  return pages
+    .map((p) => {
+      const title = String(p?.title || "").trim();
+      const key = String(p?.key || "").trim();
+      const desc = String(p?.description || "").trim();
+      const pageUrl = key ? `https://en.wikipedia.org/wiki/${encodeURIComponent(key)}` : "";
+      if (!title || !pageUrl) return null;
+      return { title, url: pageUrl, snippet: desc };
+    })
+    .filter(Boolean);
+}
+
 toolRegistry.register({
   id: "web.search",
   description: "Search the web for a query (DuckDuckGo HTML). Returns title/url/snippet results.",
@@ -129,8 +156,18 @@ toolRegistry.register({
     const q = encodeURIComponent(query);
     const url = `https://duckduckgo.com/html/?q=${q}`;
     const r = await fetchWithLimits(url, { timeoutMs: 12000, maxBytes: 1_500_000 });
-    const results = parseDuckDuckGoHtml(r.text, maxResults);
-    return { query, engine: "duckduckgo_html", results };
+    let results = parseDuckDuckGoHtml(r.text, maxResults);
+    let engine = "duckduckgo_html";
+
+    if (!results || results.length === 0) {
+      const wiki = await wikiTitleSearch(query, maxResults);
+      if (wiki.length) {
+        results = wiki;
+        engine = "wikipedia_title_search";
+      }
+    }
+
+    return { query, engine, results: results || [] };
   },
 });
 

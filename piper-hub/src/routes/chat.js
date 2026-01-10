@@ -10,9 +10,14 @@ import { triageNeedsPlanner } from "../planner/triage.js";
 import { buildSnapshot } from "../planner/snapshot.js";
 import { llmRespondAndPlan } from "../planner/planner.js";
 import { compilePlanToActions } from "../planner/compiler.js";
-import { addAction, listActions, updateAction } from "../actions/store.js";
-import { executeAction } from "../actions/executor.js";
+import { addAction } from "../actions/store.js";
 import { logRunEvent } from "../utils/runlog.js";
+
+import {
+  runWebContext,
+  extractWebSources,
+  packSourcesForUi,
+} from "../services/web/webContext.js";
 
 import { listTools } from "../tools/index.js";
 import { toolRegistry, ToolRisk } from "../tools/registry.js";
@@ -35,102 +40,9 @@ import {
 const sessions = new Map();
 
 
-//
-// ---------------- Web sources (Phase 2.1) ----------------
-// Provide non-spoken sources for UI when web.search/web.fetch were used.
-// Sources are attached to response meta.souces = { total, shown, hidden }.
-//
-function normalizeUrl(u) {
-  try {
-    const url = new URL(String(u));
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function extractWebSources(toolResults) {
-  const out = [];
-  const seen = new Set();
-
-  const push = (url, title) => {
-    const nu = normalizeUrl(url);
-    if (!nu || seen.has(nu)) return;
-    seen.add(nu);
-    out.push({ url: nu, title: String(title || nu) });
-  };
-
-  for (const tr of Array.isArray(toolResults) ? toolResults : []) {
-    if (!tr?.ok) continue;
-    const tool = String(tr.tool || tr.id || "");
-    const r = tr.result || tr.data || tr.output;
-    if (!r) continue;
-
-    if (tool === "web.search") {
-      const results = Array.isArray(r.results) ? r.results : Array.isArray(r) ? r : [];
-      for (const item of results) push(item?.url, item?.title);
-    } else if (tool === "web.fetch") {
-      push(r?.url || r?.finalUrl, r?.title);
-    }
-  }
-
-  return out;
-}
-
 // --- Phase 3: deterministic app/file actions (approval-gated) ---
 
 const _lastOpenedFolderBySid = new Map();
-
-function newActionId() {
-  return "act_" + crypto.randomUUID();
-}
-
-function addPendingAction(sid, core) {
-  const now = Date.now();
-  const action = {
-    id: core?.id || newActionId(),
-    sid,
-    status: core?.status || "pending",
-    type: core?.type,
-    title: core?.title,
-    reason: core?.reason,
-    payload: core?.payload || {},
-    preview: core?.preview,
-    risk: core?.risk || "action",
-    createdAt: core?.createdAt || now,
-    updatedAt: core?.updatedAt || now,
-  };
-
-  addAction(action);
-  return action;
-}
-
-function getLatestPendingActionForSid(sid) {
-  const all = listActions();
-  for (const a of all) {
-    if (a?.sid === sid && a?.status === "pending") return a;
-  }
-  return null;
-}
-
-function isApproveIntent(msg) {
-  const t = String(msg || "").trim().toLowerCase();
-  if (!t) return false;
-  return (
-    /^approve\b/.test(t) ||
-    /^approved\b/.test(t) ||
-    /^yes\b.*\bapprove\b/.test(t) ||
-    /^do it\b/.test(t) ||
-    /^execute\b/.test(t)
-  );
-}
-
-function isRejectIntent(msg) {
-  const t = String(msg || "").trim().toLowerCase();
-  return /^reject\b/.test(t) || /^cancel\b/.test(t) || /^no\b/.test(t);
-}
-
 
 function readAppsAllowlist() {
   try {
@@ -194,7 +106,6 @@ function parseOpenDesktopFolder(msg) {
   return {
     type: "open_path",
     title: `Open Desktop folder: ${folderName}`,
-    folderName,
     reason: `User asked to open a Desktop folder (${folderName}).`,
     payload: { path: folderPath },
     _folderName: folderName,
@@ -204,82 +115,21 @@ function parseOpenDesktopFolder(msg) {
 
 function parseWriteTextInThere(msg) {
   const raw = String(msg || "").trim();
+  const t = raw.toLowerCase();
 
-  // Examples:
-  // "put a text document in there called Bone Worms that tells me what a bone worm is"
-  // "create a txt file in there named 'Bone Worms' about giraffes"
-  // "make a text file in there called Bone Worms: <content request>"
-  const re =
-    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)|text\s+file|txt\s+file|textfile|txtfile|file)\s+in\s+(?:there|here)\s+(?:called|named)\s+["\']?([^"\']+?)["\']?(?:\s+(?:that|which)\s+|:\s*)([\s\S]+)$/i;
-
-  const m = raw.match(re);
+  // phrases like:
+  // "put a text document in there called "Bone Worms" that tells me ..."
+  // "create a txt file in there named Bone Worms about ..."
+  const m = raw.match(/\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+document|txt\s+file|text\s+file|document)\s+in\s+there\s+(?:called|named)\s+["']?([^"']+?)["']?\s+(?:that|which)\s+([\s\S]+)$/i);
   if (!m) return null;
 
   const name = String(m[1] || "").trim();
   const bodyRequest = String(m[2] || "").trim();
-  if (!name || !bodyRequest) return null;
+  if (!name) return null;
 
   const filename = name.toLowerCase().endsWith(".txt") ? name : `${name}.txt`;
+
   return { filename, bodyRequest };
-}
-
-
-function parseWriteTextInNamedFolder(msg) {
-  const raw = String(msg || "").trim();
-
-  // Supported examples:
-  // - put a txt document called "Kinds of Worms" in the worms folder that lists 10 kinds of worms
-  // - create a text file named Notes in the Projects folder: meeting notes
-  // - put a txt file in the worms folder called Kinds of Worms that ...
-  //
-  // We intentionally accept a few common word orders.
-
-  const patterns = [
-    // called/named BEFORE folder: "... called X in the Y folder ..."
-    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)?|text\s+file|txt\s+file|file)\s+(?:called|named)\s+["']?([^"']+?)["']?\s+in\s+(?:the\s+)?["']?([^"']+?)["']?\s+folder\b(?:\s+(?:that|which)\s+|:\s*|\s+)([\s\S]+)$/i,
-    // called/named AFTER folder: "... in the Y folder called X ..."
-    /\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+(?:document|doc)|txt\s+(?:document|doc)?|text\s+file|txt\s+file|file)\s+in\s+(?:the\s+)?["']?([^"']+?)["']?\s+folder\s+(?:called|named)\s+["']?([^"']+?)["']?\b(?:\s+(?:that|which)\s+|:\s*|\s+)([\s\S]+)$/i,
-  ];
-
-  let m = null;
-  let name = "";
-  let folderName = "";
-  let bodyRequest = "";
-
-  for (const re of patterns) {
-    const mm = raw.match(re);
-    if (!mm) continue;
-
-    if (re === patterns[0]) {
-      name = String(mm[1] || "").trim();
-      folderName = String(mm[2] || "").trim();
-      bodyRequest = String(mm[3] || "").trim();
-    } else {
-      folderName = String(mm[1] || "").trim();
-      name = String(mm[2] || "").trim();
-      bodyRequest = String(mm[3] || "").trim();
-    }
-    m = mm;
-    break;
-  }
-
-  if (!m) return null;
-
-  name = name.replace(/^["']|["']$/g, "");
-  folderName = folderName.replace(/^["']|["']$/g, "");
-  if (!name || !folderName || !bodyRequest) return null;
-
-  const filename = name.toLowerCase().endsWith(".txt") ? name : `${name}.txt`;
-  return { filename, folderName, bodyRequest };
-}
-
-
-
-
-
-function packSourcesForUi(sources, maxShown = 3) {
-  const list = Array.isArray(sources) ? sources : [];
-  return { total: list.length, shown: list.slice(0, maxShown), hidden: list.slice(maxShown) };
 }
 
 
@@ -289,96 +139,94 @@ function isGreeting(msg) {
 }
 
 function isWebSearchIntent(msg) {
-  const s = String(msg || "").trim();
-  // Allow polite prefixes: "can you", "please", etc.
-  // Trigger only when the user explicitly requests a web lookup.
-  return /\b(search\s+(?:the\s+)?web|web\s+search|search\s+online|look\s+it\s+up\s+online|look\s+up\s+on\s+the\s+web)\b/i.test(s);
+  const s = String(msg || "").trim().toLowerCase();
+  return (
+    s.startsWith("search the web") ||
+    s.startsWith("search web") ||
+    s.startsWith("web search") ||
+    s.includes("search the web for") ||
+    s.includes("look up ") ||
+    s.includes("find online") ||
+    s.includes("on the web")
+  );
+}
+
+
+function normalizeWebQuery(q) {
+  let s = String(q || "").trim();
+  if (!s) return "";
+  s = s.replace(/(in\s+\d+\s+words?\s+or\s+less)/ig, "");
+  s = s.replace(/(in\s+\d+\s+words?)/ig, "");
+  s = s.replace(/(ten|10)\s+words?\s+or\s+less/ig, "");
+  s = s.replace(/(briefly|concise|concisely|short|shortly|one\s+sentence|two\s+sentences)/ig, "");
+  s = s.replace(/[?.!]+$/g, "");
+  s = s.replace(/\s+/g, " ").trim();
+  return s;
 }
 
 function extractWebQuery(msg) {
   const s = String(msg || "").trim();
   // Common patterns: "Search the web for X", "Look up X", "Find X online"
   let m = s.match(/search\s+(?:the\s+)?web\s+for\s+([\s\S]{1,200})/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
   m = s.match(/look\s+up\s+([\s\S]{1,200})/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
   m = s.match(/find\s+([\s\S]{1,200})\s+online/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
   return s.slice(0, 200);
 }
 
+function shouldAutoWebSearch(msg) {
+  const s = String(msg || "").trim();
+  if (!s) return false;
 
-const _webBudgetBySid = new Map();
+  // Explicit request always wins.
+  if (isWebSearchIntent(s)) return true;
 
-function checkWebBudget(sid, { perMinute = 8, perDay = 60 } = {}) {
-  const now = Date.now();
-  const minuteMs = 60_000;
-  const dayMs = 24 * 60_000 * 60;
+  // Avoid action-ish prompts (handled elsewhere).
+  if (/(\b(open|launch|start|run|execute|restart|turn\s*off|shutdown|create|write|make|build|generate|code)\b)/i.test(s))
+    return false;
 
-  const b = _webBudgetBySid.get(sid) || {
-    minuteStart: now,
-    minuteCount: 0,
-    dayStart: now,
-    dayCount: 0,
-  };
+  // Common "knowledge / facts" prompts.
+  const looksLikeQuestion =
+    s.endsWith("?") ||
+    /^(what|who|when|where|why|how|tell\s+me\s+about|explain|define|give\s+me\s+info\s+on|can\s+you\s+tell\s+me\s+about)\b/i.test(
+      s
+    );
 
-  if (now - b.minuteStart >= minuteMs) {
-    b.minuteStart = now;
-    b.minuteCount = 0;
-  }
-  if (now - b.dayStart >= dayMs) {
-    b.dayStart = now;
-    b.dayCount = 0;
-  }
+  // Short factual queries benefit most (reduces needless searching).
+  const wordCount = s.split(/\s+/).filter(Boolean).length;
+  if (looksLikeQuestion && wordCount <= 24) return true;
 
-  if (b.minuteCount >= perMinute) {
-    const retryMs = minuteMs - (now - b.minuteStart);
-    return { ok: false, error: `Web rate limit: too many requests. Try again in ${Math.ceil(retryMs / 1000)}s.` };
-  }
-  if (b.dayCount >= perDay) {
-    return { ok: false, error: "Web rate limit: daily cap reached." };
-  }
-
-  b.minuteCount += 1;
-  b.dayCount += 1;
-  _webBudgetBySid.set(sid, b);
-  return { ok: true };
+  return false;
 }
 
-async function runWebContext(query, sid) {
-  const ran = [];
-  const webSearch = toolRegistry.get("web.search");
-  const webFetch = toolRegistry.get("web.fetch");
-  if (!webSearch) return { ran, fetchedText: null };
 
-  const budget = checkWebBudget(sid, { perMinute: 8, perDay: 60 });
-  if (!budget.ok) {
-    ran.push({ tool: "web.limit", ok: false, result: { error: budget.error } });
-    return { ran, fetchedText: null, error: budget.error };
-  }
-
-
-  const r1 = await toolRegistry.run({ id: "web.search", args: { query, maxResults: 5 }, context: { sid } });
-  ran.push({ tool: "web.search", ok: r1.ok, result: r1.result });
-  if (!r1.ok) return { ran, fetchedText: null };
-
-  const firstUrl =
-    (Array.isArray(r1.result?.results) && r1.result.results[0]?.url) ||
-    (Array.isArray(r1.result) && r1.result[0]?.url) ||
-    null;
-
-  if (webFetch && firstUrl) {
-    const r2 = await toolRegistry.run({ id: "web.fetch", args: { url: firstUrl }, context: { sid } });
-    ran.push({ tool: "web.fetch", ok: r2.ok, result: r2.result });
-    const txt = (r2.ok && (r2.result?.text || r2.result?.content || r2.result?.body)) ? String(r2.result.text || r2.result.content || r2.result.body) : null;
-    return { ran, fetchedText: txt ? txt.slice(0, 6000) : null };
-  }
-
-  return { ran, fetchedText: null };
-}
 
 function newId() {
   return Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+function addPendingAction(partial) {
+  const now = Date.now();
+  const id = newId();
+  const full = {
+    id,
+    type: partial?.type,
+    title: partial?.title,
+    reason: partial?.reason,
+    payload: partial?.payload || {},
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+  };
+  return addAction(full);
+}
+
+function logMode(sid, mode, extra = {}) {
+  try {
+    console.log("[mode]", { sid, mode, ...extra });
+  } catch {}
 }
 
 function shouldAllowActions(reqBody) {
@@ -416,22 +264,22 @@ function extractOpinionTopic(msg) {
   const s = String(msg || "").trim();
 
   let m = s.match(/feel about\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   m = s.match(/think about\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   m = s.match(/(?:are|were)\s+your\s+thoughts\s+on\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   m = s.match(/your\s+thoughts\s+on\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   m = s.match(/opinion on\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   m = s.match(/do you (?:like|love|hate)\s+(.+)$/i);
-  if (m?.[1]) return m[1].trim().replace(/[?.!]+$/, "");
+  if (m?.[1]) return normalizeWebQuery(m[1]);
 
   return null;
 }
@@ -681,6 +529,7 @@ function handleTitleRequest(msg) {
     updatedAt: Date.now(),
   });
 
+  logMode(sid ?? "no_sid", "approval_action", { kind: "set_html_title" });
   return {
     reply: enforcePiper(
       `Queued for approval, sir. I will set the page title to "${desired}".`
@@ -785,49 +634,7 @@ if (isGreeting(msg)) {
   });
 }
 
-
-// --- Phase 3: voice approve/reject (no UI click needed) ---
-try {
-  if (isApproveIntent(msg)) {
-    const affect = getAffectSnapshot(sid);
-    const pending = getLatestPendingActionForSid(sid);
-    if (!pending) {
-      const reply = enforcePiper("There's nothing pending to approve, sir.");
-      return res.json({ reply, emotion: "neutral", intensity: 0.35, proposed: [], meta: { affect } });
-    }
-
-    updateAction(pending.id, { status: "approved", updatedAt: Date.now() });
-    console.log("[phase3] approve_action", { sid, id: pending.id, type: pending.type, title: pending.title });
-
-    const execRes = await executeAction(pending);
-    const status = execRes?.ok ? "executed" : "failed";
-    updateAction(pending.id, { status, result: execRes, updatedAt: Date.now() });
-
-    if (execRes?.ok) {
-      const reply = enforcePiper("Approved.");
-      return res.json({ reply, emotion: "confident", intensity: 0.45, proposed: [], meta: { affect } });
-    }
-    const reply = enforcePiper(`I couldn't complete that action: ${String(execRes?.error || "Unknown error")}`);
-    return res.json({ reply, emotion: "concerned", intensity: 0.6, proposed: [], meta: { affect } });
-  }
-
-  if (isRejectIntent(msg)) {
-    const affect = getAffectSnapshot(sid);
-    const pending = getLatestPendingActionForSid(sid);
-    if (pending) {
-      updateAction(pending.id, { status: "rejected", updatedAt: Date.now() });
-      console.log("[phase3] reject_action", { sid, id: pending.id, type: pending.type, title: pending.title });
-    }
-    const reply = enforcePiper("Understood. I won't execute it.");
-    return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect } });
-  }
-} catch (e) {
-  console.log("[phase3] approve/reject ERROR", e);
-}
-
 // --- Phase 3 deterministic intents ---
-// Priority order: approvals handled earlier, then list/open/write.
-
 try {
   // List allowlisted apps
   if (isListAppsIntent(msg)) {
@@ -835,172 +642,75 @@ try {
     const ids = listAllowlistedAppIds();
     console.log("[phase3] list_apps", { sid, count: ids.length });
     const reply = enforcePiper(
-      `I can open these allowlisted apps: ${ids.join(", ")}. Say "open <app>" (e.g., "open vscode").`
+      ids.length
+        ? `I can open these allowlisted apps: ${ids.join(", ")}. Say "open <app>" (e.g., "open vscode").`
+        : "No apps are allowlisted yet, sir."
     );
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect } });
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect, sources: { total: 0, shown: [], hidden: [] } } });
   }
 
   // Open allowlisted app
-  const app = parseOpenAllowlistedApp(msg);
-  if (app) {
+  const openApp = parseOpenAllowlistedApp(msg);
+  if (openApp) {
     const affect = getAffectSnapshot(sid);
-
-    const action = addPendingAction(sid, {
-      type: "launch_app",
-      title: `Launch app: ${app.appId}`,
-      reason: `User asked to open ${app.appId}.`,
-      payload: { appId: app.appId, args: [] },
-    });
-
+    const action = addPendingAction({ type: openApp.type, title: openApp.title, reason: openApp.reason, payload: openApp.payload });
     console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title });
-
-    const reply = enforcePiper(`Proposed: open ${app.appId}. Approve to execute.`);
-    return res.json({
-      reply,
-      emotion: "warm",
-      intensity: 0.45,
-      proposed: [action],
-      meta: { affect },
-    });
+    const reply = enforcePiper(`Proposed: open ${openApp.payload.appId}. Approve to execute.`);
+    logMode(sid, "approval_action", { kind: "launch_app", appId: openApp.payload.appId });
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect, sources: { total: 0, shown: [], hidden: [] } } });
   }
 
-  // Open a Desktop folder (best-effort, doesn't check existence here)
+  // Open Desktop folder (various phrasings)
   const desk = parseOpenDesktopFolder(msg);
   if (desk) {
     const affect = getAffectSnapshot(sid);
-
+    const action = addPendingAction({ type: desk.type, title: desk.title, reason: desk.reason, payload: desk.payload });
     _lastOpenedFolderBySid.set(sid, desk._folderPath);
-
-    const deskName = desk._folderName || desk.folderName || path.basename(String(desk._folderPath || "")) || "folder";
-
-    const action = addPendingAction(sid, {
-      type: "open_path",
-      title: `Open Desktop folder: ${deskName}`,
-      reason: `User asked to open a Desktop folder (${deskName}).`,
-      payload: { path: desk._folderPath },
-    });
-
-    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title });
-
+    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, path: desk._folderPath });
     const reply = enforcePiper(`Proposed: open the "${desk._folderName}" folder on your Desktop. Approve to execute.`);
-    return res.json({
-      reply,
-      emotion: "warm",
-      intensity: 0.45,
-      proposed: [action],
-      meta: { affect },
-    });
+    logMode(sid, "approval_action", { kind: "open_path", path: desk._folderPath });
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect, sources: { total: 0, shown: [], hidden: [] } } });
   }
 
-  
-// Create a text document in a specifically named folder ("in the X folder") — approval-gated.
-const wtn = parseWriteTextInNamedFolder(msg);
-if (wtn) {
-  const affect = getAffectSnapshot(sid);
-
-  // Try to resolve folder. Prefer last opened folder if its basename matches.
-  let folder = _lastOpenedFolderBySid.get(sid) || null;
-  const baseName = folder ? path.basename(folder).toLowerCase() : "";
-  const wanted = String(wtn.folderName || "").trim().toLowerCase();
-
-  if (!folder || baseName !== wanted) {
-    const base = process.env.USERPROFILE ? path.join(process.env.USERPROFILE, "Desktop") : null;
-    folder = base ? path.join(base, wtn.folderName) : null;
-  }
-
-  if (!folder) {
-    const reply = enforcePiper('Which folder do you mean, sir? Open the folder first, then say: "put a text document in there called ..."');
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect } });
-  }
-
-  // Generate content using the LLM, but the write itself is approval-gated.
-  const contentPrompt = `Write the contents for a text file named "${wtn.filename}". The user asked: ${wtn.bodyRequest}. Be concise and factual.`;
-  const llmText = await callOllama(
-    [
-      { role: "system", content: piperSystemPrompt() },
-      { role: "user", content: contentPrompt },
-    ],
-    { temperature: 0.4 }
-  );
-
-  const fileContent = String(llmText || "").trim() || `Notes: ${wtn.bodyRequest}`;
-  const filePath = path.join(folder, wtn.filename);
-
-  const action = addPendingAction(sid, {
-    type: "write_text_file",
-    title: `Create file: ${wtn.filename}`,
-    reason: `User asked to create a text file in the "${wtn.folderName}" folder.`,
-    payload: { path: filePath, content: fileContent },
-    preview: fileContent.slice(0, 600),
-  });
-
-  console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, filePath });
-
-  const reply = enforcePiper(`Proposed: create "${wtn.filename}" in the "${wtn.folderName}" folder. Approve to execute.`);
-  return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect } });
-}
-
-// Create a text document in the last opened folder ("in there") — approval-gated.
+  // Write a text document "in there" (last opened folder)
   const wt = parseWriteTextInThere(msg);
   if (wt) {
     const affect = getAffectSnapshot(sid);
     const folder = _lastOpenedFolderBySid.get(sid);
-
     if (!folder) {
-      const reply = enforcePiper(
-        'Which folder do you mean, sir? Open the folder first, then say "put a text document in there..."'
-      );
-      return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect } });
+      const reply = enforcePiper('Which folder do you mean, sir? Open the folder first, then say "put a text document in there...".');
+      return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect, sources: { total: 0, shown: [], hidden: [] } } });
     }
-
-    // Generate content (no tools) — user can still edit after creation.
-    const contentPrompt = [
-      `Create the content for a plain text file named "${wt.filename}".`,
-      `User request: ${wt.bodyRequest}`,
-      "",
-      "Rules:",
-      "- Keep it concise (<= 220 words).",
-      "- Be factual and avoid making up medical/scientific claims; if the request is speculative, say so.",
-      "- No URLs in the text.",
-      "- Use simple headings if helpful.",
-    ].join("\n");
-
-    const llmText = await callOllama(
-      [
+    // We do NOT invent factual claims; we write exactly what the user asked for as content prompt for the LLM to fill.
+    // Generate the file content via LLM in-chat (no tools) then write it via action after approval.
+    const prompt = `Write the content for a text file titled "${wt.filename}". The user request: ${wt.bodyRequest}. Keep it concise and factual.`;
+    const content = await callOllama({
+      messages: [
         { role: "system", content: piperSystemPrompt() },
-        { role: "user", content: contentPrompt },
+        { role: "user", content: prompt },
       ],
-      { temperature: 0.4 }
-    );
+      temperature: 0.3,
+      max_tokens: 600,
+    });
 
-    const fileContent = String(llmText || "").trim() || `Notes: ${wt.bodyRequest}`;
     const filePath = path.join(folder, wt.filename);
-
-    const action = addPendingAction(sid, {
+    const action = addAction({
       type: "write_text_file",
-      title: `Create file: ${wt.filename}`,
-      reason: `User asked to create a text file in the last opened folder.`,
-      payload: { path: filePath, content: fileContent },
-      preview: fileContent.slice(0, 600),
+      title: `Write text file: ${wt.filename}`,
+      reason: `User asked to create a text document in the last opened folder ("in there").`,
+      payload: { path: filePath, content: String(content || "").trim() },
     });
-
-    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, filePath });
-
+    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, path: filePath });
     const reply = enforcePiper(`Proposed: create "${wt.filename}" in that folder. Approve to execute.`);
-    return res.json({
-      reply,
-      emotion: "warm",
-      intensity: 0.45,
-      proposed: [action],
-      meta: { affect },
-    });
+    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect, sources: { total: 0, shown: [], hidden: [] } } });
   }
 } catch (e) {
-  console.log("[phase3] deterministic intents ERROR", e);
+  console.log("[phase3] ERROR", e);
 }
 
 
-const meta = reqMeta(req);
+
+    const meta = reqMeta(req);
 
     bumpTurn(sid);
 
@@ -1015,6 +725,22 @@ const meta = reqMeta(req);
 
     // Track conversation for coherence
     pushConversationTurn(sid, "user", msg);
+
+
+    // Read-only web context (safe even when actions are disabled).
+    let preToolResults = [];
+    let webContext = null;
+
+    if (isWebSearchIntent(msg) || shouldAutoWebSearch(msg)) {
+      const q = extractWebQuery(msg) || msg;
+      const ran = await runWebContext(q, sid);
+      preToolResults = ran.ran || [];
+      webContext = ran.fetchedText || null;
+
+      const srcCount = extractWebSources(preToolResults)?.total || 0;
+      console.log("[web] context", { sid, q: String(q).slice(0, 140), sources: srcCount });
+    }
+
 
     // Deterministic title change shortcut
     if (isTitleRequest(msg)) {
@@ -1058,7 +784,7 @@ const meta = reqMeta(req);
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      addPendingAction(sid, action);
+      addAction(action);
       recordEvent(sid, "action_queued", { type: "restart_piper" });
       setLastIntent(sid, "change", msg);
 
@@ -1077,15 +803,6 @@ const meta = reqMeta(req);
     if (!allowActions) {
       try {
 
-// Phase 2.1: web search in chat-only mode (read-only tools allowed even when actions are disabled)
-let preToolResults = [];
-let webContext = null;
-if (isWebSearchIntent(msg)) {
-  const q = extractWebQuery(msg);
-  const ran = await runWebContext(q, sid);
-  preToolResults = ran.ran || [];
-  webContext = ran.fetchedText || null;
-}
 
         const disagreeLevel = computeDisagreeLevel(msg);
         const authorityOverride = isAuthorityOverride(msg);
@@ -1225,7 +942,7 @@ if (isWebSearchIntent(msg)) {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: { affect },
+            meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
           });
         }
 
@@ -1280,7 +997,7 @@ if (isWebSearchIntent(msg)) {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: { affect },
+          meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
         });
       } catch (e) {
         recordEvent(sid, "llm_fail", {
@@ -1348,7 +1065,7 @@ if (isWebSearchIntent(msg)) {
             emotion: "serious",
             intensity: 0.7,
             proposed: [],
-            meta: { affect },
+            meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
           });
         }
 
@@ -1449,7 +1166,7 @@ if (isWebSearchIntent(msg)) {
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [],
-            meta: { affect },
+            meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
           });
         }
 
@@ -1504,7 +1221,7 @@ if (isWebSearchIntent(msg)) {
           emotion: picked.emotion,
           intensity: picked.intensity,
           proposed: [],
-          meta: { affect },
+          meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
         });
       }
 
@@ -1531,7 +1248,7 @@ if (isWebSearchIntent(msg)) {
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          const saved = addPendingAction(sid, a);
+          const saved = addAction(a);
           sessions.set(sid, { lastIntent: "change" });
           setLastIntent(sid, "change", msg);
 
@@ -1567,7 +1284,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
+            meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
           });
         }
 
@@ -1595,7 +1312,7 @@ const affect = getAffectSnapshot(sid);
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
-          const saved = addPendingAction(sid, a);
+          const saved = addAction(a);
           sessions.set(sid, { lastIntent: "change" });
           setLastIntent(sid, "change", msg);
 
@@ -1624,7 +1341,7 @@ const affect = getAffectSnapshot(sid);
             emotion: picked.emotion,
             intensity: picked.intensity,
             proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
+            meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
           });
         }
       }
@@ -1839,7 +1556,7 @@ if (toolCalls.length > 0) {
 
       const proposed = [];
       for (const a of compiled.actions || []) {
-        const saved = addPendingAction(sid, a);
+        const saved = addAction(a);
         proposed.push({ id: saved.id, ...a.summary });
       }
 

@@ -33,12 +33,47 @@ function loadAllowlist() {
   return out;
 }
 
-function spawnDetached(cmd, args = [], cwd = process.cwd()) {
-  const child = spawn(cmd, args, { cwd, detached: true, stdio: "ignore", windowsHide: false });
-  child.unref();
-  return true;
+function expandEnvVarsWindows(p) {
+  const s = String(p || "");
+  // Expand %VAR% using process.env (Windows-style).
+  return s.replace(/%([^%]+)%/g, (_, name) => {
+    const key = String(name || "").trim();
+    const val = process.env[key];
+    return val != null ? String(val) : `%${key}%`;
+  });
 }
 
+function normalizeCmdPath(cmd) {
+  let c = String(cmd || "").trim();
+  if (!c) return c;
+  if (isWindows()) c = expandEnvVarsWindows(c);
+  // Strip surrounding quotes
+  if ((c.startsWith('"') && c.endsWith('"')) || (c.startsWith("'") && c.endsWith("'"))) c = c.slice(1, -1);
+  return c;
+}
+
+function spawnDetached(cmd, args = [], cwd = process.cwd()) {
+  const command = normalizeCmdPath(cmd);
+  const argv = Array.isArray(args) ? args.map(a => (isWindows() ? expandEnvVarsWindows(String(a)) : String(a))) : [];
+  // Basic existence check for full paths on Windows (prevents ENOENT crashes).
+  if (isWindows() && /[\\/]/.test(command) && !fs.existsSync(command)) {
+    console.log(`[executor] spawnDetached missing path: "${command}"`);
+    return { ok: false, error: `Executable not found: ${command}` };
+  }
+
+  try {
+    const child = spawn(command, argv, { cwd, detached: true, stdio: "ignore", windowsHide: false });
+    // Prevent unhandled 'error' event from crashing the process.
+    child.on("error", (err) => {
+      console.log(`[executor] spawnDetached error cmd="${command}" code="${err?.code || ""}" msg="${err?.message || err}"`);
+    });
+    child.unref();
+    return { ok: true };
+  } catch (err) {
+    console.log(`[executor] spawnDetached threw cmd="${command}" msg="${err?.message || err}"`);
+    return { ok: false, error: String(err?.message || err) };
+  }
+}
 function shellStart(target) {
   return spawnDetached("cmd.exe", ["/c", "start", '""', target]);
 }
@@ -56,7 +91,6 @@ async function executeCore(action, { dryRun = false } = {}) {
   const type = String(action?.type || "");
   const payload = action?.payload || {};
 
-  console.log(`[executor] execute type="${type}" id="${id}"`);
 
   if (!id) return { ok: false, error: "Missing action.id" };
 
@@ -70,6 +104,7 @@ async function executeCore(action, { dryRun = false } = {}) {
   }
 
   _executing.add(id);
+  console.log(`[executor] execute type="${action.type}" id="${id}"`);
   try {
     if (!isWindows()) return { ok: false, error: "Windows-only executor (win32)." };
 
@@ -89,7 +124,8 @@ async function executeCore(action, { dryRun = false } = {}) {
       const entry = allow[appId];
       if (!entry?.path) return { ok: false, error: `App "${appId}" is not allowlisted (data/apps.json).` };
       console.log(`[executor] launch_app appId="${appId}" path="${entry.path}" args=${JSON.stringify(entry.args || [])}`);
-      spawnDetached(entry.path, entry.args || []);
+      const r = spawnDetached(entry.path, entry.args || []);
+      if (!r.ok) return r;
       return { ok: true };
     }
 
@@ -97,7 +133,8 @@ async function executeCore(action, { dryRun = false } = {}) {
       const pth = String(payload?.path || "").trim();
       if (!pth) return { ok: false, error: "open_path missing payload.path" };
       console.log(`[executor] open_path path="${pth}"`);
-      spawnDetached("explorer.exe", [pth]);
+      const r = spawnDetached("explorer.exe", [pth]);
+      if (!r.ok) return r;
       return { ok: true };
     }
 
