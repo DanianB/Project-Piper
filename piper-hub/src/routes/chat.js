@@ -1,4 +1,6 @@
 // src/routes/chat.js
-// Thin shim: keep server.js imports stable while the chat route is modularized.
+// Shim file: keep server.js imports stable.
+// All chat logic lives under ./chat/ (modular route package).
 export { chatRoutes } from "./chat/index.js";
-export { default } from "./chat/index.js";
+import { chatRoutes as _chatRoutes } from "./chat/index.js";
+export default _chatRoutes;

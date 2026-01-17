@@ -41,4 +41,23 @@ function parseOpenAllowlistedApp(msg) {
   };
 }
 
-export { readAppsAllowlist, listAllowlistedAppIds, isListAppsIntent, parseOpenAllowlistedApp };
+/**
+ * Return the allowlisted target for an appId (usually a .exe path, shortcut, or command).
+ * apps.json is expected to be an object map: { "spotify": "%APPDATA%\\Spotify\\Spotify.exe", ... }
+ */
+function getAllowlistedAppTarget(appId) {
+  const apps = readAppsAllowlist();
+  if (!appId) return null;
+  const key = String(appId).trim();
+  if (!key) return null;
+  const v = apps && Object.prototype.hasOwnProperty.call(apps, key) ? apps[key] : null;
+  return v != null ? String(v) : null;
+}
+
+export {
+  readAppsAllowlist,
+  listAllowlistedAppIds,
+  isListAppsIntent,
+  parseOpenAllowlistedApp,
+  getAllowlistedAppTarget,
+};

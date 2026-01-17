@@ -172,7 +172,7 @@ No preview available for <b>${String(action.type)}</b>.
      * ========================= */
     if (
       updated.status === "done" &&
-      updated.type === "run_cmd" &&
+       (updated.type === "run_cmd" || updated.type === "read_snippet")  &&
       updated.meta?.followup &&
       typeof updated.meta.originalMessage === "string"
     ) {

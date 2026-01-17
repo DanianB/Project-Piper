@@ -81,6 +81,47 @@ function detectInspectionKindFromCmd(cmd) {
   return "other";
 }
 
+function safeRgQueryFromMessage(message) {
+  const raw = String(message || "");
+  const lower = raw.toLowerCase();
+
+  // Small, targeted boost for common UI labels/controls.
+  // This is NOT keyword triage; it only improves inspection usefulness.
+  if (/\boff\b/.test(lower) && /\bbutton\b/.test(lower)) {
+    return [
+      "off\\b",
+      "power\\b",
+      "shutdown\\b",
+      "offbtn",
+      "btnoff",
+      "off-button",
+      "btn-off",
+      "powerbtn",
+      "shutdownbtn",
+      "#off",
+      "\\.off",
+      "\\bOFF\\b",
+    ].join("|");
+  }
+
+  const words = lower
+    .toLowerCase()
+    .replace(/[^a-z0-9_\s-]/g, " ")
+    .split(/\s+/g)
+    .filter(Boolean)
+    .filter((w) => w.length >= 3 && w.length <= 24);
+
+  const unique = [];
+  const seen = new Set();
+  for (const w of words) {
+    if (seen.has(w)) continue;
+    seen.add(w);
+    unique.push(w);
+    if (unique.length >= 6) break;
+  }
+  return unique.length ? unique.join("|") : "piper";
+}
+
 function stripDecl(body, prop) {
   const p = String(prop || "").trim();
   if (!p) return body;
@@ -154,6 +195,7 @@ function findCssBlockByRegex(cssText, selector) {
 
 function buildCssApplyPatch({
   cssText,
+  cssPath,
   selector,
   title,
   reason,
@@ -198,7 +240,7 @@ function buildCssApplyPatch({
         title,
         reason,
         payload: {
-          path: "public/styles.css",
+          path: String(cssPath || "public/styles.css"),
           edits: [{ find: full, replace: nextFull, mode: "once" }],
         },
         meta: {
@@ -235,7 +277,7 @@ function buildCssApplyPatch({
         reason ||
         "Could not locate an exact CSS block; appending a minimal override block instead.",
       payload: {
-        path: "public/styles.css",
+        path: String(cssPath || "public/styles.css"),
         edits: [{ find: "", replace: appended, mode: "append" }],
       },
       meta: {
@@ -260,9 +302,11 @@ function compileCssPatch({ snapshot, op }) {
   const unset = Array.isArray(op.unset) ? op.unset : [];
   const why = String(op.why || "CSS update").trim();
 
+  const cssPath =
+    snapshot?.uiFacts?.cssFiles?.[0]?.path || "public/styles.css";
   const cssText =
-    (snapshot?.rawFiles && snapshot.rawFiles["public/styles.css"]) ||
-    readFileText("public/styles.css");
+    (snapshot?.rawFiles && snapshot.rawFiles[cssPath]) ||
+    readFileText(cssPath);
 
   const built = buildCssApplyPatch({
     cssText,
@@ -272,6 +316,7 @@ function compileCssPatch({ snapshot, op }) {
     set,
     unset,
     snapshot,
+    cssPath,
   });
 
   if (built.action) {
@@ -506,12 +551,36 @@ function queueEscalationInspection({ snapshot, reason }) {
     reason ||
     "I can’t form a deterministic patch yet; I need more grounding context.";
 
-  // If we already have a snippet, do not loop; ask for clarification
+  // If we already have a snippet but still can't act, keep forward motion by
+  // proposing a broader grounded inspection (still approval-gated), rather than
+  // bouncing back to "tell me the file/selector".
   if (stage.hasSnippet) {
+    const q = safeRgQueryFromMessage(msg);
+    const rg = compileRunCmdOp({
+      snapshot,
+      op: {
+        op: "run_cmd",
+        cmd: `rg -n "${q}" src public`,
+        timeoutMs: 12000,
+        why: baseWhy,
+      },
+    });
+
+    if (rg.action) {
+      return {
+        done: false,
+        reply:
+          "I still need a bit more grounding to make a deterministic patch. I’ll broaden the inspection next, sir.",
+        actions: [rg.action],
+        stage: { escalated: true, step: step + 1 },
+      };
+    }
+
+    // If we can't even queue rg, stop safely.
     return {
       done: true,
       reply:
-        "I inspected the relevant files but still can’t form a deterministic patch safely. Can you tell me exactly which file/section to change (or paste the relevant block), sir?",
+        "I can’t proceed safely without more grounded context. Please paste the relevant file section, sir.",
       actions: [],
       stage: { escalated: true, step, stopped: true },
     };
@@ -553,11 +622,12 @@ function queueEscalationInspection({ snapshot, reason }) {
   }
 
   // Otherwise start with rg over likely places
+  const q = safeRgQueryFromMessage(msg);
   const rg = compileRunCmdOp({
     snapshot,
     op: {
       op: "run_cmd",
-      cmd: 'rg -n "Desktop|Downloads|Documents|mkdir\\(|write_file|known:desktop|known:downloads|known:documents" src public',
+      cmd: `rg -n "${q}" src public`,
       timeoutMs: 12000,
       why: baseWhy,
     },
@@ -627,24 +697,65 @@ export function compilePlanToActions({ snapshot, plan }) {
     if (built?.action) compiled.push(built.action);
   }
 
-  // If the planner asked for approval but produced nothing actionable:
-  // escalate once instead of “feeling like an error”
+  // -------------------------
+  // Deterministic UI grounding helpers
+  // -------------------------
+  // If the LLM returned no ops but the repo already contains an obvious grounded
+  // target in allowlisted files, propose a safe, minimal patch instead of
+  // jumping straight to repo-wide inspection.
+  // This stays general (no keyword lists for triage) and only activates when
+  // the user clearly asks for a title change AND the allowlisted HTML has a <title>.
   if (compiled.length === 0 && needsApproval) {
-    if (needsMoreContext) {
-      return queueEscalationInspection({
-        snapshot,
-        reason:
-          "Planner couldn’t form a deterministic action from current context.",
-      });
-    }
+    const msg = String(snapshot?.message || plan?.message || "");
+    const wantsTitle = /\b(page\s+title|title)\b/i.test(msg);
+    const quoted = msg.match(/"([^"]{1,80})"|'([^']{1,80})'/);
+    const desired = quoted ? (quoted[1] || quoted[2] || "").trim() : "";
+    const html = snapshot?.rawFiles?.["public/index.html"];
 
-    // true no-op / done
-    return {
-      done: true,
-      reply: "Already done, sir.",
-      actions: [],
-      stage: { noop: true, noopCount },
-    };
+    if (wantsTitle && desired && typeof html === "string") {
+      const m = html.match(/<title>([\s\S]{0,200}?)<\/title>/i);
+      if (m) {
+        const oldInner = String(m[1] || "");
+        const oldTag = `<title>${oldInner}</title>`;
+        const newTag = `<title>${desired}</title>`;
+
+        // Only propose if it would actually change something.
+        if (oldTag !== newTag) {
+          return {
+            done: false,
+            reply: plan?.reply || "I’ve prepared a small, reviewable patch for approval, sir.",
+            actions: [
+              {
+                type: "apply_patch",
+                title: "Patch: public/index.html",
+                reason: "Update the page <title> tag to match your request.",
+                payload: {
+                  path: "public/index.html",
+                  edits: [
+                    {
+                      find: oldTag,
+                      replace: newTag,
+                      mode: "once",
+                    },
+                  ],
+                },
+              },
+            ],
+            stage: plan?.stage || {},
+          };
+        }
+      }
+    }
+  }
+
+  // If approval is expected but we produced nothing actionable, do NOT
+  // claim success. Instead, queue a single grounding inspection.
+  if (compiled.length === 0 && needsApproval) {
+    return queueEscalationInspection({
+      snapshot,
+      reason:
+        "Planner couldn’t form a deterministic action from current context.",
+    });
   }
 
   // HARD RULE: at most ONE approval action (bundle if needed)

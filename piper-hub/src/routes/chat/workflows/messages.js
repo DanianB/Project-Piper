@@ -1,4 +1,5 @@
 // src/routes/chat/workflows/messages.js
+import { piperSystemPrompt } from "../../../services/persona.js";
 const sessions = new Map();
 
 function buildChatMessages({

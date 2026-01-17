@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Piper Hub</title>
+  <title>Piper</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -24,13 +24,8 @@
         </label>
 
         <label class="pill">
-          <input id="dryRun" type="checkbox" />
-          <span>Dry-run</span>
-        </label>
-
-        <label class="pill">
-          <input id="debugEmotion" type="checkbox" />
-          <span>Debug emotion</span>
+          <input id="devMode" type="checkbox" />
+          <span>Dev Mode</span>
         </label>
 
         <!-- Voice menu -->
@@ -109,20 +104,12 @@ const t = document.getElementById('t');
 const talk = document.getElementById('talk');
 const off = document.getElementById('off');
 const readOnly = document.getElementById('readOnly');
-const dryRun = document.getElementById('dryRun');
-const debugEmotion = document.getElementById('debugEmotion');
+const devMode = document.getElementById('devMode');
 
 const actionsWrap = document.getElementById("actionsWrap");
 const actionsList = document.getElementById("actionsList");
 const historyList = document.getElementById("historyList");
 const runlogList = document.getElementById("runlogList");
-
-const planWrap = document.getElementById('planWrap');
-const planBody = document.getElementById('planBody');
-const planApproveBtn = document.getElementById('planApproveBtn');
-const planAbortBtn = document.getElementById('planAbortBtn');
-let currentPlanId = null;
-
 
 // Voice UI
 const voiceBtn = document.getElementById("voiceBtn");
@@ -133,6 +120,21 @@ const voiceRefresh = document.getElementById("voiceRefresh");
 
 const sessionId = localStorage.getItem("piper_sessionId") || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
 localStorage.setItem("piper_sessionId", sessionId);
+
+// Dev Mode state (client-side)
+// - Stored in localStorage
+// - Sent to the backend on each chat request (safe for older servers that ignore it)
+// - Can be toggled by saying "Activate Dev Mode" / "Deactivate Dev Mode"
+try{
+  const saved = localStorage.getItem("piper_devMode");
+  if(saved === "1") devMode.checked = true;
+}catch{}
+
+function setDevMode(on){
+  if(!devMode) return;
+  devMode.checked = !!on;
+  try{ localStorage.setItem("piper_devMode", on ? "1" : "0"); }catch{}
+}
 
 // Persist <details> open state per action id
 const openDetails = new Set(JSON.parse(localStorage.getItem("piper_openDetails") || "[]"));
@@ -177,9 +179,7 @@ async function playNextInQueue(){
     // Attempt to allow overlapping browsers to play without user gesture issues
     audio.preload = "auto";
 
-    if(debugEmotion.checked){
-      console.log("[voice] play", meta);
-    }
+    // (debugEmotion removed)
 
     // Wait for play to start (some browsers reject without user gesture)
     await audio.play().catch((e)=>{
@@ -247,7 +247,7 @@ async function speak(text, emotion, intensity){
     const blob = await r.blob();
     enqueueAudioBlob(blob, { emotion: payload.emotion, intensity: payload.intensity, chars: payload.text.length });
 
-    if(debugEmotion.checked) console.log("[voice] speak queued", payload);
+    // (debugEmotion removed)
 
   }catch(e){
     console.warn("/voice/speak error:", e);
@@ -255,8 +255,6 @@ async function speak(text, emotion, intensity){
 }
 
 // ---- Voice UI logic ----
-function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
-
 async function api(path, body){
   const r = await fetch(path,{
     method:"POST",
@@ -373,6 +371,13 @@ jarvisMode.onchange = async () => {
     await applyVoice(restore);
   }
 };
+
+// Dev Mode checkbox persistence
+if(devMode){
+  devMode.onchange = () => {
+    setDevMode(devMode.checked);
+  };
+}
 
 // ---- Utilities ----
 function hookDetailsPersistence(cardEl, actionId){
@@ -632,7 +637,8 @@ function renderPending(pending){
       try{
         approveBtn.disabled = true;
         const note = prompt("Optional note for approval (leave blank for none):") || "";
-        await api("/action/approve",{id:a.id,note,dryRun: Boolean(dryRun && dryRun.checked)});
+        // Dry-run toggle removed. Approvals always execute real actions.
+        await api("/action/approve",{id:a.id,note,dryRun:false});
         add("piper","Approved.");
         await speak("Approved.");
         refreshActions(true);
@@ -712,7 +718,8 @@ function renderHistory(list){
           const ok = confirm("Rollback this action?");
           if(!ok) return;
 
-          const res = await api("/action/rollback", { id: a.id, dryRun: Boolean(dryRun && dryRun.checked) });
+          // Dry-run toggle removed. Rollbacks run for real.
+          const res = await api("/action/rollback", { id: a.id, dryRun: false });
           const msg = res && res.ok ? "✅ Rolled back." : "Rollback finished.";
           add("piper", msg);
           await speak(msg);
@@ -766,93 +773,13 @@ async function refreshActions(force){
   }
 }
 
-
-function renderPlanPanel(plan){
-  if(!plan || typeof plan !== 'object'){
-    planWrap.style.display = 'none';
-    currentPlanId = null;
-    return;
-  }
-  currentPlanId = plan.planId || null;
-  planWrap.style.display = currentPlanId ? '' : 'none';
-
-  planBody.innerHTML = '';
-  const title = document.createElement('div');
-  title.className = 'planGoal';
-  title.textContent = plan.goal || 'Plan';
-  planBody.appendChild(title);
-
-  const meta = document.createElement('div');
-  meta.className = 'planMeta';
-  meta.textContent = `Status: ${plan.status || 'proposed'} • Steps: ${(plan.steps||[]).length}`;
-  planBody.appendChild(meta);
-
-  if(Array.isArray(plan.risks) && plan.risks.length){
-    const risks = document.createElement('div');
-    risks.className = 'planRisks';
-    risks.innerHTML = '<b>Risks:</b> ' + plan.risks.map(r => `<span class="pillMini">${escapeHtml(String(r))}</span>`).join(' ');
-    planBody.appendChild(risks);
-  }
-
-  const ol = document.createElement('ol');
-  ol.className = 'planSteps';
-  for(const s of (plan.steps || [])){
-    const li = document.createElement('li');
-    const line = document.createElement('div');
-    line.className = 'planStepLine';
-    line.innerHTML = `<span class="planType">${escapeHtml(String(s.type||'step'))}</span> <span class="planTarget">${escapeHtml(String(s.target||''))}</span>`;
-    li.appendChild(line);
-
-    if(s.reason){
-      const why = document.createElement('div');
-      why.className = 'planWhy';
-      why.textContent = s.reason;
-      li.appendChild(why);
-    }
-    ol.appendChild(li);
-  }
-  planBody.appendChild(ol);
-}
-
-planApproveBtn.onclick = async () => {
-  if(!currentPlanId) return;
-  planApproveBtn.disabled = true;
-  try{
-    const res = await api('/plan/approve', { planId: currentPlanId });
-    if(res && res.ok){
-      await refreshActions(true);
-      // keep plan visible, but update status if returned
-      if(res.plan) renderPlanPanel(res.plan);
-    }else{
-      alert(res && res.error ? res.error : 'Failed to approve plan');
-    }
-  }finally{
-    planApproveBtn.disabled = false;
-  }
-};
-
-planAbortBtn.onclick = async () => {
-  if(!currentPlanId) return;
-  planAbortBtn.disabled = true;
-  try{
-    const res = await api('/plan/abort', { planId: currentPlanId, reason: 'User aborted in UI' });
-    if(res && res.ok){
-      renderPlanPanel(res.plan);
-    }else{
-      alert(res && res.error ? res.error : 'Failed to abort plan');
-    }
-  }finally{
-    planAbortBtn.disabled = false;
-  }
-};
-
-
 // ---- Chat ----
 async function sendToChat(text){
   return await api("/chat", {
     sessionId,
     message: text,
     readOnly: readOnly.checked,
+    devMode: !!(devMode && devMode.checked),
     userInitiated: true,
     metBefore: localStorage.getItem('piper.metBefore') === '1',
   });
@@ -862,6 +789,28 @@ f.onsubmit = async (e) => {
   e.preventDefault();
   const msg = t.value.trim();
   if(!msg) return;
+
+  // ----------------------
+  // Dev Mode voice command
+  // ----------------------
+  // Keep this deterministic and local to avoid confusing planner/chat routing.
+  // Backend still receives devMode on subsequent messages via sendToChat.
+  if(/^\s*(activate|enable|turn on)\s+dev\s*mode\s*\.?\s*$/i.test(msg)){
+    t.value = "";
+    add('me', msg);
+    setDevMode(true);
+    add('piper', "Dev Mode engaged, sir.");
+    await speak("Dev Mode engaged, sir.", "confident", 0.45);
+    return;
+  }
+  if(/^\s*(deactivate|disable|turn off)\s+dev\s*mode\s*\.?\s*$/i.test(msg)){
+    t.value = "";
+    add('me', msg);
+    setDevMode(false);
+    add('piper', "Dev Mode disengaged, sir.");
+    await speak("Dev Mode disengaged, sir.", "neutral", 0.35);
+    return;
+  }
 
   t.value = "";
   add('me', msg);
@@ -874,14 +823,7 @@ f.onsubmit = async (e) => {
 
     add('piper', c.reply, c.meta);
 
-    if(c.meta && typeof c.meta === 'object' && c.meta.plan){
-      renderPlanPanel(c.meta.plan);
-    }
-
-
-    if(debugEmotion.checked){
-      console.log('[chat] reply meta', { emotion: c.emotion, intensity: c.intensity, meta: c.meta });
-    }
+    // (debugEmotion removed)
 
     const queued = !readOnly.checked && c.proposed && Array.isArray(c.proposed) && c.proposed.length > 0;
 
@@ -908,7 +850,7 @@ refreshRunLog();
   }
 };
 
-off.onclick = async () => {
+if (off) off.onclick = async () => {
   const ok = confirm("Turn Piper off? (This stops the server)");
   if(!ok) return;
   try{
@@ -1026,16 +968,3 @@ setInterval(()=>refreshActions(false), 1200);
 </script>
 </body>
 </html>
-    <div id="planWrap" class="section panel" style="display:none">
-      <div class="sectionHeader">
-        <h3>Proposed Plan</h3>
-        <div class="hint">Approve to generate pending actions.</div>
-      </div>
-      <div id="planBody"></div>
-      <div class="planBtns">
-        <button id="planApproveBtn" class="btn-primary" type="button">Approve plan</button>
-        <button id="planAbortBtn" class="btn-secondary" type="button">Abort plan</button>
-      </div>
-    </div>
-
-

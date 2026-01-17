@@ -1,62 +1,127 @@
 // src/routes/chat/parsers/filesystem.js
-const _lastOpenedFolderBySid = new Map();
+import path from "path";
+import os from "os";
 
-function parseOpenDesktopFolder(msg) {
-  const raw = String(msg || "").trim();
-  const t = raw.toLowerCase();
+// sid -> last opened folder path (for "in there")
+const _lastOpened = new Map();
 
-  // "open the folder on my desktop called worms"
-  let m =
-    t.match(/\bopen\s+(?:the\s+)?folder\s+on\s+my\s+desktop\s+(?:called|named)\s+["']?([^"']+?)["']?\b/i) ||
-    t.match(/\bopen\s+(?:the\s+)?folder\s+(?:called|named)\s+["']?([^"']+?)["']?\s+on\s+my\s+desktop\b/i);
+export function getLastOpenedFolder(sid) {
+  return _lastOpened.get(String(sid || "")) || null;
+}
 
-  // "open the worms folder on my desktop"
-  if (!m) m = t.match(/\bopen\s+(?:the\s+)?(.+?)\s+folder\s+on\s+my\s+desktop\b/i);
+export function setLastOpenedFolder(sid, folderPath) {
+  if (!sid) return;
+  _lastOpened.set(String(sid), String(folderPath || ""));
+}
 
-  if (!m) return null;
+function desktopRoot() {
+  return path.join(os.homedir(), "Desktop");
+}
 
-  const folderName = String(m[1] || "").trim().replace(/^["']|["']$/g, "");
+function hasDesktopPhrase(s) {
+  return (
+    /\b(on|in)\s+(my|your|the)?\s*desktop\b/i.test(s) ||
+    /\bdesktop\b/i.test(s)
+  );
+}
+
+function extractQuoted(s) {
+  const m = String(s || "").match(/["']([^"']+)["']/);
+  return m ? m[1].trim() : null;
+}
+
+function stripArticle(name) {
+  return String(name || "")
+    .trim()
+    .replace(/^(the|a|an)\s+/i, "")
+    .trim();
+}
+
+function cleanPunct(name) {
+  return String(name || "")
+    .trim()
+    .replace(/[.?!,;:]+$/g, "")
+    .trim();
+}
+
+function extractFolderName(s) {
+  const q = extractQuoted(s);
+  if (q) return q;
+
+  // "open worms folder ..."
+  const m = s.match(/\bopen\b\s+(.+?)\s+\bfolder\b/i);
+  if (m && m[1]) return m[1].trim();
+
+  // "open the worms on my desktop" (no word 'folder')
+  const m2 = s.match(/\bopen\b\s+(?:the\s+)?(.+?)\s+\b(on|in)\b\s+(my|your|the)?\s*desktop\b/i);
+  if (m2 && m2[1]) return m2[1].trim();
+
+  return null;
+}
+
+/**
+ * Deterministic: open a folder on the Desktop.
+ * Returns a structured object used by handler.js.
+ */
+export function parseOpenDesktopFolder(msg) {
+  const s = String(msg || "").trim();
+  if (!s) return null;
+  if (!/\b(open|show|launch|go to)\b/i.test(s)) return null;
+  if (!hasDesktopPhrase(s)) return null;
+
+  let folderName = extractFolderName(s);
+  if (!folderName) return null;
+  folderName = stripArticle(cleanPunct(folderName));
   if (!folderName) return null;
 
-  const base = process.env.USERPROFILE ? path.join(process.env.USERPROFILE, "Desktop") : null;
-  const folderPath = base ? path.join(base, folderName) : folderName;
+  const folderPath = path.join(desktopRoot(), folderName);
 
   return {
     type: "open_path",
-    title: `Open Desktop folder: ${folderName}`,
-    reason: `User asked to open a Desktop folder (${folderName}).`,
-    payload: { path: folderPath },
+    title: `Open folder: ${folderName}`,
+    reason: `User asked to open the "${folderName}" folder on the Desktop.`,
+    payload: { path: folderPath, kind: "folder" },
     _folderName: folderName,
     _folderPath: folderPath,
   };
 }
 
-function parseWriteTextInThere(msg) {
-  const raw = String(msg || "").trim();
-  const t = raw.toLowerCase();
-
-  // phrases like:
-  // "put a text document in there called "Bone Worms" that tells me ..."
-  // "create a txt file in there named Bone Worms about ..."
-  const m = raw.match(/\b(?:put|create|make|write)\s+(?:a\s+)?(?:text\s+document|txt\s+file|text\s+file|document)\s+in\s+there\s+(?:called|named)\s+["']?([^"']+?)["']?\s+(?:that|which)\s+([\s\S]+)$/i);
-  if (!m) return null;
-
-  const name = String(m[1] || "").trim();
-  const bodyRequest = String(m[2] || "").trim();
-  if (!name) return null;
-
-  const filename = name.toLowerCase().endsWith(".txt") ? name : `${name}.txt`;
-
-  return { filename, bodyRequest };
+function ensureTxt(name) {
+  const base = String(name || "").trim();
+  if (!base) return "";
+  return /\.[a-z0-9]+$/i.test(base) ? base : `${base}.txt`;
 }
 
-function getLastOpenedFolder(sid) {
-  return _lastOpenedFolderBySid.get(sid) || null;
-}
-function setLastOpenedFolder(sid, folderPath) {
-  if (!sid) return;
-  if (!folderPath) _lastOpenedFolderBySid.delete(sid);
-  else _lastOpenedFolderBySid.set(sid, folderPath);
-}
+/**
+ * Deterministic: "put a txt/text file in there called X [with ...]"
+ * Returns the intended filename plus the user's request body (optional) so the
+ * handler may optionally generate content.
+ */
+export function parseWriteTextInThere(msg) {
+  const s = String(msg || "").trim();
+  if (!s) return null;
 
-export { parseOpenDesktopFolder, parseWriteTextInThere, getLastOpenedFolder, setLastOpenedFolder };
+  // Must refer to "in there" (uses last opened folder)
+  if (!/\b(in there|in that folder|in this folder|there)\b/i.test(s)) return null;
+  if (!/\b(put|create|make|write|add)\b/i.test(s)) return null;
+  if (!/\b(text|txt)\s+file\b/i.test(s) && !/\btext\s+document\b/i.test(s) && !/\bfile\b/i.test(s)) return null;
+
+  // filename (prefer quoted)
+  let base =
+    extractQuoted(s) ||
+    (s.match(/\bcalled\s+(.+?)(?:\bwith\b|\bcontaining\b|$)/i)?.[1] || "").trim() ||
+    (s.match(/\bnamed\s+(.+?)(?:\bwith\b|\bcontaining\b|$)/i)?.[1] || "").trim();
+
+  base = stripArticle(cleanPunct(base));
+  if (!base) return null;
+
+  const filename = ensureTxt(base);
+
+  // optional body request (not the actual file content)
+  const bodyRequest = (s.match(/\b(with|containing)\s+([\s\S]+)$/i)?.[2] || "").trim();
+
+  return {
+    filename,
+    bodyRequest: bodyRequest || "(no additional content specified)",
+  };
+}

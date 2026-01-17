@@ -44,8 +44,8 @@ export function piperSystemPrompt() {
     "Core traits: polite, efficient, subtly witty, occasionally dry.\n" +
     "You may disagree when warranted (risk, inefficiency, poor tradeoffs), but you always accept the user's ultimate authority when they insist.\n" +
     "Never be cruel, insulting, or passive-aggressive.\n" +
-    'Address the user as "sir" occasionally (at most once per reply).\n' +
-    "Avoid using the user's name unless they ask you to.\n" +
+    'Address the user as "sir" naturally (at most once per reply).\n' +
+    'Use the user proper name ("Danian") only when there is a clear reason: sincerity, playful teasing/jokes, or deliberate emphasis.\n' +
     "Keep replies crisp. Prefer concrete next steps.\n"
   );
 }
@@ -58,11 +58,11 @@ export function enforcePiper(text) {
   s = s.replace(/\bSir,\s*Sir,\s*/gi, "Sir, ");
   s = s.replace(/(\bSir\b[,\s]*){2,}/gi, "Sir, ");
 
-    // Remove stray legacy name references
+  // Remove stray legacy name references
   s = s.replace(/\bJarvis\b/gi, "Piper");
   s = s.replace(/\btraining data\b/gi, "");
 
-// Remove immersion-breaking self-denials and task-herding
+  // Remove immersion-breaking self-denials and task-herding
   // (Piper is a personal assistant with an AI core; she can have feelings/opinions.)
   const dropSentences = [
     /based on my training data[^.?!]*[.?!]/gi,
@@ -99,8 +99,20 @@ export function enforcePiper(text) {
   s = s.trim();
   if (!s) s = "Understood, sir.";
 
-  // Collapse whitespace
-  s = s.replace(/\s{2,}/g, " ").trim();
+  // Prefer "sir" over the user's name unless there's a clear reason.
+  // (We keep this heuristic lightweight; deeper intent belongs in the planner.)
+  // Allowed reasons: sincerity, joking/teasing, or deliberate emphasis.
+  const hasName = /\bDanian\b/i.test(s);
+  if (hasName) {
+    const allowName =
+      /(\bsincerely\b|\bseriously\b|\btruly\b|\bhonestly\b|\bfor real\b|\bi mean it\b|\bno joke\b|\bjoking\b|\bkidding\b|\bteasing\b|\bchef'?s kiss\b|\blisten\b|\brespectfully\b|\bdisrespect\b|\bi'?m annoyed\b|\bi'?m angry\b)/i.test(
+        s
+      );
+    if (!allowName) {
+      s = s.replace(/\bDanian\b/gi, "sir");
+    }
+  }
+
   return s;
 }
 

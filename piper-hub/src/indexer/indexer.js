@@ -169,73 +169,78 @@ function extractJs(file, source) {
     return { exports, routes, imports };
   }
 
-  traverse(ast, {
-    ImportDeclaration(p) {
-      imports.push({
-        file,
-        source: p.node.source?.value || "",
-        loc: p.node.loc || null,
-      });
-    },
-    ExportNamedDeclaration(p) {
-      const d = p.node.declaration;
-      if (d?.type === "FunctionDeclaration" && d.id?.name) {
-        exports.push({
+  try {
+    traverse(ast, {
+      ImportDeclaration(p) {
+        imports.push({
           file,
-          name: d.id.name,
-          kind: "function",
+          source: p.node.source?.value || "",
           loc: p.node.loc || null,
         });
-      } else if (d?.type === "VariableDeclaration") {
-        for (const decl of d.declarations || []) {
-          if (decl.id?.type === "Identifier") {
-            exports.push({
-              file,
-              name: decl.id.name,
-              kind: "variable",
-              loc: p.node.loc || null,
-            });
+      },
+      ExportNamedDeclaration(p) {
+        const d = p.node.declaration;
+        if (d?.type === "FunctionDeclaration" && d.id?.name) {
+          exports.push({
+            file,
+            name: d.id.name,
+            kind: "function",
+            loc: p.node.loc || null,
+          });
+        } else if (d?.type === "VariableDeclaration") {
+          for (const decl of d.declarations || []) {
+            if (decl?.id?.type === "Identifier" && decl.id.name) {
+              exports.push({
+                file,
+                name: decl.id.name,
+                kind: "variable",
+                loc: p.node.loc || null,
+              });
+            }
           }
         }
-      }
-    },
-    ExportDefaultDeclaration(p) {
-      exports.push({
-        file,
-        name: "default",
-        kind: "default",
-        loc: p.node.loc || null,
-      });
-    },
-    CallExpression(p) {
-      // Express routes: app.post("/x"...), r.get("/y"...)
-      const callee = p.node.callee;
-      if (
-        callee?.type === "MemberExpression" &&
-        callee.object?.type === "Identifier" &&
-        callee.property?.type === "Identifier"
-      ) {
-        const obj = callee.object.name;
-        const method = callee.property.name;
-        if (["get", "post", "put", "delete", "patch"].includes(method)) {
-          const arg0 = p.node.arguments?.[0];
-          if (
-            arg0?.type === "StringLiteral" &&
-            typeof arg0.value === "string" &&
-            arg0.value.startsWith("/")
-          ) {
-            routes.push({
-              file,
-              object: obj,
-              method: method.toUpperCase(),
-              path: arg0.value,
-              loc: p.node.loc || null,
-            });
-          }
+      },
+      ExportDefaultDeclaration(p) {
+        exports.push({
+          file,
+          name: "default",
+          kind: "default",
+          loc: p.node.loc || null,
+        });
+      },
+      CallExpression(p) {
+        // Express route heuristics: app.get("/x", ...) / router.post("/y", ...)
+        const callee = p.node.callee;
+        const args = p.node.arguments || [];
+        const method =
+          callee?.type === "MemberExpression" &&
+          callee.property?.type === "Identifier"
+            ? callee.property.name
+            : null;
+
+        if (!method) return;
+        if (!["get", "post", "put", "delete", "patch", "all"].includes(method))
+          return;
+
+        const first = args[0];
+        if (
+          first &&
+          first.type === "StringLiteral" &&
+          typeof first.value === "string"
+        ) {
+          routes.push({
+            file,
+            method,
+            path: first.value,
+            loc: p.node.loc || null,
+          });
         }
-      }
-    },
-  });
+      },
+    });
+  } catch {
+    // Best-effort: if babel traverse hits an internal error on this file, skip it.
+    return { exports, routes, imports };
+  }
 
   return { exports, routes, imports };
 }
@@ -259,21 +264,26 @@ export function buildCodebaseIndex({ rootDir, outFile = "data/index.json" }) {
     const src = readUtf8(abs);
     if (src == null) continue;
 
-    if (rel.endsWith(".html")) {
-      const h = extractHtml(rel, src);
-      idx.html.elements.push(...h.elements);
-    } else if (rel.endsWith(".css")) {
-      const c = extractCss(rel, src);
-      idx.css.selectors.push(...c.selectors);
-    } else if (
-      rel.endsWith(".js") ||
-      rel.endsWith(".mjs") ||
-      rel.endsWith(".cjs")
-    ) {
-      const j = extractJs(rel, src);
-      idx.js.exports.push(...j.exports);
-      idx.js.routes.push(...j.routes);
-      idx.js.imports.push(...j.imports);
+    try {
+      if (rel.endsWith(".html")) {
+        const h = extractHtml(rel, src);
+        idx.html.elements.push(...h.elements);
+      } else if (rel.endsWith(".css")) {
+        const c = extractCss(rel, src);
+        idx.css.selectors.push(...c.selectors);
+      } else if (
+        rel.endsWith(".js") ||
+        rel.endsWith(".mjs") ||
+        rel.endsWith(".cjs")
+      ) {
+        const j = extractJs(rel, src);
+        idx.js.exports.push(...j.exports);
+        idx.js.routes.push(...j.routes);
+        idx.js.imports.push(...j.imports);
+      }
+    } catch {
+      // Best-effort: skip any single file that breaks extraction.
+      continue;
     }
   }
 

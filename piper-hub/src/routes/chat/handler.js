@@ -1,42 +1,28 @@
 // src/routes/chat/handler.js
-import crypto from "crypto";
-import { callOllama } from "../../services/ollama.js";
-import { enforcePiper, piperSystemPrompt } from "../../services/persona.js";
+import express from "express";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+import { enforcePiper } from "../../services/persona.js";
+import { getAffectSnapshot } from "../../services/mind.js";
 
 import { triageNeedsPlanner } from "../../planner/triage.js";
-import { buildSnapshot } from "../../planner/snapshot.js";
-import { llmRespondAndPlan } from "../../planner/planner.js";
-import { compilePlanToActions } from "../../planner/compiler.js";
-import { logRunEvent } from "../../utils/runlog.js";
+
+import runChatFlow from "./workflows/chatFlow.js";
+import runPlannerFlow from "./workflows/plannerFlow.js";
+import { fileEditFlow } from "./workflows/fileEditFlow.js";
+import { proposeAction } from "./workflows/propose.js";
 
 import {
-  runWebContext,
-  extractWebSources,
-  packSourcesForUi,
-} from "../../services/web/webContext.js";
-
-import { listTools } from "../../tools/index.js";
-import { toolRegistry, ToolRisk } from "../../tools/registry.js";
-
+  maybeFetchWebContext,
+  augmentUserMessageWithWebContext,
+  buildSourcesMeta,
+} from "./workflows/webFlow.js";
+import { isWebSearchIntent } from "./parsers/webIntent.js";
 import {
-  bumpTurn,
-  getAffectSnapshot,
-  getOrCreateOpinion,
-  recordEvent,
-  pushConversationTurn,
-  getConversationMessages,
-  setLastOpinionKey,
-  getLastOpinionKey,
-  adjustOpinionTowardUser,
-  setLastIntent,
-  shouldSelfReportExplicitly,
-  markSelfReportUsed,
-} from "../../services/mind.js";
-
-import {
-  readAppsAllowlist,
-  listAllowlistedAppIds,
   isListAppsIntent,
+  listAllowlistedAppIds,
   parseOpenAllowlistedApp,
 } from "./parsers/apps.js";
 import {
@@ -45,1016 +31,567 @@ import {
   getLastOpenedFolder,
   setLastOpenedFolder,
 } from "./parsers/filesystem.js";
-import { isGreeting, isRestartRequest, isTitleRequest } from "./parsers/conversation.js";
-import { isWebSearchIntent, extractWebQuery } from "./parsers/web.js";
-import {
-  isOpinionQuery,
-  extractOpinionTopic,
-  parseUserPreferenceSignal,
-  extractReasonClause,
-  isLikelyPreferenceFollowup,
-} from "./parsers/opinions.js";
 
-import { shouldAllowActions, reqMeta } from "./policies/actions.js";
-import {
-  isAuthorityOverride,
-  computeDisagreeLevel,
-  maybeDeterministicStrongDisagree,
-} from "./policies/authority.js";
+import { addAction, updateAction, listActions } from "../../actions/store.js";
+import { executeAction } from "../../actions/executor.js";
 
-import { newId } from "./utils/ids.js";
-import { logMode } from "./utils/logMode.js";
-import { clamp01, pickEmotion } from "./utils/emotion.js";
+const router = express.Router();
 
-import { handleTitleRequest } from "./workflows/titleFlow.js";
-import { buildChatMessages } from "./workflows/messages.js";
-import { addPendingAction } from "./workflows/pendingActions.js";
-import { maybeAddExplicitSelfReport } from "./workflows/selfReport.js";
+// -------------------------
+// Undo / rollback intent
+// -------------------------
 
-export async function chatHandler(req, res) {
+const UNDO_RE = /\b(undo|revert|rollback|roll\s*back|change\s+it\s+back|put\s+it\s+back)\b/i;
+const UNDO_COUNT_RE = /\b(?:last|previous)\s+(\d+)\b|\b(\d+)\s+(?:changes|edits|things)\b/i;
+const WORD_NUM = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
 
-    const started = Date.now();
-    const { sessionId, message } = req.body || {};
-    const sid = sessionId || "default";
-    const msg = String(message || "").trim();
+function parseUndoCount(msg) {
+  const s = String(msg || "").toLowerCase();
+  const m = s.match(UNDO_COUNT_RE);
+  if (m) {
+    const n = Number(m[1] || m[2]);
+    if (Number.isFinite(n) && n > 0) return Math.min(10, Math.trunc(n));
+  }
+  // word numbers: "last two changes"
+  const w = s.match(/\b(?:last|previous)\s+(one|two|three|four|five|six|seven|eight|nine|ten)\b/);
+  if (w) return WORD_NUM[w[1]] || 1;
+  return 1;
+}
 
-const metBefore = req.body?.metBefore === true;
+function isUndoIntent(msg) {
+  return UNDO_RE.test(String(msg || ""));
+}
 
-// Deterministic greeting (avoid "nice to meet you" every boot)
-if (isGreeting(msg)) {
-  const affect = getAffectSnapshot(sid);
-  const reply = enforcePiper(metBefore ? "Hello again, sir." : "Hello, sir.");
-  pushConversationTurn(sid, "assistant", reply);
-  return res.json({
-    reply,
-    emotion: "warm",
-    intensity: 0.35,
-    proposed: [],
-    meta: { affect, metBefore: true },
+function isRollbackableAction(a) {
+  if (!a || typeof a !== "object") return false;
+  if (a.status !== "done") return false;
+  if (!["apply_patch", "write_file"].includes(String(a.type || ""))) return false;
+  const info = a?.result?.result || {};
+  return Boolean(info.path && info.backup);
+}
+
+function buildRollbackSteps(count) {
+  const all = (listActions() || []).filter(isRollbackableAction);
+  const chosen = all.slice(0, Math.max(1, count));
+  return chosen.map((a) =>
+    proposeAction({
+      type: "rollback",
+      title: `Rollback: ${a.type} (${String((a.result?.result || {}).path || "file")})`,
+      reason: "User requested an undo/revert of recent approved changes.",
+      payload: { id: a.id },
+      meta: { rollbackTargetId: a.id },
+    })
+  );
+}
+
+// UI/CSS changes are best handled by the deterministic, approval-gated file edit flow.
+// This avoids "inspect repo" stalls for common UI edits while keeping approval sacred for changes.
+const UI_EDIT_HINT =
+  /\b(css|style|layout|theme|color|background|font|button|panel|sidebar|header|footer|title)\b/i;
+function looksLikeUiEdit(message = "") {
+  return UI_EDIT_HINT.test(String(message || ""));
+}
+
+// Broad "development" requests that should be handled in Dev Mode (codebase inspection + approval-gated changes).
+// This is intentionally coarse (not feature/keyword-specific), and only gates when the user clearly asks for
+// code/integration work rather than everyday operations.
+const DEV_WORK_HINT =
+  /\b(code|repo|repository|refactor|patch|commit|diff|css|ui|frontend|backend|server|route|endpoint|api|integrat(e|ion)|mcp|bug|fix)\b/i;
+
+// Inspections (repo search / snippet reads) should NOT be approval-gated.
+// They should run immediately, then we re-enter the planner with the new grounding.
+const INSPECTION_TYPES = new Set(["run_cmd", "read_snippet"]);
+
+function isInspectionOnly(proposed = []) {
+  return (
+    Array.isArray(proposed) &&
+    proposed.length > 0 &&
+    proposed.every((a) => INSPECTION_TYPES.has(a?.type))
+  );
+}
+
+async function runQueuedInspection(action, originalMessage) {
+  if (!action?.id) return;
+
+  // Ensure followup metadata exists so downstream flows can bind results.
+  action.meta = action.meta && typeof action.meta === "object" ? action.meta : {};
+  action.meta.followup = true;
+  action.meta.originalMessage = originalMessage;
+
+  updateAction(action.id, { status: "running", updatedAt: Date.now() });
+  const execResult = await executeAction(action, { dryRun: false });
+  updateAction(action.id, {
+    status: execResult?.ok ? "done" : "failed",
+    updatedAt: Date.now(),
+    result: execResult,
   });
 }
 
-// --- Phase 3 deterministic intents ---
-try {
-  // List allowlisted apps
-  if (isListAppsIntent(msg)) {
-    const affect = getAffectSnapshot(sid);
-    const ids = listAllowlistedAppIds();
-    console.log("[phase3] list_apps", { sid, count: ids.length });
-    const reply = enforcePiper(
-      ids.length
-        ? `I can open these allowlisted apps: ${ids.join(", ")}. Say "open <app>" (e.g., "open vscode").`
-        : "No apps are allowlisted yet, sir."
+function canDeterministicallyStyleOffButton(message = "") {
+  const m = String(message || "").toLowerCase();
+  if (!m.includes("button")) return false;
+  if (!m.includes("off")) return false;
+  if (!/\b(background|bg|colour|color)\b/.test(m)) return false;
+  if (!/\bblack\b/.test(m) && !/#000000\b|#000\b/.test(m)) return false;
+  return true;
+}
+
+function repoHasOffButtonId() {
+  try {
+    const html = fs.readFileSync(path.join(process.cwd(), "public", "index.html"), "utf8");
+    return /id\s*=\s*"off"/i.test(html);
+  } catch {
+    return false;
+  }
+}
+
+function newActionId() {
+  return "act_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+}
+
+async function runImmediateAction(action) {
+  const id = newActionId();
+  const stored = addAction({
+    id,
+    type: action.type,
+    title: action.title,
+    reason: action.reason,
+    payload: action.payload,
+    status: "running",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    result: null,
+    meta: action.meta || {},
+  });
+
+  const result = await executeAction(stored, { dryRun: false });
+  const updated = updateAction(id, {
+    status: result.ok ? "done" : "failed",
+    updatedAt: Date.now(),
+    result,
+  });
+
+  return { stored: updated || stored, result };
+}
+
+router.post("/chat", async (req, res) => {
+  const sid = req.body?.sid || req.ip;
+  const message = String(req.body?.message || "").trim();
+  const affect = getAffectSnapshot?.(sid);
+  const devMode = !!req.body?.devMode;
+
+  if (!message) {
+    return res.json({
+      reply: enforcePiper("Say something for me to act on, sir."),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // =========================
+  // NO-APPROVAL FAST PATHS
+  // =========================
+
+  // (8) Web search: no approval required, always return sources
+  if (isWebSearchIntent(message)) {
+    const { preToolResults, webContext } = await maybeFetchWebContext(
+      message,
+      sid
     );
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [], meta: { affect } });
+    const augmented = augmentUserMessageWithWebContext(message, webContext);
+    const reply = await runChatFlow({ sid, message: augmented });
+    const meta = buildSourcesMeta(affect, preToolResults, [], 3);
+    return res.json({
+      reply: enforcePiper(reply),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta,
+    });
   }
 
-  // Open allowlisted app
-  const openApp = parseOpenAllowlistedApp(msg);
-  if (openApp) {
-    const affect = getAffectSnapshot(sid);
-    const action = addPendingAction({ type: openApp.type, title: openApp.title, reason: openApp.reason, payload: openApp.payload });
-    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title });
-    const reply = enforcePiper(`Proposed: open ${openApp.payload.appId}. Approve to execute.`);
-    logMode(sid, "approval_action", { kind: "launch_app", appId: openApp.payload.appId });
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect } });
+  // (12) List apps: no approval required (disabled in Dev Mode)
+  if (devMode && isListAppsIntent(message)) {
+    return res.json({
+      reply: enforcePiper(
+        "Dev Mode is active, sir. Operational commands like listing or opening apps are paused so I can focus on code work. Say 'Deactivate Dev Mode' to resume normal operations."
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+  if (!devMode && isListAppsIntent(message)) {
+    const ids = listAllowlistedAppIds();
+    const text =
+      ids.length > 0
+        ? `I can open: ${ids.join(", ")}.`
+        : "I don't have any allowlisted apps yet, sir.";
+    return res.json({
+      reply: enforcePiper(text),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
   }
 
-  // Open Desktop folder (various phrasings)
-  const desk = parseOpenDesktopFolder(msg);
-  if (desk) {
-    const affect = getAffectSnapshot(sid);
-    const action = addPendingAction({ type: desk.type, title: desk.title, reason: desk.reason, payload: desk.payload });
-    setLastOpenedFolder(sid, desk._folderPath);
-    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, path: desk._folderPath });
-    const reply = enforcePiper(`Proposed: open the "${desk._folderName}" folder on your Desktop. Approve to execute.`);
-    logMode(sid, "approval_action", { kind: "open_path", path: desk._folderPath });
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect } });
+  // (9) Open allowlisted app: no approval required (paused in Dev Mode)
+  const openApp = parseOpenAllowlistedApp(message);
+  if (devMode && openApp) {
+    return res.json({
+      reply: enforcePiper(
+        "Dev Mode is active, sir. I won't open apps while I'm focused on code changes. Say 'Deactivate Dev Mode' to resume normal operations."
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+  if (!devMode && openApp) {
+    const { result } = await runImmediateAction(openApp);
+    const reply = result.ok
+      ? `Opening it now, sir.`
+      : `I couldn't open that, sir: ${String(result.error || "unknown error")}`;
+    return res.json({
+      reply: enforcePiper(reply),
+      emotion: result.ok ? "neutral" : "serious",
+      intensity: result.ok ? 0.35 : 0.55,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
   }
 
-  // Write a text document "in there" (last opened folder)
-  const wt = parseWriteTextInThere(msg);
-  if (wt) {
-    const affect = getAffectSnapshot(sid);
-    const folder = getLastOpenedFolder(sid);
-    if (!folder) {
-      const reply = enforcePiper('Which folder do you mean, sir? Open the folder first, then say "put a text document in there...".');
-      return res.json({ reply, emotion: "neutral", intensity: 0.4, proposed: [], meta: { affect } });
+  // (9/10) Open Desktop folder: no approval required (paused in Dev Mode)
+  const openDesk = parseOpenDesktopFolder(message);
+  if (devMode && openDesk) {
+    return res.json({
+      reply: enforcePiper(
+        "Dev Mode is active, sir. I won't open folders or browse files while I'm focused on code changes. Say 'Deactivate Dev Mode' to resume normal operations."
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+  if (!devMode && openDesk) {
+    const { result } = await runImmediateAction(openDesk);
+    if (result.ok && openDesk._folderPath) {
+      setLastOpenedFolder(sid, openDesk._folderPath);
     }
-    // We do NOT invent factual claims; we write exactly what the user asked for as content prompt for the LLM to fill.
-    // Generate the file content via LLM in-chat (no tools) then write it via action after approval.
-    const prompt = `Write the content for a text file titled "${wt.filename}". The user request: ${wt.bodyRequest}. Keep it concise and factual.`;
-    const content = await callOllama({
-      messages: [
-        { role: "system", content: piperSystemPrompt() },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.3,
-      max_tokens: 600,
+    const reply = result.ok
+      ? `Opening that folder now, sir.`
+      : `I couldn't open that folder, sir: ${String(
+          result.error || "unknown error"
+        )}`;
+    return res.json({
+      reply: enforcePiper(reply),
+      emotion: result.ok ? "neutral" : "serious",
+      intensity: result.ok ? 0.35 : 0.55,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
     });
-
-    const filePath = path.join(folder, wt.filename);
-    const action = addAction({
-      type: "write_text_file",
-      title: `Write text file: ${wt.filename}`,
-      reason: `User asked to create a text document in the last opened folder ("in there").`,
-      payload: { path: filePath, content: String(content || "").trim() },
-    });
-    console.log("[phase3] propose_action", { sid, id: action?.id, type: action?.type, title: action?.title, path: filePath });
-    const reply = enforcePiper(`Proposed: create "${wt.filename}" in that folder. Approve to execute.`);
-    return res.json({ reply, emotion: "warm", intensity: 0.45, proposed: [action], meta: { affect } });
   }
-} catch (e) {
-  console.log("[phase3] ERROR", e);
-}
 
-
-
-    const meta = reqMeta(req);
-
-    bumpTurn(sid);
-
-    if (!msg) {
+  // (11/14) Create/write a file in the last opened folder: approval REQUIRED (disabled in Dev Mode)
+  // Deterministic "in that folder/in there called X" -> propose write_file into known:* path.
+  // No repo inspection needed.
+  const writeThere = parseWriteTextInThere(message);
+  if (devMode && writeThere) {
+    return res.json({
+      reply: enforcePiper(
+        "Dev Mode is active, sir. I won't create or write files outside the codebase while I'm focused on code changes. Say 'Deactivate Dev Mode' to resume normal operations."
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+  if (!devMode && writeThere) {
+    const lastAbs = getLastOpenedFolder(sid);
+    if (!lastAbs) {
       return res.json({
-        reply: enforcePiper("Yes, sir?"),
+        reply: enforcePiper(
+          "Which folder should I use, sir? Open it first (or tell me the path) and I'll create the file there."
+        ),
         emotion: "neutral",
-        intensity: 0.3,
+        intensity: 0.35,
         proposed: [],
+        meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
       });
     }
 
-    // Track conversation for coherence
-    pushConversationTurn(sid, "user", msg);
-
-    // Deterministic title change shortcut
-    if (isTitleRequest(msg)) {
-      const out = handleTitleRequest(msg);
-      if (out) {
-        setLastIntent(sid, "change", msg);
-        console.log("[chat] title request", {
-          sid,
-          ip: meta.ip,
-          ua: meta.ua.slice(0, 48),
-        });
-        return res.json({ ...out, emotion: "confident", intensity: 0.45 });
-      }
-    }
-
-    const allowActions = shouldAllowActions(req.body);
-
-    // Deterministic restart request
-    if (isRestartRequest(msg)) {
-      if (!allowActions) {
-        const reply = enforcePiper(
-          "I can restart, sir — but actions are disabled in this chat session."
-        );
-        return res.json({
-          reply,
-          emotion: "serious",
-          intensity: 0.55,
-          proposed: [],
-        });
-      }
-      const id = crypto.randomUUID
-        ? crypto.randomUUID()
-        : String(Date.now()) + "-" + String(Math.random()).slice(2);
-      const action = {
-        id,
-        type: "restart_piper",
-        title: "Restart Piper",
-        reason: "User requested restart",
-        payload: {},
-        status: "pending",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      };
-      addAction(action);
-      recordEvent(sid, "action_queued", { type: "restart_piper" });
-      setLastIntent(sid, "change", msg);
-
-      const reply = enforcePiper(
-        "Understood, sir. Restart queued for approval."
-      );
-      return res.json({
-        reply,
-        emotion: "confident",
-        intensity: 0.5,
-        proposed: [action],
-      });
-    }
-
-    // If actions not allowed => pure chat
-    if (!allowActions) {
-      try {
-
-// Phase 2.1: web search in chat-only mode (read-only tools allowed even when actions are disabled)
-let preToolResults = [];
-let webContext = null;
-if (isWebSearchIntent(msg)) {
-  const q = extractWebQuery(msg);
-  const ran = await runWebContext(q, sid);
-  preToolResults = ran.ran || [];
-  webContext = ran.fetchedText || null;
-}
-
-        const disagreeLevel = computeDisagreeLevel(msg);
-        const authorityOverride = isAuthorityOverride(msg);
-
-        const strong = maybeDeterministicStrongDisagree(
-          msg,
-          disagreeLevel,
-          authorityOverride
-        );
-        if (strong) {
-          recordEvent(sid, "chat_deterministic", { kind: "strong_disagree" });
-          const affect = getAffectSnapshot(sid);
-          const reply = maybeAddExplicitSelfReport(
-            enforcePiper(strong),
-            "serious",
-            0.7
-          );
-          console.log("[chat] chat-only", {
-            sid,
-            ms: Date.now() - started,
-            emotion: "serious",
-            intensity: 0.7,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            disagreeLevel,
-            authorityOverride,
-            opinionKey: null,
-          });
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          return res.json({
-            reply,
-            emotion: "serious",
-            intensity: 0.7,
-            proposed: [],
-            meta: (() => {
-            const sourcesAll = extractWebSources(preToolResults);
-            const sources = packSourcesForUi(sourcesAll, 3);
-            return sources.total ? { affect, sources } : { affect };
-          })(),
-          });
-        }
-
-        const affect = getAffectSnapshot(sid);
-
-        let opinion = null;
-        let opinionScore = null;
-
-        // Opinion topic resolution:
-        // 1) Explicit opinion query ("how do you feel about X")
-        // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
-        let resolvedTopic = null;
-
-        if (isOpinionQuery(msg)) {
-          resolvedTopic = extractOpinionTopic(msg);
-        } else if (isLikelyPreferenceFollowup(msg)) {
-          const lastKey = getLastOpinionKey(sid);
-          // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
-          if (lastKey && lastKey.startsWith("topic:"))
-            resolvedTopic = lastKey.slice(6);
-        }
-
-        if (resolvedTopic) {
-          opinion = getOrCreateOpinion(resolvedTopic);
-          opinionScore = opinion?.score ?? null;
-          setLastOpinionKey(sid, opinion?.key || null);
-        }
-
-        // If the user expresses a preference about the last topic, allow Piper to shift slightly.
-        const pref = parseUserPreferenceSignal(msg);
-        const reason = extractReasonClause(msg);
-        if (pref && resolvedTopic && opinion) {
-          const shifted = adjustOpinionTowardUser(
-            resolvedTopic,
-            pref.signal,
-            reason
-          );
-          if (shifted) {
-            opinion = shifted;
-            opinionScore = shifted.score ?? opinionScore;
-          }
-        }
-
-        // Deterministic follow-up handling:
-        // If the user says "I don't like it" (or similar) right after an opinion topic,
-        // respond directly without an LLM call for better coherence + speed.
-        if (
-          pref &&
-          resolvedTopic &&
-          opinion &&
-          isLikelyPreferenceFollowup(msg)
-        ) {
-          const topic = resolvedTopic;
-          const isDislike = pref.signal === "dislike";
-          const picked = {
-            emotion: isDislike ? "dry" : "warm",
-            intensity: isDislike ? 0.5 : 0.45,
-          };
-
-          let reply = "";
-          if (isDislike) {
-            reply =
-              `Understood. On ${topic}, I'm inclined to agree — it can feel loud fast. ` +
-              "If we need that energy, I'd rather use it as a small accent than the whole interface.";
-          } else {
-            reply =
-              `Fair. On ${topic}, I can see the appeal — it has presence. ` +
-              "Used sparingly, it can look sharp instead of chaotic.";
-          }
-
-          reply = maybeAddExplicitSelfReport(
-            enforcePiper(reply),
-            picked.emotion,
-            picked.intensity
-          );
-
-          console.log("[chat] chat-only pref-followup", {
-            sid,
-            ms: Date.now() - started,
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            disagreeLevel,
-            authorityOverride,
-            opinionKey: opinion?.key || null,
-          });
-
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          recordEvent(sid, "chat_deterministic", {
-            kind: "pref_followup",
-            topic,
-          });
-          return res.json({
-            reply,
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            proposed: [],
-            meta: { affect },
-          });
-        }
-
-        const raw = await callOllama(
-          buildChatMessages({
-            userMsg: webContext ? `${msg}\n\nWeb context:\n${webContext}` : msg,
-            affect,
-            disagreeLevel,
-            authorityOverride,
-            opinion,
-            history: getConversationMessages(sid),
-            lastTopic: getLastOpinionKey(sid),
-          }),
-          {
-            model: process.env.OLLAMA_MODEL || "llama3.1",
-          }
-        );
-
-        recordEvent(sid, "llm_success", { mode: "chat" });
-
-        const picked = pickEmotion({
-          msg,
-          affect,
-          opinionScore,
-          disagreeLevel,
-          authorityOverride,
-        });
-        let reply = enforcePiper(raw || "…");
-        reply = maybeAddExplicitSelfReport(
-          reply,
-          picked.emotion,
-          picked.intensity
-        );
-
-        console.log("[chat] chat-only", {
-          sid,
-          ms: Date.now() - started,
-          emotion: picked.emotion,
-          intensity: picked.intensity,
-          mood: affect.mood,
-          fr: affect.frustration.total,
-          disagreeLevel,
-          authorityOverride,
-          opinionKey: opinion?.key || null,
-        });
-
-        setLastIntent(sid, "chat", msg);
-
-        pushConversationTurn(sid, "assistant", reply);
-        return res.json({
-          reply,
-          emotion: picked.emotion,
-          intensity: picked.intensity,
-          proposed: [],
-          meta: { affect },
-        });
-      } catch (e) {
-        recordEvent(sid, "llm_fail", {
-          mode: "chat",
-          error: String(e?.message || e),
-        });
-        console.log("[chat] chat-only ERROR", {
-          sid,
-          err: String(e?.message || e),
-        });
-        return res.status(500).json({
-          reply: enforcePiper("Something went wrong, sir."),
-          emotion: "concerned",
-          intensity: 0.6,
-          proposed: [],
-          error: String(e?.message || e),
-        });
-      }
-    }
-
-    // Actions allowed => triage: chat vs plan/change
-    try {
-      const triage = await triageNeedsPlanner({
-        message: msg,
-        lastIntent: sessions.get(sid)?.lastIntent || "chat",
-      });
-
-      // --- CHAT ---
-      if (triage.mode === "chat") {
-        const disagreeLevel = computeDisagreeLevel(msg);
-        const authorityOverride = isAuthorityOverride(msg);
-        const affect = getAffectSnapshot(sid);
-
-        const strong = maybeDeterministicStrongDisagree(
-          msg,
-          disagreeLevel,
-          authorityOverride
-        );
-        if (strong) {
-          recordEvent(sid, "chat_deterministic", {
-            kind: "strong_disagree",
-            mode: "chat",
-          });
-          const reply = maybeAddExplicitSelfReport(
-            enforcePiper(strong),
-            "serious",
-            0.7
-          );
-          console.log("[chat] chat", {
-            sid,
-            ms: Date.now() - started,
-            emotion: "serious",
-            intensity: 0.7,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            disagreeLevel,
-            authorityOverride,
-            opinionKey: null,
-          });
-          sessions.set(sid, { lastIntent: "chat" });
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          return res.json({
-            reply,
-            emotion: "serious",
-            intensity: 0.7,
-            proposed: [],
-            meta: { affect },
-          });
-        }
-
-        let opinion = null;
-        let opinionScore = null;
-
-        // Opinion topic resolution:
-        // 1) Explicit opinion query ("how do you feel about X")
-        // 2) Follow-up preference ("I don't like it") => last opinion topic for this session
-        let resolvedTopic = null;
-
-        if (isOpinionQuery(msg)) {
-          resolvedTopic = extractOpinionTopic(msg);
-        } else if (isLikelyPreferenceFollowup(msg)) {
-          const lastKey = getLastOpinionKey(sid);
-          // Convert key "topic:xyz" back to raw topic for adjustOpinionTowardUser
-          if (lastKey && lastKey.startsWith("topic:"))
-            resolvedTopic = lastKey.slice(6);
-        }
-
-        if (resolvedTopic) {
-          opinion = getOrCreateOpinion(resolvedTopic);
-          opinionScore = opinion?.score ?? null;
-          setLastOpinionKey(sid, opinion?.key || null);
-        }
-
-        // If the user expresses a preference about the last topic, allow Piper to shift slightly.
-        const pref = parseUserPreferenceSignal(msg);
-        const reason = extractReasonClause(msg);
-        if (pref && resolvedTopic && opinion) {
-          const shifted = adjustOpinionTowardUser(
-            resolvedTopic,
-            pref.signal,
-            reason
-          );
-          if (shifted) {
-            opinion = shifted;
-            opinionScore = shifted.score ?? opinionScore;
-          }
-        }
-
-        // Deterministic follow-up handling (same as chat-only path)
-        if (
-          pref &&
-          resolvedTopic &&
-          opinion &&
-          isLikelyPreferenceFollowup(msg)
-        ) {
-          recordEvent(sid, "opinion_followup", {
-            topic: opinion.key,
-            signal: pref.signal,
-          });
-          const picked = pickEmotion({
-            msg,
-            affect,
-            opinionScore: opinion.score,
-            disagreeLevel: 0,
-            authorityOverride: false,
-          });
-
-          const topic = resolvedTopic;
-          let reply;
-          if (pref.signal === "dislike") {
-            reply =
-              `Fair. On ${topic}, I'm inclined to agree — it's energetic, but it can turn obnoxious fast. ` +
-              `If we keep it, I'd limit it to a small highlight and lower saturation.`;
-          } else {
-            reply =
-              `Noted. On ${topic}, I can get behind that — used sparingly, it can feel crisp and modern. ` +
-              `We’ll just keep the rest of the palette calm so it doesn’t dominate.`;
-          }
-
-          reply = enforcePiper(reply);
-          reply = maybeAddExplicitSelfReport(
-            reply,
-            picked.emotion,
-            picked.intensity
-          );
-
-          console.log("[chat] chat", {
-            sid,
-            ms: Date.now() - started,
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            disagreeLevel: 0,
-            authorityOverride: false,
-            opinionKey: opinion?.key || null,
-            deterministic: "preference_followup",
-          });
-
-          sessions.set(sid, { lastIntent: "chat" });
-          setLastIntent(sid, "chat", msg);
-          pushConversationTurn(sid, "assistant", reply);
-          return res.json({
-            reply,
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            proposed: [],
-            meta: { affect },
-          });
-        }
-
-        const raw = await callOllama(
-          buildChatMessages({
-            userMsg: msg,
-            affect,
-            disagreeLevel,
-            authorityOverride,
-            opinion,
-            history: getConversationMessages(sid),
-            lastTopic: getLastOpinionKey(sid),
-          }),
-          {
-            model: process.env.OLLAMA_MODEL || "llama3.1",
-          }
-        );
-
-        recordEvent(sid, "llm_success", { mode: "chat" });
-
-        const picked = pickEmotion({
-          msg,
-          affect,
-          opinionScore,
-          disagreeLevel,
-          authorityOverride,
-        });
-        let reply = enforcePiper(raw || "…");
-        reply = maybeAddExplicitSelfReport(
-          reply,
-          picked.emotion,
-          picked.intensity
-        );
-
-        console.log("[chat] chat", {
-          sid,
-          ms: Date.now() - started,
-          emotion: picked.emotion,
-          intensity: picked.intensity,
-          mood: affect.mood,
-          fr: affect.frustration.total,
-          disagreeLevel,
-          authorityOverride,
-          opinionKey: opinion?.key || null,
-        });
-
-        sessions.set(sid, { lastIntent: "chat" });
-        setLastIntent(sid, "chat", msg);
-        pushConversationTurn(sid, "assistant", reply);
-        return res.json({
-          reply,
-          emotion: picked.emotion,
-          intensity: picked.intensity,
-          proposed: [],
-          meta: { affect },
-        });
-      }
-
-      // --- PLAN / CHANGE ---
-
-      // --- DETERMINISTIC QUICK ACTIONS (no LLM) ---
-      // These are small, high-confidence edits that should ALWAYS produce an approval-gated action.
+    // Map the absolute last-opened folder back into a safe "known:" path.
+    // We only allow writing inside known Desktop/Downloads/Documents.
+    const home = process.env.USERPROFILE || os.homedir();
+    const roots = [
       {
-        const s = String(msg || "").trim();
+        key: "desktop",
+        abs: path.join(home, "Desktop"),
+        token: "known:desktop",
+      },
+      {
+        key: "downloads",
+        abs: path.join(home, "Downloads"),
+        token: "known:downloads",
+      },
+      {
+        key: "documents",
+        abs: path.join(home, "Documents"),
+        token: "known:documents",
+      },
+    ];
 
-        // Change page title: e.g. "change the page title to \"Piper Hub\""
-        const mTitle = s.match(
-          /\b(?:change|set|update)\s+(?:the\s+)?(?:page\s+)?title\s+to\s+["“]([^"”]{1,80})["”]/i
-        );
-        if (mTitle) {
-          const desiredTitle = mTitle[1].trim();
-          const a = {
-            id: crypto.randomUUID(),
-            type: "set_html_title",
-            title: `Set page title to "${desiredTitle}"`,
-            reason: "User requested title change",
-            payload: { path: "public/index.html", title: desiredTitle },
-            status: "pending",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          };
-          const saved = addAction(a);
-          sessions.set(sid, { lastIntent: "change" });
-          setLastIntent(sid, "change", msg);
-
-          console.log("[chat] plan", {
-        sid,
-        ms: Date.now() - started,
-        proposed: proposed.length,
-        mood: affect.mood,
-        fr: affect.frustration.total,
-      });
-
-      logRunEvent({
-        kind: "chat_out",
-        sid,
-        ms: Date.now() - started,
-        proposedCount: proposed.length,
-        emotion,
-        intensity,
-      });
-const affect = getAffectSnapshot(sid);
-          const picked = pickEmotion({
-            msg,
-            affect,
-            opinionScore: null,
-            disagreeLevel: 0,
-            authorityOverride: false,
-          });
-
-          return res.json({
-            reply: enforcePiper(
-              `Action proposed: Update page title to "${desiredTitle}".`
-            ),
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
-          });
-        }
-
-        // Red background for chat input box (the message textbox)
-        const wantsRedBox =
-          /\b(red)\b/i.test(s) &&
-          /(background|bg|colour|color)/i.test(s) &&
-          /(chat\s*(?:response|reply)?\s*box|response\s*box|reply\s*box|chat\s*box|input\s*box|message\s*box|text\s*box)/i.test(
-            s
-          );
-
-        if (wantsRedBox) {
-          const find = "background: rgba(0,0,0,20); color: var(--text);";
-          const replace = "background: var(--bad); color: #fff;";
-          const a = {
-            id: crypto.randomUUID(),
-            type: "apply_patch",
-            title: "Make chat input background red",
-            reason: "User requested red chat input background",
-            payload: {
-              path: "public/styles.css",
-              edits: [{ find, replace, mode: "once" }],
-            },
-            status: "pending",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          };
-          const saved = addAction(a);
-          sessions.set(sid, { lastIntent: "change" });
-          setLastIntent(sid, "change", msg);
-
-          const affect = getAffectSnapshot(sid);
-          const picked = pickEmotion({
-            msg,
-            affect,
-            opinionScore: null,
-            disagreeLevel: 0,
-            authorityOverride: false,
-          });
-
-          console.log("[chat] plan", {
-            sid,
-            ms: Date.now() - started,
-            proposed: 1,
-            mood: affect.mood,
-            fr: affect.frustration.total,
-            deterministic: "red_chat_input",
-          });
-
-          return res.json({
-            reply: enforcePiper(
-              "Action proposed: Make the chat input background red."
-            ),
-            emotion: picked.emotion,
-            intensity: picked.intensity,
-            proposed: [{ id: saved.id, title: a.title }],
-            meta: { affect },
-          });
-        }
+    const lastResolved = path.resolve(String(lastAbs));
+    let base = null;
+    for (const r of roots) {
+      const rootResolved = path.resolve(r.abs);
+      if (
+        lastResolved === rootResolved ||
+        lastResolved.startsWith(rootResolved + path.sep)
+      ) {
+        base = { ...r, rootResolved };
+        break;
       }
-
-      const snapshot = await buildSnapshot({
-        message: msg,
-        lastIntent: sessions.get(sid)?.lastIntent || "chat",
-      });
-
-      const availableTools = listTools();
-
-
-      // Phase 1.1: deterministic grounding for code-location questions
-      const deriveLocationQuery = (text) => {
-        const s = String(text || "");
-        const hasWhereWords = /(\bwhere\b|\blocated\b|\bdefined\b|\bdefinition\b|\bset\b|\bstored\b)/i.test(s);
-        if (!hasWhereWords) return null;
-
-        // Only treat this as a repo/code location question if it has clear code/identifier signals.
-        const hasCodeContext = /(\bfile\b|\bfiles\b|\brepo\b|\bcode\b|\bconstant\b|\bconfig\b|\bsetting\b|\bvariable\b|\broute\b|\bmodule\b|\bimport\b|\bexport\b|\bpath\b|\bline\b)/i.test(s);
-        const backtick = s.match(/`([^`]{2,64})`/);
-        const fileLike = s.match(/\b([a-zA-Z0-9_\\/\.-]+\.(?:js|ts|json|py|css|html))\b/i);
-        const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
-        const voiceMention = /voice[_\s]?choices/i.test(s);
-        const nameMention = /your\s+name/i.test(s);
-        const identifierLike = Boolean(backtick) || Boolean(fileLike) || (Boolean(allCaps) && String(allCaps?.[0] || "").includes("_")) || voiceMention || nameMention;
-
-        if (!(hasCodeContext || identifierLike)) return null;
-
-        let q = backtick?.[1] || fileLike?.[1] || allCaps?.[0] || null;
-        if (!q && nameMention) q = "Piper";
-        if (!q && voiceMention) q = "VOICE_CHOICES";
-        if (!q) {
-          const id = s.match(/\b[a-zA-Z_][a-zA-Z0-9_]{2,64}\b/);
-          q = id?.[0] || null;
-        }
-        return q;
-      };
-
-      let preToolResults = null;
-      const locationQuery = deriveLocationQuery(msg);
-      if (locationQuery && availableTools.some((t) => t.id === "repo.searchText")) {
-        const r = await toolRegistry.run({
-          id: "repo.searchText",
-          args: { query: locationQuery, maxResults: 25 },
-          context: { sid },
-        });
-        preToolResults = [{ tool: "repo.searchText", ok: r.ok, error: r.error, result: r.result }];
-        logRunEvent("tool_call_forced", { sid, tool: "repo.searchText", query: locationQuery, ok: r.ok });
-      }
-
-
-      // If we forced a location query search, respond deterministically (so the model can’t dodge grounding).
-      if (locationQuery && Array.isArray(preToolResults) && preToolResults[0]?.ok) {
-        const matches = preToolResults[0]?.result?.matches;
-        if (Array.isArray(matches)) {
-          const total = matches.length;
-          if (total === 0) {
-            const affect = getAffectSnapshot(sid);
-            return res.json({
-              reply: enforcePiper(`I searched the repository for "${locationQuery}" and found no matches.`),
-              emotion: "confident",
-              intensity: 0.45,
-              proposed: [],
-              meta: { affect, locationMatches: { query: locationQuery, total: 0, shown: [], hidden: [] } },
-            });
-          }
-
-          const shown = matches.slice(0, 3);
-          const hidden = matches.slice(3);
-          const fmt = (m) => `${m.file}:${m.line}:${m.col} ${String(m.preview || "").trim()}`;
-          const lines = [];
-          lines.push(`I searched the repository for "${locationQuery}" and found ${total} match(es).`);
-          lines.push("Top results:");
-          for (const m of shown) lines.push(`- ${fmt(m)}`);
-          if (hidden.length > 0) lines.push(`(${hidden.length} more hidden — click “Show more”.)`);
-          lines.push("If you want, ask me to open one of these files and I can show the exact definition in context.");
-
-          const affect = getAffectSnapshot(sid);
-          return res.json({
-            reply: enforcePiper(lines.join("\n")),
-            emotion: "confident",
-            intensity: 0.45,
-            proposed: [],
-            meta: { affect, locationMatches: { query: locationQuery, total, shown, hidden } },
-          });
-        }
-      }
-
-let planned = await llmRespondAndPlan({
-  message: msg,
-  snapshot,
-  lastIntent: sessions.get(sid)?.lastIntent || "chat",
-  availableTools,
-  toolResults: preToolResults,
-});
-
-      // If we forced a repo.searchText and found no matches, do not let the model guess.
-      if (locationQuery && Array.isArray(preToolResults) && preToolResults[0]?.ok) {
-        const m = preToolResults[0]?.result?.matches;
-        if (Array.isArray(m) && m.length === 0) {
-          planned = {
-            reply: `I searched the repository for "${locationQuery}" and found no matches. It may be generated at runtime, injected from environment/config outside the repo, or spelled differently. If you tell me where you saw it (file/snippet), I can trace it.`,
-            requiresApproval: false,
-            toolCalls: [],
-            ops: [],
-          };
-        }
-      }
-
-
-// --- Tool pass (read-only tools only) ---
-const toolCalls = Array.isArray(planned?.toolCalls) ? planned.toolCalls : [];
-
-// If the model did not request tools but the user is asking for a code/config location,
-// force a read-only repo search so we don't hallucinate.
-if (toolCalls.length === 0) {
-  const s = String(msg || "");
-  const looksLikeLocationQuestion = (() => {
-  const t = String(s || "");
-  const hasWhereWords = /(\bwhere\b|\blocated\b|\bdefined\b|\bdefinition\b|\bset\b|\bstored\b)/i.test(t);
-  if (!hasWhereWords) return false;
-
-  // If the user mentions an identifier-like token (e.g. VOICE_CHOICES), force grounding.
-  const hasIdentifier = /\b[A-Z][A-Z0-9_]{2,}\b/.test(t) || /\bvoice[_\s]?choices\b/i.test(t);
-
-  // Or they explicitly ask about repo/file/code locations.
-  const hasCodeContext = /(\bfile\b|\bfiles\b|\brepo\b|\bcode\b|\bconstant\b|\bconfig\b|\bsetting\b|\bvariable\b|\bname\b)/i.test(t);
-
-  return hasIdentifier || hasCodeContext;
-})();
-
-  if (looksLikeLocationQuestion && availableTools.some((t) => t.id === "repo.searchText")) {
-    // Prefer explicit identifiers if present: `LIKE_THIS` or ALL_CAPS tokens.
-    const backtick = s.match(/`([^`]{2,64})`/);
-    const allCaps = s.match(/\b[A-Z][A-Z0-9_]{2,64}\b/);
-    let query = backtick?.[1] || allCaps?.[0] || (String(s).match(/\b[A-Z][A-Z0-9_]{2,}\b/)||[])[0] || null;
-
-    if (!query && /your\s+name/i.test(s)) query = "Piper";
-    if (!query && /voice_choices|voice choices/i.test(s)) query = "VOICE_CHOICES";
-    if (!query) query = s.slice(0, 120);
-
-    toolCalls.push({
-      tool: "repo.searchText",
-      args: { query, maxResults: 20 },
-      why: "User asked where something is defined/located; grounding required.",
-    });
-
-    logRunEvent("tool_call_forced", { sid, tool: "repo.searchText", query });
-  }
-}
-let toolResults = null;
-
-if (toolCalls.length > 0) {
-  const limited = toolCalls.slice(0, 3);
-  toolResults = [];
-
-  for (const tc of limited) {
-    const toolId = String(tc?.tool || "");
-    const args = tc?.args || {};
-    const why = String(tc?.why || "");
-
-    const tool = toolRegistry.get(toolId);
-    if (!tool) {
-      toolResults.push({ tool: toolId, ok: false, error: "Unknown tool", why });
-      continue;
     }
 
-    // Never auto-run tools with any side effects
-    if (tool.risk !== ToolRisk.READ_ONLY) {
-      toolResults.push({
-        tool: toolId,
-        ok: false,
-        error: `Tool not allowed for auto-run (risk=${tool.risk}).`,
-        why,
-      });
-      continue;
-    }
-
-    const ran = await toolRegistry.run({ id: toolId, args, context: { sid } });
-
-    logRunEvent("tool_call", {
-      sid,
-      tool: toolId,
-      ok: ran.ok,
-      why,
-      args,
-      error: ran.ok ? null : ran.error,
-    });
-
-    toolResults.push({
-      tool: toolId,
-      ok: ran.ok,
-      why,
-      args,
-      error: ran.ok ? null : ran.error,
-      result: ran.ok ? ran.result : null,
-    });
-  }
-
-  // Second pass: feed tool results back into planner
-  planned = await llmRespondAndPlan({
-    message: msg,
-    snapshot,
-    lastIntent: sessions.get(sid)?.lastIntent || "chat",
-    availableTools,
-    toolResults,
-  });
-}
-
-      const compiled = compilePlanToActions(planned, snapshot);
-
-      const proposed = [];
-      for (const a of compiled.actions || []) {
-        const saved = addAction(a);
-        proposed.push({ id: saved.id, ...a.summary });
-      }
-
-      sessions.set(sid, { lastIntent: "change" });
-      setLastIntent(sid, "change", msg);
-
-      // Task success if we proposed actions, else neutral
-      recordEvent(sid, "task_success", { proposed: proposed.length });
-
-      const affect = getAffectSnapshot(sid);
-      const picked = pickEmotion({
-        msg,
-        affect,
-        opinionScore: null,
-        disagreeLevel: 0,
-        authorityOverride: false,
-      });
-
-      console.log("[chat] plan", {
-        sid,
-        ms: Date.now() - started,
-        proposed: proposed.length,
-        mood: affect.mood,
-        fr: affect.frustration.total,
-      });
-
-      const sourcesAll = extractWebSources([...(preToolResults || []), ...toolResults]);
-const sources = packSourcesForUi(sourcesAll, 3);
-
-return res.json({
-  reply: enforcePiper(planned.reply || "Understood, sir."),
-  emotion: picked.emotion,
-  intensity: picked.intensity,
-  proposed,
-  meta: { affect, sources },
-});
-    } catch (e) {
-      recordEvent(sid, "task_fail", { error: String(e?.message || e) });
-      console.log("[chat] ERROR", { sid, err: String(e?.message || e) });
-      return res.status(500).json({
-        reply: enforcePiper("I ran into an error while planning, sir."),
-        emotion: "concerned",
-        intensity: 0.7,
+    if (!base) {
+      return res.json({
+        reply: enforcePiper(
+          "For safety, I can only create files inside Desktop, Downloads, or Documents, sir. Open a folder in one of those and try again."
+        ),
+        emotion: "serious",
+        intensity: 0.55,
         proposed: [],
-        error: String(e?.message || e),
+        meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
       });
     }
-}
+
+    const relFolder = path.relative(base.rootResolved, lastResolved);
+    const relParts = relFolder ? relFolder.split(path.sep).filter(Boolean) : [];
+    const relKnown = [base.token, ...relParts, writeThere.filename].join("/");
+
+    const action = proposeAction({
+      type: "write_file",
+      title: `Create file: ${writeThere.filename}`,
+      reason: `User requested creating a file in the last opened folder (${base.key}). Approval required for writes.`,
+      payload: {
+        path: relKnown,
+        content: "", // create empty file by default
+      },
+    });
+
+    return res.json({
+      reply: enforcePiper(
+        `I can create that file for you, sir. Please approve the write action.`
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [action],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // =========================
+  // UNDO / ROLLBACK (approval-gated)
+  // =========================
+  // Conversational rollback of the most recent approved codebase changes.
+  // Supports multi-step: "undo the last 2 changes", "revert last three", etc.
+  if (isUndoIntent(message)) {
+    const n = parseUndoCount(message);
+    const steps = buildRollbackSteps(n);
+
+    if (!steps.length) {
+      return res.json({
+        reply: enforcePiper(
+          "I don't have any recent approved changes I can roll back yet, sir."
+        ),
+        emotion: "neutral",
+        intensity: 0.35,
+        proposed: [],
+        meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+      });
+    }
+
+    if (steps.length === 1) {
+      return res.json({
+        reply: enforcePiper(
+          "Understood, sir. I can roll back the most recent change — please approve."
+        ),
+        emotion: "neutral",
+        intensity: 0.35,
+        proposed: [steps[0]],
+        meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+      });
+    }
+
+    const bundle = proposeAction({
+      type: "bundle",
+      title: `Rollback last ${steps.length} changes`,
+      reason: "User requested rolling back multiple recent approved changes.",
+      payload: {
+        actions: steps.map((s) => ({
+          type: "rollback",
+          title: s.title,
+          reason: s.reason,
+          payload: s.payload,
+          meta: s.meta || {},
+        })),
+      },
+    });
+
+    return res.json({
+      reply: enforcePiper(
+        `Understood, sir. I can roll back the last ${steps.length} changes — please approve.`
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [bundle],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // =========================
+  // CHAT vs PLAN
+  // =========================
+
+  const triage = await triageNeedsPlanner({
+    message,
+    lastIntent: req.body?.lastIntent,
+  });
+
+  if (triage.mode === "chat") {
+    const reply = await runChatFlow({ sid, message });
+    return res.json({
+      reply: enforcePiper(reply),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // Dev Mode is where Piper performs codebase work (inspection + approval-gated changes).
+  // Out of Dev Mode, we still allow normal operations (open apps/folders, create files, chat, small web searches),
+  // but we avoid mixing in code-edit planning unless Dev Mode is enabled.
+  if (!devMode && (looksLikeUiEdit(message) || DEV_WORK_HINT.test(message))) {
+    return res.json({
+      reply: enforcePiper(
+        "That sounds like development work, sir. Please say 'Activate Dev Mode' (or tick Dev Mode) and repeat the request so I stay focused on code changes and approvals."
+      ),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // =========================
+  // DEV MODE: deterministic code edits first
+  // =========================
+
+  // Known, grounded UI control: Off button is id="off" in public/index.html.
+  // If the user explicitly requests a black background, propose an approval-gated CSS patch directly.
+  if (devMode && canDeterministicallyStyleOffButton(message) && repoHasOffButtonId()) {
+    const cssAppend =
+      `\n\n/* Piper dev edit (approval-gated): Off button background */\n#off {\n  background: black !important;\n}\n`;
+
+    const action = proposeAction({
+      type: "apply_patch",
+      title: "Set Off button background to black",
+      reason: "User requested a UI style change. Approval required for code edits.",
+      payload: {
+        path: "public/styles.css",
+        edits: [{ find: "", replace: cssAppend, mode: "append" }],
+      },
+    });
+
+    return res.json({
+      reply: enforcePiper("Understood, sir. I can make that change — please approve the patch."),
+      emotion: "neutral",
+      intensity: 0.35,
+      proposed: [action],
+      meta: { affect, sources: { total: 0, shown: [], hidden: [] } },
+    });
+  }
+
+  // In Dev Mode, try the deterministic file edit flow BEFORE planner/inspection.
+  if (devMode && looksLikeUiEdit(message)) {
+    try {
+      const out = await fileEditFlow({ sid, message });
+      if (Array.isArray(out?.proposed) && out.proposed.length > 0) return res.json(out);
+    } catch {
+      // fall through
+    }
+  }
+
+  // Outside Dev Mode, we still allow deterministic UI edits only if not gated above.
+  if (!devMode && looksLikeUiEdit(message)) {
+    try {
+      const out = await fileEditFlow({ sid, message });
+      if (Array.isArray(out?.proposed) && out.proposed.length > 0) return res.json(out);
+    } catch {
+      // fall through
+    }
+  }
+
+  // =========================
+  // PLAN MODE — MUST PRODUCE ACTIONS
+  // =========================
+  let result = await runPlannerFlow({ sid, message, req });
+
+  // 🔒 Intent Contract Invariant (non-negotiable)
+  if (!Array.isArray(result?.proposed) || result.proposed.length === 0) {
+    result = await runPlannerFlow({ sid, message, req, forceInspection: true });
+  }
+
+  // Auto-run inspection-only actions (no approval) and then re-plan.
+  // This prevents "Approve" being required for repo searches/snippets.
+  for (let i = 0; i < 2; i++) {
+    if (!isInspectionOnly(result?.proposed)) break;
+    for (const a of result.proposed) {
+      await runQueuedInspection(a, message);
+    }
+    result = await runPlannerFlow({ sid, message, req });
+  }
+
+  // Final guard: if planner still produced nothing, do one immediate inspection and re-plan.
+  if (!Array.isArray(result?.proposed) || result.proposed.length === 0) {
+    const fallback = proposeAction({
+      type: "run_cmd",
+      title: "Inspect repo (auto)",
+      reason: "Planner returned no actions; auto-inspecting to ground the request.",
+      payload: {
+        cmd: `rg -n "${
+          message.replace(/[^a-zA-Z0-9_\s-]/g, " ").trim().slice(0, 60) || "piper"
+        }" src public`,
+        timeoutMs: 12000,
+      },
+    });
+
+    await runQueuedInspection(fallback, message);
+    result = await runPlannerFlow({ sid, message, req });
+  }
+
+  return res.json(result);
+});
+
+export default router;
+export const chatHandler = router;

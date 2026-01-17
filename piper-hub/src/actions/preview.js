@@ -3,17 +3,8 @@ import fs from "fs";
 import { safeResolve } from "../utils/fsx.js";
 import { unifiedDiff } from "../utils/diff.js";
 
-function setHtmlTitleInText(html, title) {
-  const t = String(title ?? "");
-  const re = /<title>[\s\S]*?<\/title>/i;
-  if (!re.test(html)) {
-    if (/<head[^>]*>/i.test(html)) {
-      return html.replace(/<head[^>]*>/i, (m) => `${m}\n  <title>${t}</title>`);
-    }
-    return `<title>${t}</title>\n` + html;
-  }
-  return html.replace(re, `<title>${t}</title>`);
-}
+// NOTE: no title-specific previewing here.
+// Page title updates should be expressed as a generic apply_patch or write_file action.
 
 function escapeHtml(s) {
   return String(s ?? "")
@@ -88,7 +79,6 @@ export function isPreviewableType(type) {
     "write_file",
     "bundle",
     "mkdir",
-    "set_html_title",
   ].includes(String(type || ""));
 }
 
@@ -96,28 +86,6 @@ export function computePreviewFilesForAction(action) {
   const type = String(action?.type || "");
   const p = action?.payload || {};
   const files = [];
-
-  if (type === "set_html_title") {
-    const rel = String(p.path || "");
-    const abs = safeResolve(rel);
-    const oldText = fs.existsSync(abs) ? fs.readFileSync(abs, "utf8") : "";
-    const newText = setHtmlTitleInText(oldText, p.title);
-
-    const diff = unifiedDiff(oldText, newText, rel);
-
-    console.log(
-      `[preview] set_html_title preview rel="${rel}" title="${String(p.title)}"`
-    );
-
-    files.push({
-      path: rel,
-      old: oldText,
-      new: newText,
-      diff,
-      note: "",
-    });
-    return files;
-  }
 
   if (type === "mkdir") {
     const rel = String(p.path || "").trim();
@@ -169,7 +137,13 @@ export function computePreviewFilesForAction(action) {
     for (const e of edits) {
       const find = String(e?.find ?? "");
       const replace = String(e?.replace ?? "");
-      const mode = e?.mode === "all" ? "all" : "once";
+      const mode = e?.mode === "all" ? "all" : e?.mode === "append" ? "append" : "once";
+
+      if (mode === "append") {
+        out = out + replace;
+        continue;
+      }
+
       if (!find) continue;
       if (mode === "all") out = out.split(find).join(replace);
       else {

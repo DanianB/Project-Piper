@@ -3,7 +3,10 @@ import { callOllama, extractFirstJsonObject } from "../services/ollama.js";
 
 function isChangeish(message) {
   const m = String(message || "").toLowerCase();
-  return /dock|move|layout|ui|css|style|position|below|under|bottom|beneath|above|left|right|center|max-?width|overflow|scroll|fix|resize|panel|sidebar|pending actions|recent actions/i.test(
+  // Broad, non-fragile detector for "make a change" requests.
+  // This is NOT meant to keyword-gate capability; it's only used to decide
+  // whether an approval-gated plan should be produced.
+  return /\b(change|set|update|modify|edit|make|turn|switch)\b|dock|move|layout|ui|css|style|theme|position|below|under|bottom|beneath|above|left|right|center|max-?width|overflow|scroll|fix|resize|panel|sidebar|button|background|colour|color|title|pending actions|recent actions/i.test(
     m
   );
 }

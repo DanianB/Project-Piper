@@ -1,0 +1,18 @@
+{
+  "servers": [
+    {
+      "name": "local-fs",
+      "command": "node",
+      "args": ["src/mcp/servers/local_fs.js"],
+      "env": {},
+      "notes": "Local filesystem MCP server (stdio)."
+    },
+    {
+      "name": "local-web",
+      "command": "node",
+      "args": ["src/mcp/servers/local_web.js"],
+      "env": {},
+      "notes": "Local web MCP server (stdio) wrapping Piper web.search and web.fetch."
+    }
+  ]
+}

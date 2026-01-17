@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-10T06:54:16.966Z",
+  "generatedAt": "2026-01-17T13:10:57.027Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -152,30 +152,7 @@
       {
         "file": "public/index.html",
         "tag": "input",
-        "id": "dryRun",
-        "classes": [],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "span",
-        "id": null,
-        "classes": [],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "label",
-        "id": null,
-        "classes": [
-          "pill"
-        ],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "input",
-        "id": "debugEmotion",
+        "id": "devMode",
         "classes": [],
         "text": null
       },
@@ -531,75 +508,6 @@
         "id": "runlogList",
         "classes": [],
         "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "div",
-        "id": "planWrap",
-        "classes": [
-          "section",
-          "panel"
-        ],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "div",
-        "id": null,
-        "classes": [
-          "sectionHeader"
-        ],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "h3",
-        "id": null,
-        "classes": [],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "div",
-        "id": null,
-        "classes": [
-          "hint"
-        ],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "div",
-        "id": "planBody",
-        "classes": [],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "div",
-        "id": null,
-        "classes": [
-          "planBtns"
-        ],
-        "text": null
-      },
-      {
-        "file": "public/index.html",
-        "tag": "button",
-        "id": "planApproveBtn",
-        "classes": [
-          "btn-primary"
-        ],
-        "text": "Approve plan"
-      },
-      {
-        "file": "public/index.html",
-        "tag": "button",
-        "id": "planAbortBtn",
-        "classes": [
-          "btn-secondary"
-        ],
-        "text": "Abort plan"
       }
     ]
   },
@@ -2091,14 +1999,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 8,
             "column": 0,
-            "index": 157
+            "index": 185
           },
           "end": {
-            "line": 9,
+            "line": 10,
             "column": 1,
-            "index": 218
+            "index": 246
           }
         }
       },
@@ -2829,7 +2737,7 @@
           "end": {
             "line": 51,
             "column": 1,
-            "index": 1360
+            "index": 1434
           }
         }
       },
@@ -2841,12 +2749,12 @@
           "start": {
             "line": 53,
             "column": 0,
-            "index": 1362
+            "index": 1436
           },
           "end": {
-            "line": 105,
+            "line": 117,
             "column": 1,
-            "index": 3263
+            "index": 3906
           }
         }
       },
@@ -2856,14 +2764,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 111,
+            "line": 123,
             "column": 0,
-            "index": 3367
+            "index": 4010
           },
           "end": {
-            "line": 186,
+            "line": 198,
             "column": 1,
-            "index": 5149
+            "index": 5792
           }
         }
       },
@@ -2873,14 +2781,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 188,
+            "line": 200,
             "column": 0,
-            "index": 5151
+            "index": 5794
           },
           "end": {
-            "line": 205,
+            "line": 217,
             "column": 1,
-            "index": 5624
+            "index": 6267
           }
         }
       },
@@ -2949,23 +2857,6 @@
             "line": 54,
             "column": 1,
             "index": 1740
-          }
-        }
-      },
-      {
-        "file": "src/services/webContext.js",
-        "name": "runWebContext",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 7,
-            "column": 0,
-            "index": 265
-          },
-          "end": {
-            "line": 48,
-            "column": 1,
-            "index": 1703
           }
         }
       },
@@ -3271,7 +3162,7 @@
           "end": {
             "line": 282,
             "column": 1,
-            "index": 8041
+            "index": 8080
           }
         }
       },
@@ -3289,6 +3180,23 @@
             "line": 33,
             "column": 1,
             "index": 853
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 237
+          },
+          "end": {
+            "line": 6,
+            "column": 27,
+            "index": 264
           }
         }
       },
@@ -3413,120 +3321,69 @@
       },
       {
         "file": "src/routes/chat/handler.js",
-        "name": "chatHandler",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 74,
-            "column": 0,
-            "index": 2226
-          },
-          "end": {
-            "line": 1060,
-            "column": 1,
-            "index": 35767
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/index.js",
-        "name": "chatRoutes",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 5,
-            "column": 0,
-            "index": 107
-          },
-          "end": {
-            "line": 9,
-            "column": 1,
-            "index": 205
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/index.js",
         "name": "default",
         "kind": "default",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 596,
             "column": 0,
-            "index": 207
+            "index": 19670
           },
           "end": {
-            "line": 11,
-            "column": 26,
-            "index": 233
+            "line": 596,
+            "column": 22,
+            "index": 19692
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "name": "buildChatRouter",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 451,
-            "column": 0,
-            "index": 13008
-          },
-          "end": {
-            "line": 1478,
-            "column": 1,
-            "index": 48382
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "name": "chatRoutes",
+        "file": "src/routes/chat/handler.js",
+        "name": "chatHandler",
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 1480,
+            "line": 597,
             "column": 0,
-            "index": 48384
+            "index": 19693
           },
           "end": {
-            "line": 1480,
-            "column": 42,
-            "index": 48426
+            "line": 597,
+            "column": 34,
+            "index": 19727
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
+        "file": "src/routes/chat/index.js",
+        "name": "chatRoutes",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 188
+          },
+          "end": {
+            "line": 11,
+            "column": 1,
+            "index": 286
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/index.js",
         "name": "default",
         "kind": "default",
         "loc": {
           "start": {
-            "line": 1482,
+            "line": 13,
             "column": 0,
-            "index": 48428
+            "index": 288
           },
           "end": {
-            "line": 1482,
-            "column": 31,
-            "index": 48459
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/phase3.js",
-        "name": "handlePhase3Deterministic",
-        "kind": "function",
-        "loc": {
-          "start": {
-            "line": 249,
-            "column": 0,
-            "index": 7580
-          },
-          "end": {
-            "line": 403,
-            "column": 1,
-            "index": 12499
+            "line": 13,
+            "column": 26,
+            "index": 314
           }
         }
       },
@@ -3561,6 +3418,57 @@
             "line": 57,
             "column": 1,
             "index": 1676
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/chatFlow.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 0,
+            "index": 980
+          },
+          "end": {
+            "line": 75,
+            "column": 1,
+            "index": 2373
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "name": "fileEditFlow",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 97,
+            "column": 0,
+            "index": 3021
+          },
+          "end": {
+            "line": 277,
+            "column": 1,
+            "index": 8237
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "name": "default",
+        "kind": "default",
+        "loc": {
+          "start": {
+            "line": 279,
+            "column": 0,
+            "index": 8239
+          },
+          "end": {
+            "line": 279,
+            "column": 28,
+            "index": 8267
           }
         }
       },
@@ -3638,14 +3546,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 20,
+            "line": 59,
             "column": 0,
-            "index": 676
+            "index": 2202
           },
           "end": {
-            "line": 325,
+            "line": 154,
             "column": 1,
-            "index": 10162
+            "index": 5244
           }
         }
       },
@@ -3655,14 +3563,31 @@
         "kind": "default",
         "loc": {
           "start": {
-            "line": 327,
+            "line": 156,
             "column": 0,
-            "index": 10164
+            "index": 5246
           },
           "end": {
-            "line": 327,
+            "line": 156,
             "column": 30,
-            "index": 10194
+            "index": 5276
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/propose.js",
+        "name": "proposeAction",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 436
+          },
+          "end": {
+            "line": 30,
+            "column": 1,
+            "index": 878
           }
         }
       },
@@ -3718,6 +3643,74 @@
         }
       },
       {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "name": "getLastOpenedFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 171
+          },
+          "end": {
+            "line": 10,
+            "column": 1,
+            "index": 268
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "name": "setLastOpenedFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 270
+          },
+          "end": {
+            "line": 15,
+            "column": 1,
+            "index": 404
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "name": "parseOpenDesktopFolder",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 66,
+            "column": 0,
+            "index": 1492
+          },
+          "end": {
+            "line": 87,
+            "column": 1,
+            "index": 2188
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "name": "parseWriteTextInThere",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 100,
+            "column": 0,
+            "index": 2547
+          },
+          "end": {
+            "line": 127,
+            "column": 1,
+            "index": 3557
+          }
+        }
+      },
+      {
         "file": "src/routes/chat/parsers/webIntent.js",
         "name": "isWebSearchIntent",
         "kind": "function",
@@ -3728,9 +3721,9 @@
             "index": 107
           },
           "end": {
-            "line": 16,
+            "line": 19,
             "column": 1,
-            "index": 497
+            "index": 603
           }
         }
       },
@@ -3740,14 +3733,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 18,
+            "line": 21,
             "column": 0,
-            "index": 499
+            "index": 605
           },
           "end": {
-            "line": 25,
+            "line": 28,
             "column": 1,
-            "index": 838
+            "index": 944
           }
         }
       },
@@ -3893,14 +3886,31 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 3,
+            "line": 8,
             "column": 0,
-            "index": 47
+            "index": 157
           },
           "end": {
-            "line": 6,
+            "line": 13,
             "column": 1,
-            "index": 167
+            "index": 340
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/deterministic/greetings.js",
+        "name": "greetingReply",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 342
+          },
+          "end": {
+            "line": 42,
+            "column": 1,
+            "index": 1000
           }
         }
       },
@@ -3995,14 +4005,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 585,
+            "line": 655,
             "column": 0,
-            "index": 15661
+            "index": 17332
           },
           "end": {
-            "line": 668,
+            "line": 779,
             "column": 1,
-            "index": 18120
+            "index": 21584
           }
         }
       },
@@ -4029,14 +4039,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 94,
+            "line": 97,
             "column": 0,
-            "index": 4022
+            "index": 4313
           },
           "end": {
-            "line": 156,
+            "line": 159,
             "column": 1,
-            "index": 5914
+            "index": 6205
           }
         }
       },
@@ -4046,14 +4056,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 101,
+            "line": 139,
             "column": 0,
-            "index": 2833
+            "index": 4135
           },
           "end": {
-            "line": 135,
+            "line": 224,
             "column": 1,
-            "index": 3806
+            "index": 6583
           }
         }
       },
@@ -4063,14 +4073,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 115,
+            "line": 12,
             "column": 0,
-            "index": 3068
+            "index": 258
           },
           "end": {
-            "line": 163,
+            "line": 71,
             "column": 1,
-            "index": 4672
+            "index": 2113
           }
         }
       },
@@ -4143,19 +4153,87 @@
         }
       },
       {
+        "file": "src/mcp/client.js",
+        "name": "loadMcpConfig",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 28,
+            "column": 0,
+            "index": 603
+          },
+          "end": {
+            "line": 33,
+            "column": 1,
+            "index": 845
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "name": "getMcpClient",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 37,
+            "column": 0,
+            "index": 876
+          },
+          "end": {
+            "line": 56,
+            "column": 1,
+            "index": 1511
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "name": "listMcpTools",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 58,
+            "column": 0,
+            "index": 1513
+          },
+          "end": {
+            "line": 61,
+            "column": 1,
+            "index": 1651
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "name": "callMcpTool",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 63,
+            "column": 0,
+            "index": 1653
+          },
+          "end": {
+            "line": 66,
+            "column": 1,
+            "index": 1851
+          }
+        }
+      },
+      {
         "file": "src/indexer/indexer.js",
         "name": "buildCodebaseIndex",
         "kind": "function",
         "loc": {
           "start": {
-            "line": 243,
+            "line": 248,
             "column": 0,
-            "index": 6251
+            "index": 6431
           },
           "end": {
-            "line": 295,
+            "line": 305,
             "column": 1,
-            "index": 7856
+            "index": 8186
           }
         }
       },
@@ -4165,14 +4243,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 297,
+            "line": 307,
             "column": 0,
-            "index": 7860
+            "index": 8190
           },
           "end": {
-            "line": 306,
+            "line": 316,
             "column": 1,
-            "index": 8103
+            "index": 8433
           }
         }
       },
@@ -4182,14 +4260,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 308,
+            "line": 318,
             "column": 0,
-            "index": 8107
+            "index": 8437
           },
           "end": {
-            "line": 345,
+            "line": 355,
             "column": 1,
-            "index": 9128
+            "index": 9458
           }
         }
       },
@@ -4658,14 +4736,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 184,
+            "line": 430,
             "column": 0,
-            "index": 6831
+            "index": 14866
           },
           "end": {
-            "line": 186,
+            "line": 432,
             "column": 1,
-            "index": 6925
+            "index": 14960
           }
         }
       },
@@ -4675,14 +4753,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 188,
+            "line": 434,
             "column": 0,
-            "index": 6927
+            "index": 14962
           },
           "end": {
-            "line": 190,
+            "line": 448,
             "column": 1,
-            "index": 7008
+            "index": 15534
           }
         }
       },
@@ -4692,14 +4770,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 85,
+            "line": 76,
             "column": 0,
-            "index": 2172
+            "index": 1940
           },
           "end": {
-            "line": 93,
+            "line": 83,
             "column": 1,
-            "index": 2346
+            "index": 2092
           }
         }
       },
@@ -4709,14 +4787,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 95,
+            "line": 85,
             "column": 0,
-            "index": 2348
+            "index": 2094
           },
           "end": {
-            "line": 208,
+            "line": 182,
             "column": 1,
-            "index": 5736
+            "index": 5069
           }
         }
       },
@@ -4726,14 +4804,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 214,
+            "line": 188,
             "column": 0,
-            "index": 5833
+            "index": 5166
           },
           "end": {
-            "line": 391,
+            "line": 365,
             "column": 1,
-            "index": 12416
+            "index": 11749
           }
         }
       },
@@ -4843,8 +4921,7 @@
     "routes": [
       {
         "file": "src/server.js",
-        "object": "app",
-        "method": "POST",
+        "method": "post",
         "path": "/shutdown",
         "loc": {
           "start": {
@@ -4860,225 +4937,25 @@
         }
       },
       {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "GET",
-        "path": "/ping",
+        "file": "src/tools/builtins/web.js",
+        "method": "get",
+        "path": "content-type",
         "loc": {
           "start": {
-            "line": 894,
-            "column": 0,
-            "index": 28887
+            "line": 57,
+            "column": 22,
+            "index": 1738
           },
           "end": {
-            "line": 896,
-            "column": 1,
-            "index": 28992
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "GET",
-        "path": "/actions",
-        "loc": {
-          "start": {
-            "line": 898,
-            "column": 0,
-            "index": 28997
-          },
-          "end": {
-            "line": 901,
-            "column": 2,
-            "index": 29090
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/action/reject",
-        "loc": {
-          "start": {
-            "line": 903,
-            "column": 0,
-            "index": 29095
-          },
-          "end": {
-            "line": 914,
-            "column": 2,
-            "index": 29467
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/action/rollback",
-        "loc": {
-          "start": {
-            "line": 916,
-            "column": 0,
-            "index": 29472
-          },
-          "end": {
-            "line": 940,
-            "column": 2,
-            "index": 30240
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/action/approve",
-        "loc": {
-          "start": {
-            "line": 942,
-            "column": 0,
-            "index": 30245
-          },
-          "end": {
-            "line": 992,
-            "column": 2,
-            "index": 31758
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/device/register",
-        "loc": {
-          "start": {
-            "line": 995,
-            "column": 0,
-            "index": 31826
-          },
-          "end": {
-            "line": 1009,
-            "column": 2,
-            "index": 32268
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "GET",
-        "path": "/devices",
-        "loc": {
-          "start": {
-            "line": 1010,
-            "column": 0,
-            "index": 32271
-          },
-          "end": {
-            "line": 1018,
-            "column": 2,
-            "index": 32482
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/device/run",
-        "loc": {
-          "start": {
-            "line": 1019,
-            "column": 0,
-            "index": 32485
-          },
-          "end": {
-            "line": 1036,
-            "column": 2,
-            "index": 33170
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/voice/transcribe",
-        "loc": {
-          "start": {
-            "line": 1039,
-            "column": 0,
-            "index": 33239
-          },
-          "end": {
-            "line": 1106,
-            "column": 2,
-            "index": 35695
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/voice/speak",
-        "loc": {
-          "start": {
-            "line": 1165,
-            "column": 0,
-            "index": 37571
-          },
-          "end": {
-            "line": 1183,
-            "column": 2,
-            "index": 38101
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/chat",
-        "loc": {
-          "start": {
-            "line": 1186,
-            "column": 0,
-            "index": 38157
-          },
-          "end": {
-            "line": 1419,
-            "column": 2,
-            "index": 45703
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "object": "app",
-        "method": "POST",
-        "path": "/shutdown",
-        "loc": {
-          "start": {
-            "line": 1439,
-            "column": 0,
-            "index": 46111
-          },
-          "end": {
-            "line": 1446,
-            "column": 2,
-            "index": 46425
+            "line": 57,
+            "column": 53,
+            "index": 1769
           }
         }
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/actions",
         "loc": {
           "start": {
@@ -5095,8 +4972,7 @@
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/action/preview/:id.json",
         "loc": {
           "start": {
@@ -5113,8 +4989,7 @@
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/action/preview/:id",
         "loc": {
           "start": {
@@ -5131,8 +5006,7 @@
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/action/reject",
         "loc": {
           "start": {
@@ -5149,8 +5023,7 @@
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/action/rollback",
         "loc": {
           "start": {
@@ -5167,8 +5040,7 @@
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/action/approve",
         "loc": {
           "start": {
@@ -5179,32 +5051,30 @@
           "end": {
             "line": 256,
             "column": 4,
-            "index": 7358
+            "index": 7397
           }
         }
       },
       {
         "file": "src/routes/actions.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/action/add",
         "loc": {
           "start": {
             "line": 261,
             "column": 2,
-            "index": 7473
+            "index": 7512
           },
           "end": {
             "line": 279,
             "column": 4,
-            "index": 8025
+            "index": 8064
           }
         }
       },
       {
         "file": "src/routes/blocks.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/blocks",
         "loc": {
           "start": {
@@ -5221,8 +5091,7 @@
       },
       {
         "file": "src/routes/devices.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/device/register",
         "loc": {
           "start": {
@@ -5239,8 +5108,7 @@
       },
       {
         "file": "src/routes/devices.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/devices",
         "loc": {
           "start": {
@@ -5257,8 +5125,7 @@
       },
       {
         "file": "src/routes/plan.js",
-        "object": "planRoutes",
-        "method": "GET",
+        "method": "get",
         "path": "/current",
         "loc": {
           "start": {
@@ -5275,8 +5142,7 @@
       },
       {
         "file": "src/routes/plan.js",
-        "object": "planRoutes",
-        "method": "POST",
+        "method": "post",
         "path": "/approve",
         "loc": {
           "start": {
@@ -5293,8 +5159,7 @@
       },
       {
         "file": "src/routes/plan.js",
-        "object": "planRoutes",
-        "method": "POST",
+        "method": "post",
         "path": "/abort",
         "loc": {
           "start": {
@@ -5311,8 +5176,7 @@
       },
       {
         "file": "src/routes/runlog.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/runlog",
         "loc": {
           "start": {
@@ -5329,8 +5193,7 @@
       },
       {
         "file": "src/routes/system.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/ping",
         "loc": {
           "start": {
@@ -5347,8 +5210,7 @@
       },
       {
         "file": "src/routes/tools.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/tools",
         "loc": {
           "start": {
@@ -5365,8 +5227,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/voice/transcribe",
         "loc": {
           "start": {
@@ -5383,8 +5244,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/voice/config",
         "loc": {
           "start": {
@@ -5401,8 +5261,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/voice/config",
         "loc": {
           "start": {
@@ -5419,8 +5278,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/voice/voices",
         "loc": {
           "start": {
@@ -5437,8 +5295,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/voice/speak",
         "loc": {
           "start": {
@@ -5455,8 +5312,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "POST",
+        "method": "post",
         "path": "/voice/chatterbox/start",
         "loc": {
           "start": {
@@ -5473,8 +5329,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "object": "r",
-        "method": "GET",
+        "method": "get",
         "path": "/voice/chatterbox/status",
         "loc": {
           "start": {
@@ -5490,38 +5345,36 @@
         }
       },
       {
-        "file": "src/routes/chat/index.js",
-        "object": "r",
-        "method": "POST",
+        "file": "src/routes/chat/handler.js",
+        "method": "post",
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 7,
-            "column": 2,
-            "index": 162
+            "line": 188,
+            "column": 0,
+            "index": 5920
           },
           "end": {
-            "line": 7,
-            "column": 30,
-            "index": 190
+            "line": 594,
+            "column": 2,
+            "index": 19667
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "object": "r",
-        "method": "POST",
+        "file": "src/routes/chat/index.js",
+        "method": "post",
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 454,
+            "line": 9,
             "column": 2,
-            "index": 13069
+            "index": 243
           },
           "end": {
-            "line": 1475,
-            "column": 4,
-            "index": 48366
+            "line": 9,
+            "column": 30,
+            "index": 271
           }
         }
       }
@@ -5784,102 +5637,6 @@
         }
       },
       {
-        "file": "src/server.old.js",
-        "source": "express",
-        "loc": {
-          "start": {
-            "line": 15,
-            "column": 0,
-            "index": 636
-          },
-          "end": {
-            "line": 15,
-            "column": 30,
-            "index": 666
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "source": "fs",
-        "loc": {
-          "start": {
-            "line": 16,
-            "column": 0,
-            "index": 668
-          },
-          "end": {
-            "line": 16,
-            "column": 20,
-            "index": 688
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "source": "path",
-        "loc": {
-          "start": {
-            "line": 17,
-            "column": 0,
-            "index": 690
-          },
-          "end": {
-            "line": 17,
-            "column": 24,
-            "index": 714
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "source": "crypto",
-        "loc": {
-          "start": {
-            "line": 18,
-            "column": 0,
-            "index": 716
-          },
-          "end": {
-            "line": 18,
-            "column": 28,
-            "index": 744
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "source": "multer",
-        "loc": {
-          "start": {
-            "line": 19,
-            "column": 0,
-            "index": 746
-          },
-          "end": {
-            "line": 19,
-            "column": 28,
-            "index": 774
-          }
-        }
-      },
-      {
-        "file": "src/server.old.js",
-        "source": "child_process",
-        "loc": {
-          "start": {
-            "line": 20,
-            "column": 0,
-            "index": 776
-          },
-          "end": {
-            "line": 20,
-            "column": 44,
-            "index": 820
-          }
-        }
-      },
-      {
         "file": "src/utils/fsx.js",
         "source": "fs",
         "loc": {
@@ -6036,6 +5793,150 @@
             "line": 5,
             "column": 27,
             "index": 155
+          }
+        }
+      },
+      {
+        "file": "src/tools/index.js",
+        "source": "./builtins/mcp.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 156
+          },
+          "end": {
+            "line": 6,
+            "column": 27,
+            "index": 183
+          }
+        }
+      },
+      {
+        "file": "src/tools/mcp/register.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 30
+          },
+          "end": {
+            "line": 2,
+            "column": 20,
+            "index": 50
+          }
+        }
+      },
+      {
+        "file": "src/tools/mcp/register.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 52
+          },
+          "end": {
+            "line": 3,
+            "column": 24,
+            "index": 76
+          }
+        }
+      },
+      {
+        "file": "src/tools/mcp/register.js",
+        "source": "../registry.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 78
+          },
+          "end": {
+            "line": 4,
+            "column": 56,
+            "index": 134
+          }
+        }
+      },
+      {
+        "file": "src/tools/mcp/register.js",
+        "source": "@modelcontextprotocol/sdk/client/index.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 165
+          },
+          "end": {
+            "line": 7,
+            "column": 67,
+            "index": 232
+          }
+        }
+      },
+      {
+        "file": "src/tools/mcp/register.js",
+        "source": "@modelcontextprotocol/sdk/client/stdio.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 234
+          },
+          "end": {
+            "line": 8,
+            "column": 81,
+            "index": 315
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/mcp.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 82
+          },
+          "end": {
+            "line": 4,
+            "column": 28,
+            "index": 110
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/mcp.js",
+        "source": "../registry.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 112
+          },
+          "end": {
+            "line": 6,
+            "column": 56,
+            "index": 168
+          }
+        }
+      },
+      {
+        "file": "src/tools/builtins/mcp.js",
+        "source": "../../mcp/client.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 169
+          },
+          "end": {
+            "line": 7,
+            "column": 79,
+            "index": 248
           }
         }
       },
@@ -6372,22 +6273,6 @@
             "line": 14,
             "column": 44,
             "index": 496
-          }
-        }
-      },
-      {
-        "file": "src/services/webContext.js",
-        "source": "./sources.js",
-        "loc": {
-          "start": {
-            "line": 1,
-            "column": 0,
-            "index": 0
-          },
-          "end": {
-            "line": 1,
-            "column": 92,
-            "index": 92
           }
         }
       },
@@ -6824,6 +6709,22 @@
         }
       },
       {
+        "file": "src/routes/chat.js",
+        "source": "./chat/index.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 176
+          },
+          "end": {
+            "line": 5,
+            "column": 60,
+            "index": 236
+          }
+        }
+      },
+      {
         "file": "src/routes/devices.js",
         "source": "express",
         "loc": {
@@ -7065,7 +6966,7 @@
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "crypto",
+        "source": "express",
         "loc": {
           "start": {
             "line": 2,
@@ -7074,24 +6975,56 @@
           },
           "end": {
             "line": 2,
-            "column": 28,
-            "index": 58
+            "column": 30,
+            "index": 60
           }
         }
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "../../services/ollama.js",
+        "source": "fs",
         "loc": {
           "start": {
             "line": 3,
             "column": 0,
-            "index": 59
+            "index": 61
           },
           "end": {
             "line": 3,
-            "column": 54,
-            "index": 113
+            "column": 20,
+            "index": 81
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 82
+          },
+          "end": {
+            "line": 4,
+            "column": 24,
+            "index": 106
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "os",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 107
+          },
+          "end": {
+            "line": 5,
+            "column": 20,
+            "index": 127
           }
         }
       },
@@ -7100,142 +7033,14 @@
         "source": "../../services/persona.js",
         "loc": {
           "start": {
-            "line": 4,
-            "column": 0,
-            "index": 114
-          },
-          "end": {
-            "line": 4,
-            "column": 76,
-            "index": 190
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../planner/triage.js",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 192
-          },
-          "end": {
-            "line": 6,
-            "column": 61,
-            "index": 253
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../planner/snapshot.js",
-        "loc": {
-          "start": {
             "line": 7,
             "column": 0,
-            "index": 254
+            "index": 129
           },
           "end": {
             "line": 7,
-            "column": 58,
-            "index": 312
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../planner/planner.js",
-        "loc": {
-          "start": {
-            "line": 8,
-            "column": 0,
-            "index": 313
-          },
-          "end": {
-            "line": 8,
-            "column": 61,
-            "index": 374
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../planner/compiler.js",
-        "loc": {
-          "start": {
-            "line": 9,
-            "column": 0,
-            "index": 375
-          },
-          "end": {
-            "line": 9,
-            "column": 65,
-            "index": 440
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../utils/runlog.js",
-        "loc": {
-          "start": {
-            "line": 10,
-            "column": 0,
-            "index": 441
-          },
-          "end": {
-            "line": 10,
-            "column": 52,
-            "index": 493
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../services/web/webContext.js",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 495
-          },
-          "end": {
-            "line": 16,
-            "column": 42,
-            "index": 604
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../tools/index.js",
-        "loc": {
-          "start": {
-            "line": 18,
-            "column": 0,
-            "index": 606
-          },
-          "end": {
-            "line": 18,
-            "column": 49,
-            "index": 655
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../tools/registry.js",
-        "loc": {
-          "start": {
-            "line": 19,
-            "column": 0,
-            "index": 656
-          },
-          "end": {
-            "line": 19,
-            "column": 65,
-            "index": 721
+            "column": 57,
+            "index": 186
           }
         }
       },
@@ -7244,14 +7049,126 @@
         "source": "../../services/mind.js",
         "loc": {
           "start": {
-            "line": 21,
+            "line": 8,
             "column": 0,
-            "index": 723
+            "index": 187
           },
           "end": {
-            "line": 34,
+            "line": 8,
+            "column": 59,
+            "index": 246
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "../../planner/triage.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 248
+          },
+          "end": {
+            "line": 10,
+            "column": 61,
+            "index": 309
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/chatFlow.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 311
+          },
+          "end": {
+            "line": 12,
+            "column": 50,
+            "index": 361
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/plannerFlow.js",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 362
+          },
+          "end": {
+            "line": 13,
+            "column": 56,
+            "index": 418
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/fileEditFlow.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 419
+          },
+          "end": {
+            "line": 14,
+            "column": 59,
+            "index": 478
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/propose.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 479
+          },
+          "end": {
+            "line": 15,
+            "column": 55,
+            "index": 534
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./workflows/webFlow.js",
+        "loc": {
+          "start": {
+            "line": 17,
+            "column": 0,
+            "index": 536
+          },
+          "end": {
+            "line": 21,
             "column": 32,
-            "index": 1023
+            "index": 657
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/handler.js",
+        "source": "./parsers/webIntent.js",
+        "loc": {
+          "start": {
+            "line": 22,
+            "column": 0,
+            "index": 658
+          },
+          "end": {
+            "line": 22,
+            "column": 59,
+            "index": 717
           }
         }
       },
@@ -7260,14 +7177,14 @@
         "source": "./parsers/apps.js",
         "loc": {
           "start": {
-            "line": 36,
+            "line": 23,
             "column": 0,
-            "index": 1025
+            "index": 718
           },
           "end": {
-            "line": 41,
+            "line": 27,
             "column": 27,
-            "index": 1154
+            "index": 826
           }
         }
       },
@@ -7276,206 +7193,46 @@
         "source": "./parsers/filesystem.js",
         "loc": {
           "start": {
-            "line": 42,
+            "line": 28,
             "column": 0,
-            "index": 1155
+            "index": 827
           },
           "end": {
-            "line": 47,
+            "line": 33,
             "column": 33,
-            "index": 1294
+            "index": 966
           }
         }
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "./parsers/conversation.js",
+        "source": "../../actions/store.js",
         "loc": {
           "start": {
-            "line": 48,
+            "line": 35,
             "column": 0,
-            "index": 1295
+            "index": 968
           },
           "end": {
-            "line": 48,
-            "column": 89,
-            "index": 1384
+            "line": 35,
+            "column": 78,
+            "index": 1046
           }
         }
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "./parsers/web.js",
+        "source": "../../actions/executor.js",
         "loc": {
           "start": {
-            "line": 49,
+            "line": 36,
             "column": 0,
-            "index": 1385
+            "index": 1047
           },
           "end": {
-            "line": 49,
-            "column": 70,
-            "index": 1455
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./parsers/opinions.js",
-        "loc": {
-          "start": {
-            "line": 50,
-            "column": 0,
-            "index": 1456
-          },
-          "end": {
-            "line": 56,
-            "column": 31,
-            "index": 1619
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./policies/actions.js",
-        "loc": {
-          "start": {
-            "line": 58,
-            "column": 0,
-            "index": 1621
-          },
-          "end": {
-            "line": 58,
-            "column": 68,
-            "index": 1689
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./policies/authority.js",
-        "loc": {
-          "start": {
-            "line": 59,
-            "column": 0,
-            "index": 1690
-          },
-          "end": {
-            "line": 63,
-            "column": 33,
-            "index": 1815
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./utils/ids.js",
-        "loc": {
-          "start": {
-            "line": 65,
-            "column": 0,
-            "index": 1817
-          },
-          "end": {
-            "line": 65,
-            "column": 39,
-            "index": 1856
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./utils/logMode.js",
-        "loc": {
-          "start": {
-            "line": 66,
-            "column": 0,
-            "index": 1857
-          },
-          "end": {
-            "line": 66,
-            "column": 45,
-            "index": 1902
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./utils/emotion.js",
-        "loc": {
-          "start": {
-            "line": 67,
-            "column": 0,
-            "index": 1903
-          },
-          "end": {
-            "line": 67,
+            "line": 36,
             "column": 58,
-            "index": 1961
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/titleFlow.js",
-        "loc": {
-          "start": {
-            "line": 69,
-            "column": 0,
-            "index": 1963
-          },
-          "end": {
-            "line": 69,
-            "column": 62,
-            "index": 2025
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/messages.js",
-        "loc": {
-          "start": {
-            "line": 70,
-            "column": 0,
-            "index": 2026
-          },
-          "end": {
-            "line": 70,
-            "column": 60,
-            "index": 2086
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/pendingActions.js",
-        "loc": {
-          "start": {
-            "line": 71,
-            "column": 0,
-            "index": 2087
-          },
-          "end": {
-            "line": 71,
-            "column": 65,
-            "index": 2152
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/selfReport.js",
-        "loc": {
-          "start": {
-            "line": 72,
-            "column": 0,
-            "index": 2153
-          },
-          "end": {
-            "line": 72,
-            "column": 71,
-            "index": 2224
+            "index": 1105
           }
         }
       },
@@ -7512,88 +7269,72 @@
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "source": "express",
+        "file": "src/routes/chat/workflows/chatFlow.js",
+        "source": "../../../services/ollama.js",
         "loc": {
           "start": {
-            "line": 2,
+            "line": 8,
             "column": 0,
-            "index": 29
+            "index": 267
           },
           "end": {
-            "line": 2,
-            "column": 33,
-            "index": 62
+            "line": 8,
+            "column": 57,
+            "index": 324
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "source": "crypto",
+        "file": "src/routes/chat/workflows/chatFlow.js",
+        "source": "../../../services/persona.js",
         "loc": {
           "start": {
-            "line": 3,
+            "line": 9,
             "column": 0,
-            "index": 63
+            "index": 325
           },
           "end": {
-            "line": 3,
-            "column": 28,
-            "index": 91
+            "line": 9,
+            "column": 65,
+            "index": 390
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../services/ollama.js",
+        "file": "src/routes/chat/workflows/chatFlow.js",
+        "source": "../../../services/mind.js",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 10,
             "column": 0,
-            "index": 92
+            "index": 391
           },
           "end": {
-            "line": 4,
-            "column": 54,
-            "index": 146
+            "line": 10,
+            "column": 90,
+            "index": 481
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../services/persona.js",
+        "file": "src/routes/chat/workflows/chatFlow.js",
+        "source": "../deterministic/greetings.js",
         "loc": {
           "start": {
-            "line": 5,
+            "line": 11,
             "column": 0,
-            "index": 147
+            "index": 482
           },
           "end": {
-            "line": 5,
-            "column": 76,
-            "index": 223
+            "line": 11,
+            "column": 74,
+            "index": 556
           }
         }
       },
       {
-        "file": "src/routes/chat/legacy.js",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
         "source": "fs",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 224
-          },
-          "end": {
-            "line": 6,
-            "column": 20,
-            "index": 244
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "path",
         "loc": {
           "start": {
             "line": 7,
@@ -7602,456 +7343,136 @@
           },
           "end": {
             "line": 7,
-            "column": 24,
-            "index": 269
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./constants.js",
-        "loc": {
-          "start": {
-            "line": 11,
-            "column": 0,
-            "index": 425
-          },
-          "end": {
-            "line": 11,
-            "column": 47,
-            "index": 472
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./utils/ids.js",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 473
-          },
-          "end": {
-            "line": 12,
-            "column": 39,
-            "index": 512
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./utils/logMode.js",
-        "loc": {
-          "start": {
-            "line": 13,
-            "column": 0,
-            "index": 513
-          },
-          "end": {
-            "line": 13,
-            "column": 45,
-            "index": 558
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./deterministic/appsAllowlist.js",
-        "loc": {
-          "start": {
-            "line": 14,
-            "column": 0,
-            "index": 559
-          },
-          "end": {
-            "line": 19,
-            "column": 42,
-            "index": 703
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./deterministic/filesystem.js",
-        "loc": {
-          "start": {
-            "line": 20,
-            "column": 0,
-            "index": 704
-          },
-          "end": {
-            "line": 25,
-            "column": 39,
-            "index": 849
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./deterministic/greetings.js",
-        "loc": {
-          "start": {
-            "line": 26,
-            "column": 0,
-            "index": 850
-          },
-          "end": {
-            "line": 26,
-            "column": 58,
-            "index": 908
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./deterministic/webIntent.js",
-        "loc": {
-          "start": {
-            "line": 27,
-            "column": 0,
-            "index": 909
-          },
-          "end": {
-            "line": 27,
-            "column": 82,
-            "index": 991
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "./policies/actions.js",
-        "loc": {
-          "start": {
-            "line": 28,
-            "column": 0,
-            "index": 992
-          },
-          "end": {
-            "line": 28,
-            "column": 68,
-            "index": 1060
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../planner/triage.js",
-        "loc": {
-          "start": {
-            "line": 30,
-            "column": 0,
-            "index": 1062
-          },
-          "end": {
-            "line": 30,
-            "column": 61,
-            "index": 1123
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../planner/snapshot.js",
-        "loc": {
-          "start": {
-            "line": 31,
-            "column": 0,
-            "index": 1124
-          },
-          "end": {
-            "line": 31,
-            "column": 58,
-            "index": 1182
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../planner/planner.js",
-        "loc": {
-          "start": {
-            "line": 32,
-            "column": 0,
-            "index": 1183
-          },
-          "end": {
-            "line": 32,
-            "column": 61,
-            "index": 1244
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../planner/compiler.js",
-        "loc": {
-          "start": {
-            "line": 33,
-            "column": 0,
-            "index": 1245
-          },
-          "end": {
-            "line": 33,
-            "column": 65,
-            "index": 1310
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../actions/store.js",
-        "loc": {
-          "start": {
-            "line": 34,
-            "column": 0,
-            "index": 1311
-          },
-          "end": {
-            "line": 34,
-            "column": 51,
-            "index": 1362
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../utils/runlog.js",
-        "loc": {
-          "start": {
-            "line": 35,
-            "column": 0,
-            "index": 1363
-          },
-          "end": {
-            "line": 35,
-            "column": 52,
-            "index": 1415
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../services/plan/store.js",
-        "loc": {
-          "start": {
-            "line": 37,
-            "column": 0,
-            "index": 1417
-          },
-          "end": {
-            "line": 37,
-            "column": 89,
-            "index": 1506
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../services/web/webContext.js",
-        "loc": {
-          "start": {
-            "line": 39,
-            "column": 0,
-            "index": 1508
-          },
-          "end": {
-            "line": 43,
-            "column": 42,
-            "index": 1617
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../tools/index.js",
-        "loc": {
-          "start": {
-            "line": 45,
-            "column": 0,
-            "index": 1619
-          },
-          "end": {
-            "line": 45,
-            "column": 49,
-            "index": 1668
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../tools/registry.js",
-        "loc": {
-          "start": {
-            "line": 46,
-            "column": 0,
-            "index": 1669
-          },
-          "end": {
-            "line": 46,
-            "column": 65,
-            "index": 1734
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/legacy.js",
-        "source": "../../services/mind.js",
-        "loc": {
-          "start": {
-            "line": 48,
-            "column": 0,
-            "index": 1736
-          },
-          "end": {
-            "line": 61,
-            "column": 32,
-            "index": 2036
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/phase3.js",
-        "source": "crypto",
-        "loc": {
-          "start": {
-            "line": 9,
-            "column": 0,
-            "index": 308
-          },
-          "end": {
-            "line": 9,
-            "column": 28,
-            "index": 336
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/phase3.js",
-        "source": "fs",
-        "loc": {
-          "start": {
-            "line": 10,
-            "column": 0,
-            "index": 337
-          },
-          "end": {
-            "line": 10,
             "column": 20,
-            "index": 357
+            "index": 265
           }
         }
       },
       {
-        "file": "src/routes/chat/phase3.js",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
         "source": "path",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 8,
             "column": 0,
-            "index": 358
+            "index": 266
           },
           "end": {
-            "line": 11,
+            "line": 8,
             "column": 24,
-            "index": 382
+            "index": 290
           }
         }
       },
       {
-        "file": "src/routes/chat/phase3.js",
-        "source": "os",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "../../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 292
+          },
+          "end": {
+            "line": 10,
+            "column": 48,
+            "index": 340
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "../../../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 341
+          },
+          "end": {
+            "line": 11,
+            "column": 60,
+            "index": 401
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "../../../services/mind.js",
         "loc": {
           "start": {
             "line": 12,
             "column": 0,
-            "index": 383
+            "index": 402
           },
           "end": {
             "line": 12,
-            "column": 20,
-            "index": 403
+            "column": 62,
+            "index": 464
           }
         }
       },
       {
-        "file": "src/routes/chat/phase3.js",
-        "source": "../../services/ollama.js",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "../../../services/ollama.js",
         "loc": {
           "start": {
-            "line": 14,
+            "line": 13,
             "column": 0,
-            "index": 405
+            "index": 465
           },
           "end": {
-            "line": 14,
-            "column": 54,
-            "index": 459
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/phase3.js",
-        "source": "../../services/persona.js",
-        "loc": {
-          "start": {
-            "line": 15,
-            "column": 0,
-            "index": 460
-          },
-          "end": {
-            "line": 15,
+            "line": 13,
             "column": 57,
-            "index": 517
+            "index": 522
           }
         }
       },
       {
-        "file": "src/routes/chat/phase3.js",
-        "source": "../../actions/store.js",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "../../../tools/registry.js",
         "loc": {
           "start": {
-            "line": 17,
+            "line": 14,
             "column": 0,
-            "index": 519
+            "index": 523
           },
           "end": {
-            "line": 17,
-            "column": 65,
-            "index": 584
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/phase3.js",
-        "source": "../../actions/executor.js",
-        "loc": {
-          "start": {
-            "line": 18,
-            "column": 0,
-            "index": 585
-          },
-          "end": {
-            "line": 18,
+            "line": 14,
             "column": 58,
-            "index": 643
+            "index": 581
           }
         }
       },
       {
-        "file": "src/routes/chat/phase3.js",
-        "source": "../../utils/runlog.js",
+        "file": "src/routes/chat/workflows/fileEditFlow.js",
+        "source": "./pendingActions.js",
         "loc": {
           "start": {
-            "line": 19,
+            "line": 15,
             "column": 0,
-            "index": 644
+            "index": 582
           },
           "end": {
-            "line": 19,
-            "column": 52,
-            "index": 696
+            "line": 15,
+            "column": 55,
+            "index": 637
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/messages.js",
+        "source": "../../../services/persona.js",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 41
+          },
+          "end": {
+            "line": 2,
+            "column": 65,
+            "index": 106
           }
         }
       },
@@ -8121,17 +7542,17 @@
       },
       {
         "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "crypto",
+        "source": "../../../planner/planner.js",
         "loc": {
           "start": {
-            "line": 2,
+            "line": 10,
             "column": 0,
-            "index": 44
+            "index": 388
           },
           "end": {
-            "line": 2,
-            "column": 28,
-            "index": 72
+            "line": 10,
+            "column": 64,
+            "index": 452
           }
         }
       },
@@ -8140,30 +7561,14 @@
         "source": "../../../planner/snapshot.js",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 11,
             "column": 0,
-            "index": 74
+            "index": 453
           },
           "end": {
-            "line": 4,
+            "line": 11,
             "column": 61,
-            "index": 135
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../planner/planner.js",
-        "loc": {
-          "start": {
-            "line": 5,
-            "column": 0,
-            "index": 136
-          },
-          "end": {
-            "line": 5,
-            "column": 64,
-            "index": 200
+            "index": 514
           }
         }
       },
@@ -8172,78 +7577,94 @@
         "source": "../../../planner/compiler.js",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 12,
             "column": 0,
-            "index": 201
+            "index": 515
           },
           "end": {
-            "line": 6,
+            "line": 12,
             "column": 68,
-            "index": 269
+            "index": 583
           }
         }
       },
       {
         "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../tools/index.js",
+        "source": "./propose.js",
         "loc": {
           "start": {
-            "line": 8,
+            "line": 13,
             "column": 0,
-            "index": 271
+            "index": 584
           },
           "end": {
-            "line": 8,
-            "column": 52,
-            "index": 323
+            "line": 13,
+            "column": 45,
+            "index": 629
           }
         }
       },
       {
         "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../tools/registry.js",
+        "source": "../../../services/persona.js",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 14,
             "column": 0,
-            "index": 324
+            "index": 630
           },
           "end": {
-            "line": 9,
-            "column": 68,
-            "index": 392
+            "line": 14,
+            "column": 60,
+            "index": 690
           }
         }
       },
       {
         "file": "src/routes/chat/workflows/plannerFlow.js",
+        "source": "../../../services/mind.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 691
+          },
+          "end": {
+            "line": 15,
+            "column": 75,
+            "index": 766
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/propose.js",
+        "source": "crypto",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 41
+          },
+          "end": {
+            "line": 2,
+            "column": 28,
+            "index": 69
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/workflows/propose.js",
         "source": "../../../actions/store.js",
         "loc": {
           "start": {
-            "line": 11,
+            "line": 3,
             "column": 0,
-            "index": 394
+            "index": 71
           },
           "end": {
-            "line": 11,
-            "column": 54,
-            "index": 448
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../utils/runlog.js",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 449
-          },
-          "end": {
-            "line": 12,
-            "column": 55,
-            "index": 504
+            "line": 3,
+            "column": 73,
+            "index": 144
           }
         }
       },
@@ -8308,6 +7729,38 @@
             "line": 3,
             "column": 24,
             "index": 80
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 41
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 65
+          }
+        }
+      },
+      {
+        "file": "src/routes/chat/parsers/filesystem.js",
+        "source": "os",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 66
+          },
+          "end": {
+            "line": 3,
+            "column": 20,
+            "index": 86
           }
         }
       },
@@ -8520,6 +7973,230 @@
         }
       },
       {
+        "file": "src/mcp/client.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 59
+          },
+          "end": {
+            "line": 4,
+            "column": 20,
+            "index": 79
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 80
+          },
+          "end": {
+            "line": 5,
+            "column": 24,
+            "index": 104
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "source": "@modelcontextprotocol/sdk/client/index.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 106
+          },
+          "end": {
+            "line": 7,
+            "column": 67,
+            "index": 173
+          }
+        }
+      },
+      {
+        "file": "src/mcp/client.js",
+        "source": "@modelcontextprotocol/sdk/client/stdio.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 174
+          },
+          "end": {
+            "line": 8,
+            "column": 81,
+            "index": 255
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_fs.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 107
+          },
+          "end": {
+            "line": 4,
+            "column": 20,
+            "index": 127
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_fs.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 128
+          },
+          "end": {
+            "line": 5,
+            "column": 24,
+            "index": 152
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_fs.js",
+        "source": "@modelcontextprotocol/sdk/server/index.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 154
+          },
+          "end": {
+            "line": 7,
+            "column": 67,
+            "index": 221
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_fs.js",
+        "source": "@modelcontextprotocol/sdk/server/stdio.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 222
+          },
+          "end": {
+            "line": 8,
+            "column": 81,
+            "index": 303
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_fs.js",
+        "source": "@modelcontextprotocol/sdk/types.js",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 304
+          },
+          "end": {
+            "line": 12,
+            "column": 44,
+            "index": 408
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_web.js",
+        "source": "@modelcontextprotocol/sdk/server/index.js",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 93
+          },
+          "end": {
+            "line": 4,
+            "column": 67,
+            "index": 160
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_web.js",
+        "source": "@modelcontextprotocol/sdk/server/stdio.js",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 161
+          },
+          "end": {
+            "line": 5,
+            "column": 81,
+            "index": 242
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_web.js",
+        "source": "@modelcontextprotocol/sdk/types.js",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 243
+          },
+          "end": {
+            "line": 9,
+            "column": 44,
+            "index": 347
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_web.js",
+        "source": "../../tools/registry.js",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 349
+          },
+          "end": {
+            "line": 11,
+            "column": 55,
+            "index": 404
+          }
+        }
+      },
+      {
+        "file": "src/mcp/servers/local_web.js",
+        "source": "../../tools/builtins/web.js",
+        "loc": {
+          "start": {
+            "line": 12,
+            "column": 0,
+            "index": 405
+          },
+          "end": {
+            "line": 12,
+            "column": 37,
+            "index": 442
+          }
+        }
+      },
+      {
         "file": "src/indexer/indexer.js",
         "source": "fs",
         "loc": {
@@ -8700,14 +8377,14 @@
         "source": "fs",
         "loc": {
           "start": {
-            "line": 5,
+            "line": 9,
             "column": 0,
-            "index": 161
+            "index": 325
           },
           "end": {
-            "line": 5,
+            "line": 9,
             "column": 20,
-            "index": 181
+            "index": 345
           }
         }
       },
@@ -8716,14 +8393,30 @@
         "source": "path",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 10,
             "column": 0,
-            "index": 182
+            "index": 346
           },
           "end": {
-            "line": 6,
+            "line": 10,
             "column": 24,
-            "index": 206
+            "index": 370
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "os",
+        "loc": {
+          "start": {
+            "line": 11,
+            "column": 0,
+            "index": 371
+          },
+          "end": {
+            "line": 11,
+            "column": 20,
+            "index": 391
           }
         }
       },
@@ -8732,14 +8425,46 @@
         "source": "child_process",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 12,
             "column": 0,
-            "index": 207
+            "index": 392
           },
           "end": {
-            "line": 7,
+            "line": 12,
             "column": 38,
-            "index": 245
+            "index": 430
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "../utils/fsx.js",
+        "loc": {
+          "start": {
+            "line": 14,
+            "column": 0,
+            "index": 432
+          },
+          "end": {
+            "line": 14,
+            "column": 82,
+            "index": 514
+          }
+        }
+      },
+      {
+        "file": "src/actions/executor.js",
+        "source": "./store.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 515
+          },
+          "end": {
+            "line": 15,
+            "column": 43,
+            "index": 558
           }
         }
       },

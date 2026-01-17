@@ -44,12 +44,13 @@ function detectInspectionKindFromCmd(cmd) {
  * Collect ONLY inspection outputs that belong to THIS message.
  * This prevents old inspections from polluting the replanning loop.
  */
-function collectRunCmdOutputs(actions, currentMessage) {
+function collectFollowupInspectionOutputs(actions, currentMessage) {
   const cur = normalizeMsg(currentMessage);
 
   const out = [];
   for (const a of actions) {
-    if (!a || a.type !== "run_cmd") continue;
+    if (!a) continue;
+    if (a.type !== "run_cmd" && a.type !== "read_snippet") continue;
     if (a.status !== "done") continue;
 
     // must be a follow-up inspection
@@ -67,11 +68,14 @@ function collectRunCmdOutputs(actions, currentMessage) {
     const r = a.result?.result || a.result || {};
     const stdout = typeof r.stdout === "string" ? r.stdout : "";
     const stderr = typeof r.stderr === "string" ? r.stderr : "";
-    if (!stdout && !stderr) continue;
+    const text = typeof r.text === "string" ? r.text : "";
+    if (!stdout && !stderr && !text) continue;
 
-    const cmd = a.payload?.cmd || r.cmd || "";
+    const cmd = a.type === "run_cmd" ? a.payload?.cmd || r.cmd || "" : "read_snippet";
     const inspectionKind =
-      a.meta?.inspectionKind || detectInspectionKindFromCmd(cmd) || "other";
+      a.meta?.inspectionKind ||
+      (a.type === "read_snippet" ? "snippet" : detectInspectionKindFromCmd(cmd)) ||
+      "other";
 
     out.push({
       id: a.id,
@@ -79,6 +83,7 @@ function collectRunCmdOutputs(actions, currentMessage) {
       cmd,
       stdout,
       stderr,
+      text,
       updatedAt: a.updatedAt || a.createdAt || 0,
       inspectionKind,
     });
@@ -86,6 +91,39 @@ function collectRunCmdOutputs(actions, currentMessage) {
 
   out.sort((x, y) => (x.updatedAt || 0) - (y.updatedAt || 0));
   return out.slice(-6);
+}
+
+function parseRg(stdout) {
+  const lines = String(stdout || "").split(/\r?\n/);
+  const matches = [];
+  for (const line of lines) {
+    // Typical rg format: file:line:col:text OR file:line:text
+    const m = line.match(/^([^:\n\r]+):(\d+):(\d+):(.*)$/);
+    if (m) {
+      matches.push({ file: m[1], line: Number(m[2]), col: Number(m[3]), text: m[4] });
+      continue;
+    }
+    const m2 = line.match(/^([^:\n\r]+):(\d+):(.*)$/);
+    if (m2) {
+      matches.push({ file: m2[1], line: Number(m2[2]), col: 1, text: m2[3] });
+    }
+  }
+  return matches.slice(0, 200);
+}
+
+function parseSelectorsFromText(txt) {
+  const t = String(txt || "");
+  const selectors = new Set();
+  // class="a b" and id="x"
+  for (const m of t.matchAll(/\bclass\s*=\s*"([^"]{1,500})"/g)) {
+    const parts = String(m[1]).split(/\s+/g).filter(Boolean);
+    for (const p of parts) selectors.add(`.${p}`);
+  }
+  for (const m of t.matchAll(/\bid\s*=\s*"([^"]{1,200})"/g)) {
+    const id = String(m[1]).trim();
+    if (id) selectors.add(`#${id}`);
+  }
+  return Array.from(selectors).slice(0, 250);
 }
 
 function deriveInspectionStage(runCmdOutputs) {
@@ -109,8 +147,36 @@ export async function buildSnapshot({ message, lastIntent } = {}) {
   }
 
   const msg = String(message || "");
-  const runCmdOutputs = collectRunCmdOutputs(actions, msg);
+  const runCmdOutputs = collectFollowupInspectionOutputs(actions, msg);
   const inspectionStage = deriveInspectionStage(runCmdOutputs);
+
+  // Parse inspection outputs into structured facts for the planner/compiler.
+  const rgMatches = [];
+  const snippets = [];
+  const selectorsFound = new Set();
+
+  for (const o of runCmdOutputs) {
+    if (!o) continue;
+    if (o.inspectionKind === "rg") {
+      const matches = parseRg(o.stdout || "");
+      if (matches.length) rgMatches.push({ id: o.id, cmd: o.cmd, matches });
+      continue;
+    }
+
+    if (o.inspectionKind === "snippet") {
+      const text = o.text || o.stdout || "";
+      if (text) {
+        snippets.push({ id: o.id, title: o.title, text });
+        for (const s of parseSelectorsFromText(text)) selectorsFound.add(s);
+      }
+    }
+  }
+
+  const inspectionFacts = {
+    rgMatches,
+    snippets,
+    selectorsFound: Array.from(selectorsFound).slice(0, 250),
+  };
 
   // lightweight selector list (optional)
   const cssSelectors = [];
@@ -123,6 +189,27 @@ export async function buildSnapshot({ message, lastIntent } = {}) {
     }
   }
 
+  const uiFacts = {
+    cssFiles: [],
+    htmlFiles: [],
+  };
+  // Provide small grounded excerpts (not full repo) to help the planner
+  // select the right selector/file for UI changes.
+  if (typeof rawFiles["public/styles.css"] === "string") {
+    uiFacts.cssFiles.push({
+      path: "public/styles.css",
+      bytes: rawFiles["public/styles.css"].length,
+      text: rawFiles["public/styles.css"],
+    });
+  }
+  if (typeof rawFiles["public/index.html"] === "string") {
+    uiFacts.htmlFiles.push({
+      path: "public/index.html",
+      bytes: rawFiles["public/index.html"].length,
+      text: rawFiles["public/index.html"],
+    });
+  }
+
   return {
     message: msg,
     lastIntent: String(lastIntent || "chat"),
@@ -130,6 +217,8 @@ export async function buildSnapshot({ message, lastIntent } = {}) {
     rawFiles,
     runCmdOutputs,
     inspectionStage,
+    inspectionFacts,
     uiMapSummary: { cssSelectors },
+    uiFacts,
   };
 }

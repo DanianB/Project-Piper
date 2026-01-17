@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": 1767697124060,
-  "updatedAt": 1768024079669,
+  "updatedAt": 1768655613194,
   "opinions": {
     "topic:the color red": {
       "score": 0.24502950000000004,
@@ -97,11 +97,11 @@
     "dislikes": {},
     "updatedAt": 0
   },
-  "moodBaseline": 0.2979999999999999,
+  "moodBaseline": 0,
   "frustration": {
     "llm": 0,
     "tts": 0,
-    "task": 0.35
+    "task": 0
   },
   "lastExplicitAt": 0
 }
