@@ -12,7 +12,6 @@ import os from "os";
 import { spawn } from "child_process";
 
 import { safeResolve, ensureDirForFile, readTextIfExists } from "../utils/fsx.js";
-import { getActionById } from "./store.js";
 
 const _executing = new Set();
 const _executed = new Set();
@@ -309,62 +308,6 @@ async function executeCore(action, { dryRun = false } = {}) {
       fs.mkdirSync(abs, { recursive: true });
       console.log(`[executor] mkdir rel="${rel}"`);
       return { ok: true, result: { path: rel } };
-    }
-
-    // Roll back a previous file-mutating action by restoring its recorded backup.
-    // This allows conversational "undo" to be approval-gated via the normal /action/approve route.
-    if (type === "rollback") {
-      const targetId = String(payload?.id || "").trim();
-      if (!targetId) return { ok: false, error: "rollback missing payload.id" };
-
-      const prev = getActionById(targetId);
-      if (!prev) return { ok: false, error: `rollback unknown action id: ${targetId}` };
-
-      const info = prev?.result?.result || {};
-      const targetRel = info.path;
-      const backup = info.backup;
-      if (!targetRel || !backup) return { ok: false, error: "No rollback info available for that action" };
-
-      const restored = restoreBackup(backup, targetRel);
-      return { ok: true, result: { rolledBackId: targetId, ...restored } };
-    }
-
-    if (type === "read_snippet") {
-      const rel = String(payload?.path || "").trim();
-      if (!rel) return { ok: false, error: "read_snippet missing payload.path" };
-
-      const abs = safeResolve(rel);
-      if (!fs.existsSync(abs)) return { ok: false, error: `File not found: ${rel}` };
-
-      const maxBytes = 512 * 1024;
-      const stat = fs.statSync(abs);
-      if (stat.size > maxBytes) return { ok: false, error: `File too large (> ${maxBytes} bytes)` };
-
-      const content = fs.readFileSync(abs, "utf-8");
-      const lines = content.split(/\r?\n/);
-
-      const aroundLine = payload?.aroundLine != null ? Number(payload.aroundLine) : null;
-      const radius = payload?.radius != null ? Math.max(1, Number(payload.radius)) : 60;
-      const startLine = payload?.startLine != null ? Number(payload.startLine) : null;
-      const endLine = payload?.endLine != null ? Number(payload.endLine) : null;
-
-      let start = 1;
-      let end = Math.min(lines.length, 200);
-
-      if (Number.isFinite(startLine) && Number.isFinite(endLine)) {
-        start = Math.max(1, Math.min(lines.length, Math.trunc(startLine)));
-        end = Math.max(start, Math.min(lines.length, Math.trunc(endLine)));
-      } else if (Number.isFinite(aroundLine)) {
-        const mid = Math.max(1, Math.min(lines.length, Math.trunc(aroundLine)));
-        start = Math.max(1, mid - radius);
-        end = Math.min(lines.length, mid + radius);
-      }
-
-      const slice = lines.slice(start - 1, end).join("\n");
-      const header = `=== ${rel} (lines ${start}-${end} of ${lines.length}) ===\n`;
-      const text = header + slice;
-
-      return { ok: true, result: { path: rel, startLine: start, endLine: end, totalLines: lines.length, text }, stdout: text };
     }
 
     if (type === "run_cmd") {

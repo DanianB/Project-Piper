@@ -2,6 +2,9 @@
   "provider": "piper",
   "voice": "alba",
   "autoStartChatterbox": true,
+  "streaming": {
+    "mode": "pcm"
+  },
   "chatterbox": {
     "cfg_weight": 0.35,
     "exaggeration": 0.5,
@@ -12,5 +15,10 @@
     "max_new_tokens_mode": "estimate",
     "max_new_tokens_min": 140,
     "max_new_tokens_max": 550
+  },
+  "gemini": {
+    "model": "gemini-2.0-flash-exp",
+    "sampleRateHz": 24000,
+    "channels": 1
   }
 }

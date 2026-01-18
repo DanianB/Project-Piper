@@ -81,47 +81,6 @@ function detectInspectionKindFromCmd(cmd) {
   return "other";
 }
 
-function safeRgQueryFromMessage(message) {
-  const raw = String(message || "");
-  const lower = raw.toLowerCase();
-
-  // Small, targeted boost for common UI labels/controls.
-  // This is NOT keyword triage; it only improves inspection usefulness.
-  if (/\boff\b/.test(lower) && /\bbutton\b/.test(lower)) {
-    return [
-      "off\\b",
-      "power\\b",
-      "shutdown\\b",
-      "offbtn",
-      "btnoff",
-      "off-button",
-      "btn-off",
-      "powerbtn",
-      "shutdownbtn",
-      "#off",
-      "\\.off",
-      "\\bOFF\\b",
-    ].join("|");
-  }
-
-  const words = lower
-    .toLowerCase()
-    .replace(/[^a-z0-9_\s-]/g, " ")
-    .split(/\s+/g)
-    .filter(Boolean)
-    .filter((w) => w.length >= 3 && w.length <= 24);
-
-  const unique = [];
-  const seen = new Set();
-  for (const w of words) {
-    if (seen.has(w)) continue;
-    seen.add(w);
-    unique.push(w);
-    if (unique.length >= 6) break;
-  }
-  return unique.length ? unique.join("|") : "piper";
-}
-
 function stripDecl(body, prop) {
   const p = String(prop || "").trim();
   if (!p) return body;
@@ -551,36 +510,12 @@ function queueEscalationInspection({ snapshot, reason }) {
     reason ||
     "I can’t form a deterministic patch yet; I need more grounding context.";
 
-  // If we already have a snippet but still can't act, keep forward motion by
-  // proposing a broader grounded inspection (still approval-gated), rather than
-  // bouncing back to "tell me the file/selector".
+  // If we already have a snippet, do not loop; ask for clarification
   if (stage.hasSnippet) {
-    const q = safeRgQueryFromMessage(msg);
-    const rg = compileRunCmdOp({
-      snapshot,
-      op: {
-        op: "run_cmd",
-        cmd: `rg -n "${q}" src public`,
-        timeoutMs: 12000,
-        why: baseWhy,
-      },
-    });
-
-    if (rg.action) {
-      return {
-        done: false,
-        reply:
-          "I still need a bit more grounding to make a deterministic patch. I’ll broaden the inspection next, sir.",
-        actions: [rg.action],
-        stage: { escalated: true, step: step + 1 },
-      };
-    }
-
-    // If we can't even queue rg, stop safely.
     return {
       done: true,
       reply:
-        "I can’t proceed safely without more grounded context. Please paste the relevant file section, sir.",
+        "I inspected the relevant files but still can’t form a deterministic patch safely. Can you tell me exactly which file/section to change (or paste the relevant block), sir?",
       actions: [],
       stage: { escalated: true, step, stopped: true },
     };
@@ -622,12 +557,11 @@ function queueEscalationInspection({ snapshot, reason }) {
   }
 
   // Otherwise start with rg over likely places
-  const q = safeRgQueryFromMessage(msg);
   const rg = compileRunCmdOp({
     snapshot,
     op: {
       op: "run_cmd",
-      cmd: `rg -n "${q}" src public`,
+      cmd: 'rg -n "Desktop|Downloads|Documents|mkdir\\(|write_file|known:desktop|known:downloads|known:documents" src public',
       timeoutMs: 12000,
       why: baseWhy,
     },
@@ -695,57 +629,6 @@ export function compilePlanToActions({ snapshot, plan }) {
     if (built?.noop) noopCount += 1;
     if (built?.needsMoreContext) needsMoreContext = true;
     if (built?.action) compiled.push(built.action);
-  }
-
-  // -------------------------
-  // Deterministic UI grounding helpers
-  // -------------------------
-  // If the LLM returned no ops but the repo already contains an obvious grounded
-  // target in allowlisted files, propose a safe, minimal patch instead of
-  // jumping straight to repo-wide inspection.
-  // This stays general (no keyword lists for triage) and only activates when
-  // the user clearly asks for a title change AND the allowlisted HTML has a <title>.
-  if (compiled.length === 0 && needsApproval) {
-    const msg = String(snapshot?.message || plan?.message || "");
-    const wantsTitle = /\b(page\s+title|title)\b/i.test(msg);
-    const quoted = msg.match(/"([^"]{1,80})"|'([^']{1,80})'/);
-    const desired = quoted ? (quoted[1] || quoted[2] || "").trim() : "";
-    const html = snapshot?.rawFiles?.["public/index.html"];
-
-    if (wantsTitle && desired && typeof html === "string") {
-      const m = html.match(/<title>([\s\S]{0,200}?)<\/title>/i);
-      if (m) {
-        const oldInner = String(m[1] || "");
-        const oldTag = `<title>${oldInner}</title>`;
-        const newTag = `<title>${desired}</title>`;
-
-        // Only propose if it would actually change something.
-        if (oldTag !== newTag) {
-          return {
-            done: false,
-            reply: plan?.reply || "I’ve prepared a small, reviewable patch for approval, sir.",
-            actions: [
-              {
-                type: "apply_patch",
-                title: "Patch: public/index.html",
-                reason: "Update the page <title> tag to match your request.",
-                payload: {
-                  path: "public/index.html",
-                  edits: [
-                    {
-                      find: oldTag,
-                      replace: newTag,
-                      mode: "once",
-                    },
-                  ],
-                },
-              },
-            ],
-            stage: plan?.stage || {},
-          };
-        }
-      }
-    }
   }
 
   // If approval is expected but we produced nothing actionable, do NOT

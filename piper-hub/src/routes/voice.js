@@ -9,8 +9,10 @@ import {
   listVoices,
   ensureChatterboxRunning,
   getChatterboxStatus,
+  synthesizeWavBuffer,
 } from "../services/voice/tts.js";
 import { recordEvent } from "../services/mind.js";
+import { streamChatterboxPcmToHttp } from "../services/voice/chatterbox_stream.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -44,7 +46,7 @@ export function voiceRoutes() {
 
   r.get("/voice/voices", (_req, res) => res.json(listVoices()));
 
-  // ---- Speak ----
+  // ---- Speak (returns audio for browser playback) ----
   r.post("/voice/speak", async (req, res) => {
     try {
       const {
@@ -75,7 +77,10 @@ export function voiceRoutes() {
         await ensureChatterboxRunning();
       }
 
-      await speakQueued(String(text || ""), { emotion, intensity });
+      const wav = await synthesizeWavBuffer(String(text || ""), {
+        emotion,
+        intensity,
+      });
 
       if (sessionId)
         recordEvent(sessionId, "tts_success", {
@@ -84,12 +89,49 @@ export function voiceRoutes() {
           chars: String(text || "").length,
         });
 
-      res.json({ ok: true });
+      // Return WAV bytes so the browser can play them.
+      res.setHeader("Content-Type", "audio/wav");
+      res.setHeader("Cache-Control", "no-store");
+      res.status(200).send(Buffer.from(wav));
     } catch (e) {
       // Don’t hard-fail the UI—report error but keep HTTP 200.
-      return res
-        .status(200)
-        .json({ ok: false, error: String(e?.message || e) });
+      return res.status(200).json({ ok: false, error: String(e?.message || e) });
+    }
+  });
+
+  // ---- True streaming (PCM16LE framed stream) ----
+  r.post("/voice/stream", async (req, res) => {
+    try {
+      const { text = "", emotion = "neutral", intensity = 0.4 } = req.body || {};
+      const cfg = getVoiceConfig();
+
+      // Ensure chatterbox is running if selected.
+      if ((cfg?.provider || "piper") === "chatterbox") {
+        if (Boolean(cfg?.autoStartChatterbox)) {
+          const r0 = await startChatterboxProcess();
+          if (!r0?.ok) {
+            return res.status(500).json({ ok: false, error: `Chatterbox failed to start: ${r0?.error || "unknown"}` });
+          }
+        }
+        await ensureChatterboxRunning();
+      }
+
+      res.setHeader("Content-Type", "application/octet-stream");
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("X-Audio-Format", "pcm_s16le");
+      res.setHeader("X-Audio-Sample-Rate", String(Number(process.env.CHATTERBOX_STREAM_SR || "24000")));
+      res.setHeader("X-Audio-Channels", "1");
+
+      await streamChatterboxPcmToHttp({
+        text: String(text || ""),
+        emotion,
+        intensity,
+        res,
+      });
+    } catch (e) {
+      try {
+        res.status(500).end();
+      } catch {}
     }
   });
 

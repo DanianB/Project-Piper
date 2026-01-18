@@ -23,6 +23,13 @@ const DEFAULT_CFG = {
   provider: "piper",
   voice: "amy",
   autoStartChatterbox: false,
+  // streaming.mode:
+  //  - "chunked" : non-streaming (text chunking) - legacy
+  //  - "pcm"     : true PCM streaming via /voice/stream (Phase 2B)
+  streaming: {
+    mode: "chunked",
+    maxChunkChars: 220,
+  },
   chatterbox: {
     cfg_weight: 0.35,
     exaggeration: 0.5,
@@ -71,6 +78,20 @@ export function setVoiceConfig(patch = {}) {
     };
   } else {
     next.chatterbox = prev.chatterbox || DEFAULT_CFG.chatterbox;
+  }
+
+  if (
+    patch &&
+    typeof patch === "object" &&
+    patch.streaming &&
+    typeof patch.streaming === "object"
+  ) {
+    next.streaming = {
+      ...(prev.streaming || DEFAULT_CFG.streaming),
+      ...(patch.streaming || {}),
+    };
+  } else {
+    next.streaming = prev.streaming || DEFAULT_CFG.streaming;
   }
 
   next.provider = next.provider === "chatterbox" ? "chatterbox" : "piper";
@@ -555,4 +576,27 @@ export function speakQueued(text, meta = {}) {
   });
 
   return ttsQueue;
+}
+
+// --- Browser playback helper ---
+// Returns a WAV buffer for the current provider/voice, without playing audio server-side.
+export async function synthesizeWavBuffer(text, meta = {}) {
+  const cfg = getVoiceConfig();
+  const provider = cfg.provider || "piper";
+  const voice = cfg.voice || (provider === "chatterbox" ? "default" : "amy");
+
+  const emotion = normalizeEmotion(meta?.emotion ?? "neutral");
+  const intensity = clamp01(meta?.intensity ?? 0.4);
+
+  const spoken = makeSpoken(String(text || ""), emotion, intensity);
+
+  let wavPath;
+  if (provider === "chatterbox") {
+    wavPath = await runChatterboxToWav(spoken, voice, { emotion, intensity });
+  } else {
+    wavPath = await runPiperToWav(spoken, voice);
+  }
+
+  const buf = fs.readFileSync(wavPath);
+  return buf;
 }

@@ -5,7 +5,7 @@
 # - Keeps window open if startup fails so you can read errors
 # ---- Chatterbox auto-start configuration ----
 $env:CHATTERBOX_AUTOSTART = "true"
-$env:CHATTERBOX_CONDA_ENV = "chatterbox"
+$env:CHATTERBOX_CONDA_ENV = "chatterbox_clean"
 $env:CHATTERBOX_HOST = "127.0.0.1"
 $env:CHATTERBOX_PORT = "4123"
 $env:CHATTERBOX_PROMPT_WAV = "D:\AI\piper-tts\voices\Piper-Default-Voice.wav"

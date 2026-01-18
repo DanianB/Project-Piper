@@ -9,9 +9,6 @@ export function isWebSearchIntent(msg = "") {
     s.startsWith("look up") ||
     s.startsWith("google") ||
     s.startsWith("find online") ||
-    // Polite / mid-sentence forms
-    s.includes("search the web") ||
-    s.includes("search online") ||
     s.includes("search the web for") ||
     s.includes("look this up") ||
     s.includes("browse the web")

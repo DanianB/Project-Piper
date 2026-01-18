@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-17T13:42:22.659Z",
+  "generatedAt": "2026-01-18T06:31:55.184Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -152,7 +152,30 @@
       {
         "file": "public/index.html",
         "tag": "input",
-        "id": "devMode",
+        "id": "dryRun",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "debugEmotion",
         "classes": [],
         "text": null
       },
@@ -1886,18 +1909,6 @@
         "properties": [
           "border-color"
         ]
-      },
-      {
-        "file": "public/styles.css",
-        "selector": ".msg.me .bubble",
-        "specificity": [
-          0,
-          3,
-          0
-        ],
-        "properties": [
-          "background"
-        ]
       }
     ]
   },
@@ -2958,6 +2969,23 @@
         }
       },
       {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "name": "streamChatterboxPcmToHttp",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 19,
+            "column": 0,
+            "index": 516
+          },
+          "end": {
+            "line": 86,
+            "column": 1,
+            "index": 2061
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "name": "transcribeAudioBuffer",
         "kind": "function",
@@ -2980,14 +3008,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 41,
+            "line": 48,
             "column": 0,
-            "index": 1136
+            "index": 1349
           },
           "end": {
-            "line": 56,
+            "line": 63,
             "column": 1,
-            "index": 1557
+            "index": 1770
           }
         }
       },
@@ -2997,14 +3025,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 58,
+            "line": 65,
             "column": 0,
-            "index": 1559
+            "index": 1772
           },
           "end": {
-            "line": 86,
+            "line": 107,
             "column": 1,
-            "index": 2391
+            "index": 2920
           }
         }
       },
@@ -3014,14 +3042,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 269,
+            "line": 290,
             "column": 0,
-            "index": 8064
+            "index": 8593
           },
           "end": {
-            "line": 304,
+            "line": 325,
             "column": 1,
-            "index": 8995
+            "index": 9524
           }
         }
       },
@@ -3031,14 +3059,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 306,
+            "line": 327,
             "column": 0,
-            "index": 8997
+            "index": 9526
           },
           "end": {
-            "line": 314,
+            "line": 335,
             "column": 1,
-            "index": 9312
+            "index": 9841
           }
         }
       },
@@ -3048,14 +3076,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 496,
+            "line": 517,
             "column": 0,
-            "index": 14607
+            "index": 15136
           },
           "end": {
-            "line": 506,
+            "line": 527,
             "column": 1,
-            "index": 14925
+            "index": 15454
           }
         }
       },
@@ -3065,14 +3093,65 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 510,
+            "line": 531,
             "column": 0,
-            "index": 14962
+            "index": 15491
           },
           "end": {
-            "line": 558,
+            "line": 579,
             "column": 1,
-            "index": 16296
+            "index": 16825
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "synthesizeWavBuffer",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 583,
+            "column": 0,
+            "index": 16953
+          },
+          "end": {
+            "line": 602,
+            "column": 1,
+            "index": 17607
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini.js",
+        "name": "runGeminiToWav",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 242
+          },
+          "end": {
+            "line": 59,
+            "column": 1,
+            "index": 1797
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini_tts.js",
+        "name": "runGeminiToWav",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 48,
+            "column": 0,
+            "index": 1459
+          },
+          "end": {
+            "line": 97,
+            "column": 1,
+            "index": 3265
           }
         }
       },
@@ -3174,7 +3253,7 @@
           "end": {
             "line": 282,
             "column": 1,
-            "index": 8080
+            "index": 8041
           }
         }
       },
@@ -3303,14 +3382,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 17,
+            "line": 19,
             "column": 0,
-            "index": 477
+            "index": 584
           },
           "end": {
-            "line": 117,
+            "line": 159,
             "column": 1,
-            "index": 3439
+            "index": 4981
           }
         }
       },
@@ -3337,14 +3416,14 @@
         "kind": "default",
         "loc": {
           "start": {
-            "line": 381,
+            "line": 57,
             "column": 0,
-            "index": 13273
+            "index": 1552
           },
           "end": {
-            "line": 381,
+            "line": 57,
             "column": 22,
-            "index": 13295
+            "index": 1574
           }
         }
       },
@@ -3354,14 +3433,14 @@
         "kind": "variable",
         "loc": {
           "start": {
-            "line": 382,
+            "line": 58,
             "column": 0,
-            "index": 13296
+            "index": 1575
           },
           "end": {
-            "line": 382,
+            "line": 58,
             "column": 34,
-            "index": 13330
+            "index": 1609
           }
         }
       },
@@ -3441,12 +3520,12 @@
           "start": {
             "line": 28,
             "column": 0,
-            "index": 980
+            "index": 991
           },
           "end": {
-            "line": 75,
+            "line": 74,
             "column": 1,
-            "index": 2373
+            "index": 2391
           }
         }
       },
@@ -3558,14 +3637,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 59,
+            "line": 11,
             "column": 0,
-            "index": 2202
+            "index": 383
           },
           "end": {
-            "line": 154,
+            "line": 75,
             "column": 1,
-            "index": 5244
+            "index": 2113
           }
         }
       },
@@ -3575,14 +3654,14 @@
         "kind": "default",
         "loc": {
           "start": {
-            "line": 156,
+            "line": 77,
             "column": 0,
-            "index": 5246
+            "index": 2115
           },
           "end": {
-            "line": 156,
+            "line": 77,
             "column": 30,
-            "index": 5276
+            "index": 2145
           }
         }
       },
@@ -3733,9 +3812,9 @@
             "index": 107
           },
           "end": {
-            "line": 19,
+            "line": 16,
             "column": 1,
-            "index": 603
+            "index": 497
           }
         }
       },
@@ -3745,14 +3824,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 21,
+            "line": 18,
             "column": 0,
-            "index": 605
+            "index": 499
           },
           "end": {
-            "line": 28,
+            "line": 25,
             "column": 1,
-            "index": 944
+            "index": 838
           }
         }
       },
@@ -4017,14 +4096,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 655,
+            "line": 589,
             "column": 0,
-            "index": 17332
+            "index": 15784
           },
           "end": {
-            "line": 779,
+            "line": 662,
             "column": 1,
-            "index": 21584
+            "index": 18053
           }
         }
       },
@@ -4068,14 +4147,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 139,
+            "line": 101,
             "column": 0,
-            "index": 4135
+            "index": 2833
           },
           "end": {
-            "line": 224,
+            "line": 157,
             "column": 1,
-            "index": 6583
+            "index": 4460
           }
         }
       },
@@ -4090,9 +4169,9 @@
             "index": 258
           },
           "end": {
-            "line": 71,
+            "line": 58,
             "column": 1,
-            "index": 2113
+            "index": 1588
           }
         }
       },
@@ -4748,14 +4827,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 430,
+            "line": 373,
             "column": 0,
-            "index": 14866
+            "index": 12220
           },
           "end": {
-            "line": 432,
+            "line": 375,
             "column": 1,
-            "index": 14960
+            "index": 12314
           }
         }
       },
@@ -4765,14 +4844,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 434,
+            "line": 377,
             "column": 0,
-            "index": 14962
+            "index": 12316
           },
           "end": {
-            "line": 448,
+            "line": 391,
             "column": 1,
-            "index": 15534
+            "index": 12888
           }
         }
       },
@@ -5063,7 +5142,7 @@
           "end": {
             "line": 256,
             "column": 4,
-            "index": 7397
+            "index": 7358
           }
         }
       },
@@ -5075,12 +5154,12 @@
           "start": {
             "line": 261,
             "column": 2,
-            "index": 7512
+            "index": 7473
           },
           "end": {
             "line": 279,
             "column": 4,
-            "index": 8064
+            "index": 8025
           }
         }
       },
@@ -5243,14 +5322,14 @@
         "path": "/voice/transcribe",
         "loc": {
           "start": {
-            "line": 21,
+            "line": 23,
             "column": 2,
-            "index": 553
+            "index": 660
           },
           "end": {
-            "line": 31,
+            "line": 33,
             "column": 4,
-            "index": 972
+            "index": 1079
           }
         }
       },
@@ -5260,14 +5339,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 34,
+            "line": 36,
             "column": 2,
-            "index": 1005
+            "index": 1112
           },
           "end": {
-            "line": 34,
+            "line": 36,
             "column": 67,
-            "index": 1070
+            "index": 1177
           }
         }
       },
@@ -5277,14 +5356,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 36,
+            "line": 38,
             "column": 2,
-            "index": 1075
+            "index": 1182
           },
           "end": {
-            "line": 43,
+            "line": 45,
             "column": 4,
-            "index": 1323
+            "index": 1430
           }
         }
       },
@@ -5294,14 +5373,14 @@
         "path": "/voice/voices",
         "loc": {
           "start": {
-            "line": 45,
+            "line": 47,
             "column": 2,
-            "index": 1328
+            "index": 1435
           },
           "end": {
-            "line": 45,
+            "line": 47,
             "column": 63,
-            "index": 1389
+            "index": 1496
           }
         }
       },
@@ -5311,14 +5390,31 @@
         "path": "/voice/speak",
         "loc": {
           "start": {
-            "line": 48,
+            "line": 50,
             "column": 2,
-            "index": 1415
+            "index": 1559
           },
           "end": {
-            "line": 94,
+            "line": 100,
             "column": 4,
-            "index": 2828
+            "index": 3169
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "method": "post",
+        "path": "/voice/stream",
+        "loc": {
+          "start": {
+            "line": 103,
+            "column": 2,
+            "index": 3228
+          },
+          "end": {
+            "line": 136,
+            "column": 4,
+            "index": 4370
           }
         }
       },
@@ -5328,14 +5424,14 @@
         "path": "/voice/chatterbox/start",
         "loc": {
           "start": {
-            "line": 97,
+            "line": 139,
             "column": 2,
-            "index": 2867
+            "index": 4409
           },
           "end": {
-            "line": 105,
+            "line": 147,
             "column": 4,
-            "index": 3160
+            "index": 4702
           }
         }
       },
@@ -5345,14 +5441,14 @@
         "path": "/voice/chatterbox/status",
         "loc": {
           "start": {
-            "line": 107,
+            "line": 149,
             "column": 2,
-            "index": 3165
+            "index": 4707
           },
           "end": {
-            "line": 114,
+            "line": 156,
             "column": 4,
-            "index": 3423
+            "index": 4965
           }
         }
       },
@@ -5362,14 +5458,14 @@
         "path": "/chat",
         "loc": {
           "start": {
-            "line": 119,
+            "line": 11,
             "column": 0,
-            "index": 4126
+            "index": 384
           },
           "end": {
-            "line": 379,
+            "line": 55,
             "column": 2,
-            "index": 13270
+            "index": 1549
           }
         }
       },
@@ -6305,6 +6401,54 @@
         }
       },
       {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 174
+          },
+          "end": {
+            "line": 5,
+            "column": 38,
+            "index": 212
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 213
+          },
+          "end": {
+            "line": 6,
+            "column": 24,
+            "index": 237
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 238
+          },
+          "end": {
+            "line": 7,
+            "column": 47,
+            "index": 285
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "source": "fs",
         "loc": {
@@ -6461,6 +6605,86 @@
             "line": 7,
             "column": 70,
             "index": 263
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 21
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 45
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini.js",
+        "source": "../../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 3,
+            "column": 0,
+            "index": 46
+          },
+          "end": {
+            "line": 3,
+            "column": 50,
+            "index": 96
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini_tts.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 1,
+            "column": 0,
+            "index": 0
+          },
+          "end": {
+            "line": 1,
+            "column": 20,
+            "index": 20
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/providers/gemini_tts.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 2,
+            "column": 0,
+            "index": 21
+          },
+          "end": {
+            "line": 2,
+            "column": 24,
+            "index": 45
           }
         }
       },
@@ -6954,9 +7178,9 @@
             "index": 205
           },
           "end": {
-            "line": 12,
+            "line": 13,
             "column": 34,
-            "index": 363
+            "index": 386
           }
         }
       },
@@ -6965,14 +7189,30 @@
         "source": "../services/mind.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 14,
             "column": 0,
-            "index": 364
+            "index": 387
           },
           "end": {
-            "line": 13,
+            "line": 14,
             "column": 50,
-            "index": 414
+            "index": 437
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "../services/voice/chatterbox_stream.js",
+        "loc": {
+          "start": {
+            "line": 15,
+            "column": 0,
+            "index": 438
+          },
+          "end": {
+            "line": 15,
+            "column": 83,
+            "index": 521
           }
         }
       },
@@ -6994,7 +7234,7 @@
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "path",
+        "source": "../../services/persona.js",
         "loc": {
           "start": {
             "line": 3,
@@ -7003,40 +7243,8 @@
           },
           "end": {
             "line": 3,
-            "column": 24,
-            "index": 85
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "os",
-        "loc": {
-          "start": {
-            "line": 4,
-            "column": 0,
-            "index": 86
-          },
-          "end": {
-            "line": 4,
-            "column": 20,
-            "index": 106
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../services/persona.js",
-        "loc": {
-          "start": {
-            "line": 6,
-            "column": 0,
-            "index": 108
-          },
-          "end": {
-            "line": 6,
             "column": 57,
-            "index": 165
+            "index": 118
           }
         }
       },
@@ -7045,14 +7253,14 @@
         "source": "../../services/mind.js",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 4,
             "column": 0,
-            "index": 166
+            "index": 119
           },
           "end": {
-            "line": 7,
+            "line": 4,
             "column": 59,
-            "index": 225
+            "index": 178
           }
         }
       },
@@ -7061,30 +7269,14 @@
         "source": "../../planner/triage.js",
         "loc": {
           "start": {
-            "line": 9,
+            "line": 5,
             "column": 0,
-            "index": 227
+            "index": 179
           },
           "end": {
-            "line": 9,
+            "line": 5,
             "column": 61,
-            "index": 288
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/chatFlow.js",
-        "loc": {
-          "start": {
-            "line": 11,
-            "column": 0,
-            "index": 290
-          },
-          "end": {
-            "line": 11,
-            "column": 50,
-            "index": 340
+            "index": 240
           }
         }
       },
@@ -7093,142 +7285,30 @@
         "source": "./workflows/plannerFlow.js",
         "loc": {
           "start": {
-            "line": 12,
+            "line": 6,
             "column": 0,
-            "index": 341
+            "index": 241
           },
           "end": {
-            "line": 12,
+            "line": 6,
             "column": 56,
-            "index": 397
+            "index": 297
           }
         }
       },
       {
         "file": "src/routes/chat/handler.js",
-        "source": "./workflows/fileEditFlow.js",
+        "source": "./workflows/chatFlow.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 7,
             "column": 0,
-            "index": 398
+            "index": 298
           },
           "end": {
-            "line": 13,
-            "column": 59,
-            "index": 457
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/propose.js",
-        "loc": {
-          "start": {
-            "line": 14,
-            "column": 0,
-            "index": 458
-          },
-          "end": {
-            "line": 14,
-            "column": 55,
-            "index": 513
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./workflows/webFlow.js",
-        "loc": {
-          "start": {
-            "line": 16,
-            "column": 0,
-            "index": 515
-          },
-          "end": {
-            "line": 16,
-            "column": 114,
-            "index": 629
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./parsers/webIntent.js",
-        "loc": {
-          "start": {
-            "line": 17,
-            "column": 0,
-            "index": 630
-          },
-          "end": {
-            "line": 17,
-            "column": 59,
-            "index": 689
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./parsers/apps.js",
-        "loc": {
-          "start": {
-            "line": 18,
-            "column": 0,
-            "index": 690
-          },
-          "end": {
-            "line": 18,
-            "column": 101,
-            "index": 791
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "./parsers/filesystem.js",
-        "loc": {
-          "start": {
-            "line": 19,
-            "column": 0,
-            "index": 792
-          },
-          "end": {
-            "line": 24,
-            "column": 33,
-            "index": 931
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../actions/store.js",
-        "loc": {
-          "start": {
-            "line": 26,
-            "column": 0,
-            "index": 933
-          },
-          "end": {
-            "line": 26,
-            "column": 65,
-            "index": 998
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/handler.js",
-        "source": "../../actions/executor.js",
-        "loc": {
-          "start": {
-            "line": 27,
-            "column": 0,
-            "index": 999
-          },
-          "end": {
-            "line": 27,
-            "column": 58,
-            "index": 1057
+            "line": 7,
+            "column": 50,
+            "index": 348
           }
         }
       },
@@ -7271,12 +7351,12 @@
           "start": {
             "line": 8,
             "column": 0,
-            "index": 267
+            "index": 293
           },
           "end": {
             "line": 8,
             "column": 57,
-            "index": 324
+            "index": 350
           }
         }
       },
@@ -7287,12 +7367,12 @@
           "start": {
             "line": 9,
             "column": 0,
-            "index": 325
+            "index": 351
           },
           "end": {
             "line": 9,
             "column": 65,
-            "index": 390
+            "index": 416
           }
         }
       },
@@ -7303,12 +7383,12 @@
           "start": {
             "line": 10,
             "column": 0,
-            "index": 391
+            "index": 417
           },
           "end": {
             "line": 10,
             "column": 90,
-            "index": 481
+            "index": 507
           }
         }
       },
@@ -7319,12 +7399,12 @@
           "start": {
             "line": 11,
             "column": 0,
-            "index": 482
+            "index": 508
           },
           "end": {
             "line": 11,
-            "column": 74,
-            "index": 556
+            "column": 59,
+            "index": 567
           }
         }
       },
@@ -7541,62 +7621,14 @@
         "source": "../../../planner/planner.js",
         "loc": {
           "start": {
-            "line": 10,
+            "line": 2,
             "column": 0,
-            "index": 388
+            "index": 44
           },
           "end": {
-            "line": 10,
+            "line": 2,
             "column": 64,
-            "index": 452
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../planner/snapshot.js",
-        "loc": {
-          "start": {
-            "line": 11,
-            "column": 0,
-            "index": 453
-          },
-          "end": {
-            "line": 11,
-            "column": 61,
-            "index": 514
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "../../../planner/compiler.js",
-        "loc": {
-          "start": {
-            "line": 12,
-            "column": 0,
-            "index": 515
-          },
-          "end": {
-            "line": 12,
-            "column": 68,
-            "index": 583
-          }
-        }
-      },
-      {
-        "file": "src/routes/chat/workflows/plannerFlow.js",
-        "source": "./propose.js",
-        "loc": {
-          "start": {
-            "line": 13,
-            "column": 0,
-            "index": 584
-          },
-          "end": {
-            "line": 13,
-            "column": 45,
-            "index": 629
+            "index": 108
           }
         }
       },
@@ -7605,14 +7637,14 @@
         "source": "../../../services/persona.js",
         "loc": {
           "start": {
-            "line": 14,
+            "line": 3,
             "column": 0,
-            "index": 630
+            "index": 109
           },
           "end": {
-            "line": 14,
+            "line": 3,
             "column": 60,
-            "index": 690
+            "index": 169
           }
         }
       },
@@ -7621,14 +7653,14 @@
         "source": "../../../services/mind.js",
         "loc": {
           "start": {
-            "line": 15,
+            "line": 4,
             "column": 0,
-            "index": 691
+            "index": 170
           },
           "end": {
-            "line": 15,
+            "line": 4,
             "column": 75,
-            "index": 766
+            "index": 245
           }
         }
       },
@@ -8445,22 +8477,6 @@
             "line": 14,
             "column": 82,
             "index": 514
-          }
-        }
-      },
-      {
-        "file": "src/actions/executor.js",
-        "source": "./store.js",
-        "loc": {
-          "start": {
-            "line": 15,
-            "column": 0,
-            "index": 515
-          },
-          "end": {
-            "line": 15,
-            "column": 43,
-            "index": 558
           }
         }
       },

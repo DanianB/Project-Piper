@@ -12,11 +12,6 @@ import { callOllama, extractFirstJsonObject } from "../services/ollama.js";
 export async function triageNeedsPlanner({ message, lastIntent }) {
   const m = String(message || "").trim();
 
-  // Deterministic greetings stay in chat mode (avoid LLM misclassification)
-  if (/^(hi|hey|hello|yo|g'day|good (morning|afternoon|evening))\b/i.test(m)) {
-    return { mode: "chat", action: "greet", confidence: 1 };
-  }
-
   // Hard commands
   if (/^(restart|reload)\b/i.test(m)) {
     return { mode: "plan", action: "restart", confidence: 1 };
@@ -30,14 +25,6 @@ export async function triageNeedsPlanner({ message, lastIntent }) {
     /^(please\s+)?(change|set|update|modify|make|add|remove|fix|edit|open|create|write|search)\b/i.test(
       m
     )
-  ) {
-    return { mode: "plan", action: "do", confidence: 0.9 };
-  }
-
-  // Polite action-questions are still plan ("Can you…", "Could you please…")
-  if (
-    /^(can|could|would|will)\s+you\b/i.test(m) &&
-    /\b(change|set|update|modify|make|add|remove|fix|edit|open|create|write|search)\b/i.test(m)
   ) {
     return { mode: "plan", action: "do", confidence: 0.9 };
   }
