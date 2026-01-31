@@ -13,7 +13,6 @@ import { toolsRoutes } from "./routes/tools.js";
 import { deviceRoutes } from "./routes/devices.js";
 import { blocksRoutes } from "./routes/blocks.js";
 import { buildCodebaseIndex } from "./indexer/indexer.js";
-import { startChatterboxProcess, stopChatterboxProcess } from "./services/chatterbox_manager.js";
 
 const app = express();
 const PORT = DEFAULT_PORT;
@@ -55,9 +54,7 @@ async function gracefulShutdown(reason, exitCode = 0, writeOffFlag = false) {
     console.log("[server] shutdown", { reason, exitCode, writeOffFlag });
 
     try {
-      await stopChatterboxProcess();
     } catch (e) {
-      console.warn("[server] stopChatterboxProcess failed:", e?.message || e);
     }
 
     await closeServer();
@@ -92,17 +89,6 @@ try {
   console.warn("⚠️ Codebase index failed:", e?.message || e);
 }
 
-// Optional: auto-start local Chatterbox API server
-const AUTOSTART_CHATTERBOX =
-  String(process.env.CHATTERBOX_AUTOSTART || "").toLowerCase() === "1" ||
-  String(process.env.CHATTERBOX_AUTOSTART || "").toLowerCase() === "true";
-
-if (AUTOSTART_CHATTERBOX) {
-  startChatterboxProcess().catch((e) => {
-    console.warn("[chatterbox] autostart failed:", e?.message || e);
-  });
-}
-
 server = app.listen(PORT, () =>
   console.log(`✅ Piper Hub listening on http://localhost:${PORT}`)
 );
@@ -112,7 +98,6 @@ server.on("connection", (socket) => {
   socket.on("close", () => sockets.delete(socket));
 });
 
-// Ensure chatterbox process is closed when Piper exits (Ctrl+C, terminal close, etc.)
 const _exitSignals = ["SIGINT", "SIGTERM", "SIGHUP"];
 for (const sig of _exitSignals) {
   process.on(sig, () => {
@@ -122,5 +107,4 @@ for (const sig of _exitSignals) {
 
 // Last-resort hook (may not run on hard kills)
 process.on("exit", () => {
-  try { stopChatterboxProcess().catch(() => {}); } catch {}
 });

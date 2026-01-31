@@ -5,7 +5,83 @@ import http from "http";
 import { exec, spawn } from "child_process";
 import * as PATHS from "../../config/paths.js";
 import { normalizeEmotion, clamp01, makeSpoken } from "../persona.js";
+import { startChatterboxProcess } from "../chatterbox_manager.js";
 
+
+// ---------------- Qwen3 TTS (local microservice) ----------------
+function normalizeProvider(p) {
+  const s = String(p || "").trim().toLowerCase();
+  if (!s) return s;
+  if (s === "qwen") return "qwen3";
+  return s;
+}
+
+function qwenBaseUrl() {
+  return (process.env.QWEN3_TTS_URL || "http://127.0.0.1:5005").replace(/\/$/, "");
+}
+
+async function qwenSpeakToWavBuffer({ text, voice = "ryan", language = "english", instruct = "Neutral." }) {
+  const url = new URL(qwenBaseUrl() + "/speak");
+  const payload = JSON.stringify({
+    text: String(text || ""),
+    voice: String(voice || "ryan").toLowerCase(),
+    language: String(language || "english").toLowerCase(),
+    instruct: String(instruct || "Neutral."),
+  });
+
+  return await new Promise((resolve, reject) => {
+    const req = http.request(
+      {
+        method: "POST",
+        hostname: url.hostname,
+        port: url.port,
+        path: url.pathname,
+        protocol: url.protocol,
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const buf = Buffer.concat(chunks);
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            return resolve(buf);
+          }
+          const body = buf.toString("utf8");
+          return reject(new Error(`Qwen3 TTS HTTP ${res.statusCode}: ${body}`));
+        });
+      }
+    );
+
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function runQwenToWav(text, cfg, meta = {}) {
+  if (!fs.existsSync(PATHS.TMP_DIR)) fs.mkdirSync(PATHS.TMP_DIR, { recursive: true });
+
+  // Map Piper's emotion/intensity into an instruction hint (safe / optional)
+  const emotion = meta?.emotion ?? "neutral";
+  const intensity = meta?.intensity ?? 0.4;
+  const emo = String(emotion || "neutral").toLowerCase();
+  const inst = meta?.instruct || `Speak in a ${emo} tone.`;
+
+  const buf = await qwenSpeakToWavBuffer({
+    text,
+    voice: (cfg?.voice || "ryan"),
+    language: (meta?.language || "english"),
+    instruct: inst,
+  });
+
+  const outPath = path.join(PATHS.TMP_DIR, `qwen_${Date.now()}_${Math.random().toString(16).slice(2)}.wav`);
+  await fs.promises.writeFile(outPath, buf);
+  return outPath;
+}
 /* ---------------- Robust paths ---------------- */
 const ROOT = PATHS.ROOT || process.cwd();
 const DATA_DIR = PATHS.DATA_DIR || path.join(ROOT, "data");
@@ -96,7 +172,9 @@ const JARVIS_VOICE_PATH =
 
 const ALBA_VOICE_PATH =
   process.env.PIPER_ALBA_VOICE ||
-  (AMY_VOICE_PATH ? path.join(path.dirname(AMY_VOICE_PATH), "en_GB-alba-medium.onnx") : null);
+  (AMY_VOICE_PATH
+    ? path.join(path.dirname(AMY_VOICE_PATH), "en_GB-alba-medium.onnx")
+    : null);
 const TMP_PIPER_TEXT =
   PATHS.TMP_PIPER_TEXT || path.join(TMP_DIR, "piper_text.txt");
 const TMP_PIPER_WAV =
@@ -179,8 +257,9 @@ const HEALTH_CACHE_MS = Number(
 );
 let _healthCache = { at: 0, data: null };
 
-const CHATTERBOX_REQ_TIMEOUT_MS = Number(process.env.CHATTERBOX_REQ_TIMEOUT_MS || "15000");
-
+const CHATTERBOX_REQ_TIMEOUT_MS = Number(
+  process.env.CHATTERBOX_REQ_TIMEOUT_MS || "15000"
+);
 
 function chooseMaxNewTokensEstimate(text, cb) {
   const s = String(text || "").trim();
@@ -220,7 +299,9 @@ function chooseMaxNewTokens(text) {
   if (mode === "max") {
     const maxCap =
       Number(
-        process.env.CHATTERBOX_MAX_NEW_TOKENS_MAX || cb?.max_new_tokens_max || 1200
+        process.env.CHATTERBOX_MAX_NEW_TOKENS_MAX ||
+          cb?.max_new_tokens_max ||
+          1200
       ) || 1200;
     return Math.trunc(maxCap);
   }
@@ -246,7 +327,9 @@ function httpGetJson(url) {
     });
     // Safety: avoid hangs (connect/read) that would stall voice entirely
     req.setTimeout(CHATTERBOX_REQ_TIMEOUT_MS, () => {
-      req.destroy(new Error(`Chatterbox timeout after ${CHATTERBOX_REQ_TIMEOUT_MS}ms`));
+      req.destroy(
+        new Error(`Chatterbox timeout after ${CHATTERBOX_REQ_TIMEOUT_MS}ms`)
+      );
     });
 
     req.on("error", reject);
@@ -331,10 +414,21 @@ function httpPostWav(url, jsonBody, outPath) {
         res.on("data", (d) => chunks.push(d));
         res.on("end", () => {
           const buf = Buffer.concat(chunks);
-          const ct = String(res.headers?.['content-type'] || '').toLowerCase();
+          const ct = String(res.headers?.["content-type"] || "").toLowerCase();
           // If Chatterbox returns JSON here, treat as an error so we can fall back cleanly.
-          if ((res.statusCode || 0) >= 200 && (res.statusCode || 0) < 300 && ct && !ct.includes('audio/wav')) {
-            return reject(new Error(`Chatterbox unexpected content-type: ${ct} ${buf.toString('utf8').slice(0, 400)}`));
+          if (
+            (res.statusCode || 0) >= 200 &&
+            (res.statusCode || 0) < 300 &&
+            ct &&
+            !ct.includes("audio/wav")
+          ) {
+            return reject(
+              new Error(
+                `Chatterbox unexpected content-type: ${ct} ${buf
+                  .toString("utf8")
+                  .slice(0, 400)}`
+              )
+            );
           }
           if ((res.statusCode || 0) >= 400) {
             return reject(
@@ -437,13 +531,13 @@ async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
 
   const endpoint = `${CHATTERBOX_URL}/audio/speech`;
 
-  const max_new_tokens = Math.trunc(chooseMaxNewTokens(text));
-
   const basePayload = {
+    // chatterbox_server.py accepts both input and text; we send input.
     input: String(text || ""),
     voice: String(voiceId || "default"),
-    max_new_tokens,
-    ...(CHATTERBOX_PROMPT_WAV ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV } : {}),
+    ...(CHATTERBOX_PROMPT_WAV
+      ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV }
+      : {}),
     ...tuned,
   };
 
@@ -458,12 +552,12 @@ async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
     // Windows-side Chatterbox server sometimes throws Errno 22 during wav serialization.
     // Retry once with safer minimal payload and higher token cap.
     if (msg.includes("Errno 22") || msg.includes("Invalid argument")) {
-      const retryTokens = Math.trunc(Math.max(max_new_tokens * 2, 260));
       const fallbackPayload = {
         input: String(text || ""),
         voice: String(voiceId || "default"),
-        max_new_tokens: retryTokens,
-        ...(CHATTERBOX_PROMPT_WAV ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV } : {}),
+        ...(CHATTERBOX_PROMPT_WAV
+          ? { audio_prompt_path: CHATTERBOX_PROMPT_WAV }
+          : {}),
 
         // keep only the core three controls (most stable)
         exaggeration: tuned.exaggeration,
@@ -472,8 +566,6 @@ async function runChatterboxToWav(text, voiceId = "default", meta = {}) {
       };
 
       console.warn("[tts] chatterbox Errno22; retrying with fallback payload", {
-        max_new_tokens,
-        retryTokens,
         emotion,
         intensity,
       });
@@ -505,12 +597,50 @@ export function listVoices() {
   };
 }
 
+/**
+ * Synthesize speech and return WAV bytes (for browser playback / conversion to PCM).
+ * This does NOT play audio locally.
+ */
+export 
+async function synthesizeWavBuffer(arg1, arg2 = {}) {
+  // Back-compat: synthesizeWavBuffer(text, meta) OR synthesizeWavBuffer({ provider, text, ... })
+  const cfg = getVoiceConfig();
+
+  let opts;
+  if (arg1 && typeof arg1 === "object" && typeof arg1.text !== "undefined") {
+    opts = arg1;
+  } else {
+    opts = { text: arg1, ...(arg2 || {}) };
+  }
+
+  const provider = normalizeProvider(opts?.provider || cfg?.provider || "piper");
+  const text = String(opts?.text || "");
+
+  let wavPath;
+  if (provider === "qwen3") {
+    wavPath = await runQwenToWav(text, cfg, opts);
+  } else if (provider === "chatterbox") {
+    if (Boolean(cfg?.autoStartChatterbox)) {
+      await startChatterboxProcess();
+    }
+    wavPath = await runChatterboxToWav(text, cfg.voice || "default", opts);
+  } else {
+    // Default / fallback: piper
+    wavPath = await runPiperToWav(text, opts);
+  }
+
+  const buf = await fs.promises.readFile(wavPath);
+  // Best-effort cleanup
+  fs.promises.unlink(wavPath).catch(() => {});
+  return buf;
+}
+
 let ttsQueue = Promise.resolve();
 
 export function speakQueued(text, meta = {}) {
   ttsQueue = ttsQueue.then(async () => {
     const cfg = getVoiceConfig();
-    const provider = cfg.provider || "piper";
+    const provider = normalizeProvider(cfg.provider || "piper");
 
     const emotion = meta?.emotion ?? "neutral";
     const intensity = meta?.intensity ?? 0.4;
@@ -544,9 +674,15 @@ export function speakQueued(text, meta = {}) {
           intensity,
         });
       } catch (e) {
-        console.warn(`[tts] chatterbox failed, fallback to piper: ${String(e?.message || e)}`);
+        console.warn(
+          `[tts] chatterbox failed, fallback to piper: ${String(
+            e?.message || e
+          )}`
+        );
         wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
       }
+    } else if (normalizeProvider(provider) === "qwen3") {
+      wavPath = await runQwenToWav(spoken, cfg, { emotion, intensity });
     } else {
       wavPath = await runPiperToWav(spoken, cfg.voice || "amy");
     }

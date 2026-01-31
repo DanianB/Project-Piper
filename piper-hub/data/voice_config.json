@@ -1,7 +1,7 @@
 {
-  "provider": "piper",
-  "voice": "alba",
-  "autoStartChatterbox": true,
+  "provider": "qwen3",
+  "voice": "default_female",
+  "autoStartChatterbox": false,
   "chatterbox": {
     "cfg_weight": 0.35,
     "exaggeration": 0.5,
@@ -12,5 +12,18 @@
     "max_new_tokens_mode": "estimate",
     "max_new_tokens_min": 140,
     "max_new_tokens_max": 550
-  }
+  },
+  "qwen3": {
+    "mode": "default_female",
+    "customDescription": "",
+    "imitation": {
+      "enabled": false,
+      "voiceId": "",
+      "refPath": ""
+    },
+    "emotionOverride": "",
+    "emotionLink": true
+  },
+  "fallbackProvider": "piper",
+  "fallbackVoice": "alba"
 }

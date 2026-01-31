@@ -1,4 +1,4 @@
 {
-  "provider": "chatterbox",
-  "voice": "default"
+  "provider": "qwen3",
+  "voice": "ryan"
 }

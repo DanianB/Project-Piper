@@ -145,6 +145,7 @@ export async function ensureChatterboxProcess() {
   if (starting) return starting;
 
   starting = (async () => {
+    try {
     if (await isHealthy()) {
       await maybePrewarm();
       return { ok: true, adopted: true };
@@ -168,6 +169,18 @@ export async function ensureChatterboxProcess() {
       env: process.env,
     });
 
+
+    let startErr = null;
+    proc.on("error", (err) => {
+      startErr = err;
+      console.log("[chatterbox] spawn error", { message: String(err?.message || err) });
+      proc = null;
+      startedByUs = false;
+    });
+
+    // If spawn fails (e.g. conda not on PATH), bail early instead of crashing Piper.
+    // The health loop below will detect startErr and return a clean error.
+
     proc.stdout.on("data", (d) =>
       process.stdout.write("[chatterbox] " + String(d))
     );
@@ -183,6 +196,9 @@ export async function ensureChatterboxProcess() {
 
     // Wait up to ~20s for health
     for (let i = 0; i < 40; i++) {
+      if (startErr) {
+        throw new Error(`Chatterbox spawn failed: ${String(startErr.message || startErr)}`);
+      }
       if (await isHealthy()) {
         await maybePrewarm();
         return { ok: true, adopted: false };
@@ -194,6 +210,9 @@ export async function ensureChatterboxProcess() {
       adopted: false,
       error: "Chatterbox did not become healthy in time",
     };
+    } finally {
+      starting = null;
+    }
   })();
 
   const result = await starting;

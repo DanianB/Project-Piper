@@ -4,3 +4,4 @@ Whisper/
 piper-tts/
 backups/
 tmp/
+.venv-qwen/

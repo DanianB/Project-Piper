@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-17T13:42:22.659Z",
+  "generatedAt": "2026-01-31T02:23:48.692Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -287,6 +287,189 @@
       {
         "file": "public/index.html",
         "tag": "div",
+        "id": "qwenPanel",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenEmotionLink",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenEmotionOverride",
+        "classes": [
+          "voiceSelect"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenCustomRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "textarea",
+        "id": "qwenCustomDesc",
+        "classes": [
+          "voiceSelect"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenImitationRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "qwenUploadBtn",
+        "classes": [
+          "btn-secondary",
+          "btn-voiceRefresh"
+        ],
+        "text": "Upload WAV"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": "qwenImitationStatus",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenUploadInput",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenCapsRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": "qwenCapsText",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
         "id": null,
         "classes": [],
         "text": null
@@ -302,6 +485,189 @@
         "file": "public/index.html",
         "tag": "div",
         "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenPanel",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "label",
+        "id": null,
+        "classes": [
+          "pill"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenEmotionLink",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenEmotionOverride",
+        "classes": [
+          "voiceSelect"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenCustomRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "textarea",
+        "id": "qwenCustomDesc",
+        "classes": [
+          "voiceSelect"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenImitationRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "button",
+        "id": "qwenUploadBtn",
+        "classes": [
+          "btn-secondary",
+          "btn-voiceRefresh"
+        ],
+        "text": "Upload WAV"
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": "qwenImitationStatus",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "input",
+        "id": "qwenUploadInput",
+        "classes": [],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": "qwenCapsRow",
+        "classes": [
+          "voiceRow"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "div",
+        "id": null,
+        "classes": [
+          "voiceLabel"
+        ],
+        "text": null
+      },
+      {
+        "file": "public/index.html",
+        "tag": "span",
+        "id": "qwenCapsText",
         "classes": [],
         "text": null
       },
@@ -1898,6 +2264,18 @@
         "properties": [
           "background"
         ]
+      },
+      {
+        "file": "public/styles.css",
+        "selector": ".input#readOnly",
+        "specificity": [
+          1,
+          1,
+          0
+        ],
+        "properties": [
+          "background-color"
+        ]
       }
     ]
   },
@@ -2118,9 +2496,9 @@
             "index": 3729
           },
           "end": {
-            "line": 202,
+            "line": 221,
             "column": 1,
-            "index": 5205
+            "index": 5770
           }
         }
       },
@@ -2130,14 +2508,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 207,
+            "line": 226,
             "column": 0,
-            "index": 5252
+            "index": 5817
           },
           "end": {
-            "line": 209,
+            "line": 228,
             "column": 1,
-            "index": 5338
+            "index": 5903
           }
         }
       },
@@ -2147,14 +2525,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 228,
+            "line": 247,
             "column": 0,
-            "index": 5878
+            "index": 6443
           },
           "end": {
-            "line": 242,
+            "line": 261,
             "column": 1,
-            "index": 6319
+            "index": 6884
           }
         }
       },
@@ -2958,6 +3336,40 @@
         }
       },
       {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "name": "streamChatterboxPcmToHttp",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 107,
+            "column": 0,
+            "index": 3400
+          },
+          "end": {
+            "line": 143,
+            "column": 1,
+            "index": 4971
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "name": "streamChatterboxToHttp",
+        "kind": "variable",
+        "loc": {
+          "start": {
+            "line": 146,
+            "column": 0,
+            "index": 5043
+          },
+          "end": {
+            "line": 146,
+            "column": 64,
+            "index": 5107
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "name": "transcribeAudioBuffer",
         "kind": "function",
@@ -2980,14 +3392,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 41,
+            "line": 117,
             "column": 0,
-            "index": 1136
+            "index": 3575
           },
           "end": {
-            "line": 56,
+            "line": 132,
             "column": 1,
-            "index": 1557
+            "index": 3996
           }
         }
       },
@@ -2997,14 +3409,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 58,
+            "line": 134,
             "column": 0,
-            "index": 1559
+            "index": 3998
           },
           "end": {
-            "line": 86,
+            "line": 162,
             "column": 1,
-            "index": 2391
+            "index": 4830
           }
         }
       },
@@ -3014,14 +3426,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 269,
+            "line": 352,
             "column": 0,
-            "index": 8064
+            "index": 10550
           },
           "end": {
-            "line": 304,
+            "line": 387,
             "column": 1,
-            "index": 8995
+            "index": 11481
           }
         }
       },
@@ -3031,14 +3443,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 306,
+            "line": 389,
             "column": 0,
-            "index": 8997
+            "index": 11483
           },
           "end": {
-            "line": 314,
+            "line": 397,
             "column": 1,
-            "index": 9312
+            "index": 11798
           }
         }
       },
@@ -3048,14 +3460,31 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 496,
+            "line": 588,
             "column": 0,
-            "index": 14607
+            "index": 17116
           },
           "end": {
-            "line": 506,
+            "line": 598,
             "column": 1,
-            "index": 14925
+            "index": 17434
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "name": "synthesizeWavBuffer",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 604,
+            "column": 0,
+            "index": 17567
+          },
+          "end": {
+            "line": 636,
+            "column": 1,
+            "index": 18588
           }
         }
       },
@@ -3065,14 +3494,31 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 510,
+            "line": 640,
             "column": 0,
-            "index": 14962
+            "index": 18625
           },
           "end": {
-            "line": 558,
+            "line": 694,
             "column": 1,
-            "index": 16296
+            "index": 20153
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/wav_pcm.js",
+        "name": "wavToPcm16le",
+        "kind": "function",
+        "loc": {
+          "start": {
+            "line": 13,
+            "column": 0,
+            "index": 365
+          },
+          "end": {
+            "line": 85,
+            "column": 1,
+            "index": 2892
           }
         }
       },
@@ -3303,14 +3749,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 17,
+            "line": 367,
             "column": 0,
-            "index": 477
+            "index": 9606
           },
           "end": {
-            "line": 117,
+            "line": 558,
             "column": 1,
-            "index": 3439
+            "index": 14919
           }
         }
       },
@@ -4937,14 +5383,14 @@
         "path": "/shutdown",
         "loc": {
           "start": {
-            "line": 76,
+            "line": 73,
             "column": 0,
-            "index": 2178
+            "index": 1964
           },
           "end": {
-            "line": 82,
+            "line": 79,
             "column": 2,
-            "index": 2386
+            "index": 2172
           }
         }
       },
@@ -5243,14 +5689,14 @@
         "path": "/voice/transcribe",
         "loc": {
           "start": {
-            "line": 21,
+            "line": 370,
             "column": 2,
-            "index": 553
+            "index": 9663
           },
           "end": {
-            "line": 31,
+            "line": 380,
             "column": 4,
-            "index": 972
+            "index": 10082
           }
         }
       },
@@ -5260,14 +5706,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 34,
+            "line": 383,
             "column": 2,
-            "index": 1005
+            "index": 10115
           },
           "end": {
-            "line": 34,
+            "line": 383,
             "column": 67,
-            "index": 1070
+            "index": 10180
           }
         }
       },
@@ -5277,14 +5723,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 36,
+            "line": 385,
             "column": 2,
-            "index": 1075
+            "index": 10185
           },
           "end": {
-            "line": 43,
+            "line": 392,
             "column": 4,
-            "index": 1323
+            "index": 10467
           }
         }
       },
@@ -5294,14 +5740,48 @@
         "path": "/voice/voices",
         "loc": {
           "start": {
-            "line": 45,
+            "line": 394,
             "column": 2,
-            "index": 1328
+            "index": 10472
           },
           "end": {
-            "line": 45,
+            "line": 394,
             "column": 63,
-            "index": 1389
+            "index": 10533
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "method": "get",
+        "path": "/voice/qwen/capabilities",
+        "loc": {
+          "start": {
+            "line": 397,
+            "column": 2,
+            "index": 10579
+          },
+          "end": {
+            "line": 428,
+            "column": 4,
+            "index": 11434
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "method": "post",
+        "path": "/voice/qwen/imitation/upload",
+        "loc": {
+          "start": {
+            "line": 431,
+            "column": 2,
+            "index": 11486
+          },
+          "end": {
+            "line": 467,
+            "column": 3,
+            "index": 12424
           }
         }
       },
@@ -5311,48 +5791,31 @@
         "path": "/voice/speak",
         "loc": {
           "start": {
-            "line": 48,
+            "line": 470,
             "column": 2,
-            "index": 1415
+            "index": 12464
           },
           "end": {
-            "line": 94,
-            "column": 4,
-            "index": 2828
+            "line": 507,
+            "column": 3,
+            "index": 13552
           }
         }
       },
       {
         "file": "src/routes/voice.js",
         "method": "post",
-        "path": "/voice/chatterbox/start",
+        "path": "/voice/stream",
         "loc": {
           "start": {
-            "line": 97,
+            "line": 510,
             "column": 2,
-            "index": 2867
+            "index": 13596
           },
           "end": {
-            "line": 105,
-            "column": 4,
-            "index": 3160
-          }
-        }
-      },
-      {
-        "file": "src/routes/voice.js",
-        "method": "get",
-        "path": "/voice/chatterbox/status",
-        "loc": {
-          "start": {
-            "line": 107,
-            "column": 2,
-            "index": 3165
-          },
-          "end": {
-            "line": 114,
-            "column": 4,
-            "index": 3423
+            "line": 555,
+            "column": 3,
+            "index": 14903
           }
         }
       },
@@ -5629,22 +6092,6 @@
             "line": 15,
             "column": 58,
             "index": 718
-          }
-        }
-      },
-      {
-        "file": "src/server.js",
-        "source": "./services/chatterbox_manager.js",
-        "loc": {
-          "start": {
-            "line": 16,
-            "column": 0,
-            "index": 719
-          },
-          "end": {
-            "line": 16,
-            "column": 97,
-            "index": 816
           }
         }
       },
@@ -6305,6 +6752,86 @@
         }
       },
       {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 273
+          },
+          "end": {
+            "line": 6,
+            "column": 20,
+            "index": 293
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 294
+          },
+          "end": {
+            "line": 7,
+            "column": 24,
+            "index": 318
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "http",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 319
+          },
+          "end": {
+            "line": 8,
+            "column": 24,
+            "index": 343
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 9,
+            "column": 0,
+            "index": 344
+          },
+          "end": {
+            "line": 9,
+            "column": 41,
+            "index": 385
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/chatterbox_stream.js",
+        "source": "../../config/paths.js",
+        "loc": {
+          "start": {
+            "line": 10,
+            "column": 0,
+            "index": 386
+          },
+          "end": {
+            "line": 10,
+            "column": 60,
+            "index": 446
+          }
+        }
+      },
+      {
         "file": "src/services/voice/stt.js",
         "source": "fs",
         "loc": {
@@ -6461,6 +6988,22 @@
             "line": 7,
             "column": 70,
             "index": 263
+          }
+        }
+      },
+      {
+        "file": "src/services/voice/tts.js",
+        "source": "../chatterbox_manager.js",
+        "loc": {
+          "start": {
+            "line": 8,
+            "column": 0,
+            "index": 264
+          },
+          "end": {
+            "line": 8,
+            "column": 66,
+            "index": 330
           }
         }
       },
@@ -6898,7 +7441,7 @@
       },
       {
         "file": "src/routes/voice.js",
-        "source": "../services/chatterbox_manager.js",
+        "source": "express",
         "loc": {
           "start": {
             "line": 2,
@@ -6907,8 +7450,8 @@
           },
           "end": {
             "line": 2,
-            "column": 75,
-            "index": 109
+            "column": 30,
+            "index": 64
           }
         }
       },
@@ -6919,12 +7462,76 @@
           "start": {
             "line": 3,
             "column": 0,
-            "index": 110
+            "index": 65
           },
           "end": {
             "line": 3,
             "column": 28,
-            "index": 138
+            "index": 93
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "fs",
+        "loc": {
+          "start": {
+            "line": 4,
+            "column": 0,
+            "index": 94
+          },
+          "end": {
+            "line": 4,
+            "column": 20,
+            "index": 114
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "path",
+        "loc": {
+          "start": {
+            "line": 5,
+            "column": 0,
+            "index": 115
+          },
+          "end": {
+            "line": 5,
+            "column": 24,
+            "index": 139
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "url",
+        "loc": {
+          "start": {
+            "line": 6,
+            "column": 0,
+            "index": 140
+          },
+          "end": {
+            "line": 6,
+            "column": 36,
+            "index": 176
+          }
+        }
+      },
+      {
+        "file": "src/routes/voice.js",
+        "source": "child_process",
+        "loc": {
+          "start": {
+            "line": 7,
+            "column": 0,
+            "index": 177
+          },
+          "end": {
+            "line": 7,
+            "column": 38,
+            "index": 215
           }
         }
       },
@@ -6933,46 +7540,46 @@
         "source": "../services/voice/stt.js",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 8,
             "column": 0,
-            "index": 139
+            "index": 216
           },
           "end": {
-            "line": 4,
+            "line": 8,
             "column": 65,
-            "index": 204
+            "index": 281
           }
         }
       },
       {
         "file": "src/routes/voice.js",
-        "source": "../services/voice/tts.js",
+        "source": "../services/voice/wav_pcm.js",
         "loc": {
           "start": {
-            "line": 5,
+            "line": 9,
             "column": 0,
-            "index": 205
+            "index": 282
           },
           "end": {
-            "line": 12,
-            "column": 34,
-            "index": 363
+            "line": 9,
+            "column": 60,
+            "index": 342
           }
         }
       },
       {
         "file": "src/routes/voice.js",
-        "source": "../services/mind.js",
+        "source": "../config/paths.js",
         "loc": {
           "start": {
-            "line": 13,
+            "line": 10,
             "column": 0,
-            "index": 364
+            "index": 343
           },
           "end": {
-            "line": 13,
-            "column": 50,
-            "index": 414
+            "line": 10,
+            "column": 47,
+            "index": 390
           }
         }
       },
