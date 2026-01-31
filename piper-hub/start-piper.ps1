@@ -4,6 +4,13 @@
 $ErrorActionPreference = 'Continue'
 $PiperDir = Split-Path -Parent $PSCommandPath
 
+# ---- Qwen host/port defaults (robust) ----
+if (-not $QwenHost -or $QwenHost -eq "") { $QwenHost = "127.0.0.1" }
+if (-not $QwenPort -or $QwenPort -eq 0) { $QwenPort = 5005 }
+
+# Ensure imitation fallback reference audio is available to the Qwen server
+$env:QWEN3_DEFAULT_REF_AUDIO = "E:\AI\Voice\voice.mp3"
+
 function PauseExit([int]$code, [string]$msg) {
   Write-Host $msg
   Write-Host 'Press ENTER to exit...'
@@ -138,12 +145,34 @@ if ($QwenEnabled) {
   else {
     $health = Wait-ForUrl ($QwenUrl + '/health') 60
     if ($null -ne $health) {
-      Write-Host ("Qwen health: device={0} dtype={1} loaded={2}" -f $health.device, $health.dtype, $health.model_loaded)
+
+      # New server reports tts_loaded/clone_loaded; older one reports model_loaded.
+      $ttsLoaded = $false
+      $cloneLoaded = $false
+
+      if ($null -ne $health.tts_loaded) { $ttsLoaded = [bool]$health.tts_loaded }
+      elseif ($null -ne $health.model_loaded) { $ttsLoaded = [bool]$health.model_loaded }
+
+      if ($null -ne $health.clone_loaded) { $cloneLoaded = [bool]$health.clone_loaded }
+
+      Write-Host ("Qwen health: device={0} dtype={1} tts_loaded={2} clone_loaded={3}" -f $health.device, $health.dtype, $ttsLoaded, $cloneLoaded)
+
+      # Warm up both models to avoid first-speak stalls (loads TTS + Clone models).
+      try {
+        Write-Host "Warming up Qwen models..."
+        $warm = Invoke-RestMethod -Uri ($QwenUrl + "/warmup") -Method Get -TimeoutSec 180
+        Write-Host ("Qwen warmup: ok={0} tts_loaded={1} clone_loaded={2}" -f $warm.ok, $warm.tts_loaded, $warm.clone_loaded)
+      }
+      catch {
+        Write-Warning ("Qwen warmup failed: {0}" -f $_.Exception.Message)
+      }
+
     }
     else {
       Write-Host "WARNING: Qwen did not become healthy in time. TTS may fail. Check logs:"
       Write-Host ("  {0}" -f $QwenErr)
     }
+
   }
 
   Write-Host ''

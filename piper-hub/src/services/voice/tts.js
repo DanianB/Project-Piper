@@ -1,4 +1,5 @@
 // src/services/voice/tts.js
+// REF_AUDIO_PATCH_v1
 import fs from "fs";
 import path from "path";
 import http from "http";
@@ -20,16 +21,21 @@ function qwenBaseUrl() {
   return (process.env.QWEN3_TTS_URL || "http://127.0.0.1:5005").replace(/\/$/, "");
 }
 
-async function qwenSpeakToWavBuffer({ text, voice = "ryan", language = "english", instruct = "Neutral." }) {
+async function qwenSpeakToWavBuffer({ text, voice = "ryan", language = "english", instruct = "Neutral.", ref_audio = "", voice_id = "" }) {
   const url = new URL(qwenBaseUrl() + "/speak");
-  const payload = JSON.stringify({
+  const payloadObj = {
     text: String(text || ""),
     voice: String(voice || "ryan").toLowerCase(),
     language: String(language || "english").toLowerCase(),
     instruct: String(instruct || "Neutral."),
-  });
+  };
 
-  return await new Promise((resolve, reject) => {
+  // If ref_audio is provided, pass it through to enable voice cloning (imitation).
+  if (ref_audio) payloadObj.ref_audio = String(ref_audio);
+  if (voice_id) payloadObj.voice_id = String(voice_id);
+
+  const payload = JSON.stringify(payloadObj);
+return await new Promise((resolve, reject) => {
     const req = http.request(
       {
         method: "POST",
@@ -71,11 +77,45 @@ async function runQwenToWav(text, cfg, meta = {}) {
   const emo = String(emotion || "neutral").toLowerCase();
   const inst = meta?.instruct || `Speak in a ${emo} tone.`;
 
+
+// --- imitation ref_audio wiring (no guessing) ---
+let refAudio = "";
+try {
+  const q = cfg?.qwen3 || {};
+  const im = q?.imitation || {};
+  const mode = q?.mode || "";
+  const isImitation = (String(cfg?.voice || "").toLowerCase() === "imitation") || (String(mode).toLowerCase() === "imitation");
+
+  if (isImitation) {
+    // Priority: explicit refPath -> refDir+refFile -> default E:\AI\Voice\voice.mp3
+    const rp = String(im?.refPath || "").trim();
+    const rd = String(im?.refDir || "").trim();
+    const rf = String(im?.refFile || "").trim();
+
+    if (rp) refAudio = rp;
+    else if (rd && rf) refAudio = path.join(rd, rf);
+    else if (rd) refAudio = path.join(rd, "voice.mp3");
+    else refAudio = "E:\\AI\\Voice\\voice.mp3";
+
+    // Do not silently proceed if file missing; log and let Qwen run without cloning.
+    if (refAudio && !fs.existsSync(refAudio)) {
+      console.warn("[voice] imitation ref_audio not found:", refAudio);
+      refAudio = "";
+    } else if (refAudio) {
+      console.log("[voice] imitation ref_audio:", refAudio);
+    }
+  }
+} catch (e) {
+  console.warn("[voice] imitation ref_audio error:", e?.message || e);
+}
+
   const buf = await qwenSpeakToWavBuffer({
     text,
     voice: (cfg?.voice || "ryan"),
     language: (meta?.language || "english"),
     instruct: inst,
+    ref_audio: refAudio,
+    voice_id: (cfg?.qwen3?.imitation?.voiceId || ""),
   });
 
   const outPath = path.join(PATHS.TMP_DIR, `qwen_${Date.now()}_${Math.random().toString(16).slice(2)}.wav`);

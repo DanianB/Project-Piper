@@ -1,6 +1,6 @@
 {
   "provider": "qwen3",
-  "voice": "default_female",
+  "voice": "imitation",
   "autoStartChatterbox": false,
   "chatterbox": {
     "cfg_weight": 0.35,
@@ -14,12 +14,14 @@
     "max_new_tokens_max": 550
   },
   "qwen3": {
-    "mode": "default_female",
+    "mode": "imitation",
     "customDescription": "",
     "imitation": {
-      "enabled": false,
-      "voiceId": "",
-      "refPath": ""
+      "enabled": true,
+      "voiceId": "main_clone",
+      "refPath": "",
+      "refDir": "E:\\AI\\Voice",
+      "refFile": "voice.mp3"
     },
     "emotionOverride": "",
     "emotionLink": true

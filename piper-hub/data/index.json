@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-01-31T02:23:48.692Z",
+  "generatedAt": "2026-01-31T09:41:17.523Z",
   "root": "E:\\AI\\piper-hub",
   "html": {
     "elements": [
@@ -3071,12 +3071,12 @@
           "start": {
             "line": 96,
             "column": 0,
-            "index": 2514
+            "index": 2516
           },
           "end": {
             "line": 194,
             "column": 1,
-            "index": 5458
+            "index": 5446
           }
         }
       },
@@ -3392,14 +3392,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 117,
+            "line": 157,
             "column": 0,
-            "index": 3575
+            "index": 5089
           },
           "end": {
-            "line": 132,
+            "line": 172,
             "column": 1,
-            "index": 3996
+            "index": 5510
           }
         }
       },
@@ -3409,14 +3409,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 134,
+            "line": 174,
             "column": 0,
-            "index": 3998
+            "index": 5512
           },
           "end": {
-            "line": 162,
+            "line": 202,
             "column": 1,
-            "index": 4830
+            "index": 6344
           }
         }
       },
@@ -3426,14 +3426,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 352,
+            "line": 392,
             "column": 0,
-            "index": 10550
+            "index": 12064
           },
           "end": {
-            "line": 387,
+            "line": 427,
             "column": 1,
-            "index": 11481
+            "index": 12995
           }
         }
       },
@@ -3443,14 +3443,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 389,
+            "line": 429,
             "column": 0,
-            "index": 11483
+            "index": 12997
           },
           "end": {
-            "line": 397,
+            "line": 437,
             "column": 1,
-            "index": 11798
+            "index": 13312
           }
         }
       },
@@ -3460,14 +3460,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 588,
+            "line": 628,
             "column": 0,
-            "index": 17116
+            "index": 18630
           },
           "end": {
-            "line": 598,
+            "line": 638,
             "column": 1,
-            "index": 17434
+            "index": 18948
           }
         }
       },
@@ -3477,14 +3477,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 604,
+            "line": 644,
             "column": 0,
-            "index": 17567
+            "index": 19081
           },
           "end": {
-            "line": 636,
+            "line": 676,
             "column": 1,
-            "index": 18588
+            "index": 20102
           }
         }
       },
@@ -3494,14 +3494,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 640,
+            "line": 680,
             "column": 0,
-            "index": 18625
+            "index": 20139
           },
           "end": {
-            "line": 694,
+            "line": 734,
             "column": 1,
-            "index": 20153
+            "index": 21667
           }
         }
       },
@@ -3749,14 +3749,14 @@
         "kind": "function",
         "loc": {
           "start": {
-            "line": 367,
+            "line": 566,
             "column": 0,
-            "index": 9606
+            "index": 15760
           },
           "end": {
-            "line": 558,
+            "line": 735,
             "column": 1,
-            "index": 14919
+            "index": 20640
           }
         }
       },
@@ -5689,14 +5689,14 @@
         "path": "/voice/transcribe",
         "loc": {
           "start": {
-            "line": 370,
+            "line": 570,
             "column": 2,
-            "index": 9663
+            "index": 15836
           },
           "end": {
-            "line": 380,
+            "line": 580,
             "column": 4,
-            "index": 10082
+            "index": 16255
           }
         }
       },
@@ -5706,14 +5706,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 383,
+            "line": 583,
             "column": 2,
-            "index": 10115
+            "index": 16288
           },
           "end": {
-            "line": 383,
+            "line": 583,
             "column": 67,
-            "index": 10180
+            "index": 16353
           }
         }
       },
@@ -5723,14 +5723,14 @@
         "path": "/voice/config",
         "loc": {
           "start": {
-            "line": 385,
+            "line": 585,
             "column": 2,
-            "index": 10185
+            "index": 16358
           },
           "end": {
-            "line": 392,
+            "line": 592,
             "column": 4,
-            "index": 10467
+            "index": 16640
           }
         }
       },
@@ -5740,14 +5740,14 @@
         "path": "/voice/voices",
         "loc": {
           "start": {
-            "line": 394,
+            "line": 594,
             "column": 2,
-            "index": 10472
+            "index": 16645
           },
           "end": {
-            "line": 394,
+            "line": 594,
             "column": 63,
-            "index": 10533
+            "index": 16706
           }
         }
       },
@@ -5757,14 +5757,14 @@
         "path": "/voice/qwen/capabilities",
         "loc": {
           "start": {
-            "line": 397,
+            "line": 597,
             "column": 2,
-            "index": 10579
+            "index": 16752
           },
           "end": {
-            "line": 428,
+            "line": 622,
             "column": 4,
-            "index": 11434
+            "index": 17545
           }
         }
       },
@@ -5774,14 +5774,14 @@
         "path": "/voice/qwen/imitation/upload",
         "loc": {
           "start": {
-            "line": 431,
+            "line": 625,
             "column": 2,
-            "index": 11486
+            "index": 17637
           },
           "end": {
-            "line": 467,
+            "line": 662,
             "column": 3,
-            "index": 12424
+            "index": 18683
           }
         }
       },
@@ -5791,14 +5791,14 @@
         "path": "/voice/speak",
         "loc": {
           "start": {
-            "line": 470,
+            "line": 665,
             "column": 2,
-            "index": 12464
+            "index": 18723
           },
           "end": {
-            "line": 507,
+            "line": 702,
             "column": 3,
-            "index": 13552
+            "index": 19811
           }
         }
       },
@@ -5808,14 +5808,14 @@
         "path": "/voice/stream",
         "loc": {
           "start": {
-            "line": 510,
+            "line": 705,
             "column": 2,
-            "index": 13596
+            "index": 19855
           },
           "end": {
-            "line": 555,
+            "line": 732,
             "column": 3,
-            "index": 14903
+            "index": 20624
           }
         }
       },
@@ -6900,14 +6900,14 @@
         "source": "fs",
         "loc": {
           "start": {
-            "line": 2,
+            "line": 3,
             "column": 0,
-            "index": 29
+            "index": 51
           },
           "end": {
-            "line": 2,
+            "line": 3,
             "column": 20,
-            "index": 49
+            "index": 71
           }
         }
       },
@@ -6916,14 +6916,14 @@
         "source": "path",
         "loc": {
           "start": {
-            "line": 3,
+            "line": 4,
             "column": 0,
-            "index": 50
+            "index": 72
           },
           "end": {
-            "line": 3,
+            "line": 4,
             "column": 24,
-            "index": 74
+            "index": 96
           }
         }
       },
@@ -6932,14 +6932,14 @@
         "source": "http",
         "loc": {
           "start": {
-            "line": 4,
+            "line": 5,
             "column": 0,
-            "index": 75
+            "index": 97
           },
           "end": {
-            "line": 4,
+            "line": 5,
             "column": 24,
-            "index": 99
+            "index": 121
           }
         }
       },
@@ -6948,14 +6948,14 @@
         "source": "child_process",
         "loc": {
           "start": {
-            "line": 5,
+            "line": 6,
             "column": 0,
-            "index": 100
+            "index": 122
           },
           "end": {
-            "line": 5,
+            "line": 6,
             "column": 44,
-            "index": 144
+            "index": 166
           }
         }
       },
@@ -6964,14 +6964,14 @@
         "source": "../../config/paths.js",
         "loc": {
           "start": {
-            "line": 6,
+            "line": 7,
             "column": 0,
-            "index": 145
+            "index": 167
           },
           "end": {
-            "line": 6,
+            "line": 7,
             "column": 47,
-            "index": 192
+            "index": 214
           }
         }
       },
@@ -6980,14 +6980,14 @@
         "source": "../persona.js",
         "loc": {
           "start": {
-            "line": 7,
+            "line": 8,
             "column": 0,
-            "index": 193
+            "index": 215
           },
           "end": {
-            "line": 7,
+            "line": 8,
             "column": 70,
-            "index": 263
+            "index": 285
           }
         }
       },
@@ -6996,14 +6996,14 @@
         "source": "../chatterbox_manager.js",
         "loc": {
           "start": {
-            "line": 8,
+            "line": 9,
             "column": 0,
-            "index": 264
+            "index": 286
           },
           "end": {
-            "line": 8,
+            "line": 9,
             "column": 66,
-            "index": 330
+            "index": 352
           }
         }
       },
@@ -7578,8 +7578,8 @@
           },
           "end": {
             "line": 10,
-            "column": 47,
-            "index": 390
+            "column": 59,
+            "index": 402
           }
         }
       },

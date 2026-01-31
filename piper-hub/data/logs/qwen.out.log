@@ -3,10 +3,16 @@
 Warning: flash-attn is not installed. Will only run the manual PyTorch version. Please install flash-attn for faster inference.
 ********
  
-INFO:     127.0.0.1:60110 - "GET /health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:64600 - "GET /capabilities HTTP/1.1" 200 OK
-INFO:     127.0.0.1:64601 - "GET /capabilities HTTP/1.1" 200 OK
-[qwen3] Loading Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice | cuda:0 | torch.float32
-[qwen3] Model ready
-INFO:     127.0.0.1:50476 - "GET /debug/model_methods?load=true HTTP/1.1" 200 OK
-INFO:     127.0.0.1:53399 - "GET /debug/imitation_signature?load=true HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63910 - "GET /health HTTP/1.1" 200 OK
+[qwen3] loading Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice | cuda:0 | torch.float32
+[qwen3] model ready: Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice
+[qwen3] loading Qwen/Qwen3-TTS-12Hz-0.6B-Base | cuda:0 | torch.float32
+[qwen3] model ready: Qwen/Qwen3-TTS-12Hz-0.6B-Base
+INFO:     127.0.0.1:63910 - "GET /warmup HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53909 - "GET /capabilities HTTP/1.1" 200 OK
+[qwen3] /speak voice='imitation' ref_audio='E:\AI\Voice\voice.mp3' voice_id='main_clone' text_len=21
+INFO:     127.0.0.1:53910 - "POST /speak HTTP/1.1" 200 OK
+[qwen3] /speak voice='imitation' ref_audio='E:\AI\Voice\voice.mp3' voice_id='main_clone' text_len=16
+INFO:     127.0.0.1:62961 - "POST /speak HTTP/1.1" 200 OK
+[qwen3] /speak voice='imitation' ref_audio='E:\AI\Voice\voice.mp3' voice_id='main_clone' text_len=195
+INFO:     127.0.0.1:50702 - "POST /speak HTTP/1.1" 200 OK
