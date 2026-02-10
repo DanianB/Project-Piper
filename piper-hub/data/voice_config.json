@@ -1,6 +1,6 @@
 {
   "provider": "qwen3",
-  "voice": "imitation",
+  "voice": "custom",
   "autoStartChatterbox": false,
   "chatterbox": {
     "cfg_weight": 0.35,
@@ -14,17 +14,7 @@
     "max_new_tokens_max": 550
   },
   "qwen3": {
-    "mode": "imitation",
-    "customDescription": "",
-    "imitation": {
-      "enabled": true,
-      "voiceId": "main_clone",
-      "refPath": "",
-      "refDir": "E:\\AI\\Voice",
-      "refFile": "voice.mp3"
-    },
-    "emotionOverride": "",
-    "emotionLink": true
+    "mode": "custom"
   },
   "fallbackProvider": "piper",
   "fallbackVoice": "alba"

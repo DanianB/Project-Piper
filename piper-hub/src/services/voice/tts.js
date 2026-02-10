@@ -1,5 +1,4 @@
 // src/services/voice/tts.js
-// REF_AUDIO_PATCH_v1
 import fs from "fs";
 import path from "path";
 import http from "http";
@@ -30,12 +29,13 @@ async function qwenSpeakToWavBuffer({ text, voice = "ryan", language = "english"
     instruct: String(instruct || "Neutral."),
   };
 
-  // If ref_audio is provided, pass it through to enable voice cloning (imitation).
+  // Optional: enable imitation/voice-clone when supported by the server/model
   if (ref_audio) payloadObj.ref_audio = String(ref_audio);
   if (voice_id) payloadObj.voice_id = String(voice_id);
 
   const payload = JSON.stringify(payloadObj);
-return await new Promise((resolve, reject) => {
+
+  return await new Promise((resolve, reject) => {
     const req = http.request(
       {
         method: "POST",
@@ -78,36 +78,38 @@ async function runQwenToWav(text, cfg, meta = {}) {
   const inst = meta?.instruct || `Speak in a ${emo} tone.`;
 
 
-// --- imitation ref_audio wiring (no guessing) ---
-let refAudio = "";
-try {
-  const q = cfg?.qwen3 || {};
-  const im = q?.imitation || {};
-  const mode = q?.mode || "";
-  const isImitation = (String(cfg?.voice || "").toLowerCase() === "imitation") || (String(mode).toLowerCase() === "imitation");
+  // --- Imitation voice wiring (uses local reference audio) ---
+  // We only attach ref_audio when the active voice/mode is imitation.
+  let refAudio = "";
+  let voiceId = "";
+  try {
+    const q = (cfg && typeof cfg === "object") ? (cfg.qwen3 || {}) : {};
+    const im = (q && typeof q === "object") ? (q.imitation || {}) : {};
 
-  if (isImitation) {
-    // Priority: explicit refPath -> refDir+refFile -> default E:\AI\Voice\voice.mp3
-    const rp = String(im?.refPath || "").trim();
-    const rd = String(im?.refDir || "").trim();
-    const rf = String(im?.refFile || "").trim();
+    const voiceStr = String(cfg?.voice || "").toLowerCase();
+    const modeStr = String(q?.mode || "").toLowerCase();
+    const isImitation = (voiceStr === "imitation") || (modeStr === "imitation") || (voiceStr.includes("imitation"));
 
-    if (rp) refAudio = rp;
-    else if (rd && rf) refAudio = path.join(rd, rf);
-    else if (rd) refAudio = path.join(rd, "voice.mp3");
-    else refAudio = "E:\\AI\\Voice\\voice.mp3";
+    if (isImitation) {
+      voiceId = String(im?.voiceId || "");
 
-    // Do not silently proceed if file missing; log and let Qwen run without cloning.
-    if (refAudio && !fs.existsSync(refAudio)) {
-      console.warn("[voice] imitation ref_audio not found:", refAudio);
-      refAudio = "";
-    } else if (refAudio) {
-      console.log("[voice] imitation ref_audio:", refAudio);
+      const rp = String(im?.refPath || "").trim();
+      const rd = String(im?.refDir || "").trim();
+      const rf = String(im?.refFile || "").trim();
+
+      if (rp) refAudio = rp;
+      else if (rd && rf) refAudio = path.join(rd, rf);
+      else if (rd) refAudio = path.join(rd, "voice.mp3");
+      else refAudio = String(process.env.QWEN3_DEFAULT_REF_AUDIO || "E:\AI\Voice\voice.mp3");
+
+      if (refAudio && !fs.existsSync(refAudio)) {
+        console.warn("[voice] imitation ref_audio not found:", refAudio);
+        refAudio = "";
+      }
     }
+  } catch (e) {
+    console.warn("[voice] imitation ref_audio error:", e?.message || e);
   }
-} catch (e) {
-  console.warn("[voice] imitation ref_audio error:", e?.message || e);
-}
 
   const buf = await qwenSpeakToWavBuffer({
     text,
@@ -115,7 +117,7 @@ try {
     language: (meta?.language || "english"),
     instruct: inst,
     ref_audio: refAudio,
-    voice_id: (cfg?.qwen3?.imitation?.voiceId || ""),
+    voice_id: voiceId,
   });
 
   const outPath = path.join(PATHS.TMP_DIR, `qwen_${Date.now()}_${Math.random().toString(16).slice(2)}.wav`);

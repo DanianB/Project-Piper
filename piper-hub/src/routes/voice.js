@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 import { transcribeAudioBuffer } from "../services/voice/stt.js";
 import { wavToPcm16le } from "../services/voice/wav_pcm.js";
-import { PIPER_EXE, FFMPEG_EXE } from "../config/paths.js";
+import { PIPER_EXE } from "../config/paths.js";
 
 /**
  * Voice routes (Chatterbox removed for now).
@@ -28,19 +28,29 @@ const __dirname = path.dirname(__filename);
 const VOICES_DIR = "E:\\AI\\piper-tts\\voices";
 const DATA_DIR = path.resolve(__dirname, "../../data");
 const VOICE_CONFIG_PATH = path.join(DATA_DIR, "voice_config.json");
+const TTS_CONFIG_PATH = path.join(DATA_DIR, "tts.json");
 
+const QWEN_CUSTOM_DESC_PATH = path.join(DATA_DIR, "qwen_custom_voice.txt");
+
+// Temp files for Piper fallback
 const TMP_DIR = path.join(DATA_DIR, "tmp");
 const TMP_PIPER_TEXT = path.join(TMP_DIR, "piper_input.txt");
 const TMP_PIPER_WAV = path.join(TMP_DIR, "piper_output.wav");
-
-// Qwen imitation reference clips live here
-const QWEN_REF_DIR = path.join(DATA_DIR, "qwen_refs");
-const QWEN_REF_CACHE_DIR = path.join(DATA_DIR, "qwen_ref_cache");
 
 function readJsonSafe(filePath, fallback = null) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
     return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function readTextSafe(p, fallback = "") {
+  try {
+    if (!fs.existsSync(p)) return fallback;
+    const s = fs.readFileSync(p, "utf-8");
+    return String(s || "").trim();
   } catch {
     return fallback;
   }
@@ -68,174 +78,45 @@ function normalizeVoice(v) {
   return raw;
 }
 
-async function convertAudioToWav({ inputPath, outputPath, sampleRate = 24000 }) {
-  ensureDir(path.dirname(outputPath));
-
-  if (!FFMPEG_EXE || !fs.existsSync(FFMPEG_EXE)) {
-    throw new Error(
-      `FFMPEG_EXE not found. Set env FFMPEG_EXE or install tools/ffmpeg. Tried: ${FFMPEG_EXE}`
-    );
-  }
-
-  const args = ["-y", "-i", inputPath, "-ac", "1", "-ar", String(sampleRate), "-vn", outputPath];
-
-  await new Promise((resolve, reject) => {
-    const child = spawn(FFMPEG_EXE, args, { windowsHide: true });
-    let stderr = "";
-    child.stderr.on("data", (d) => (stderr += d.toString("utf8")));
-    child.on("error", reject);
-    child.on("close", (code) => {
-      if (code !== 0) return reject(new Error(`ffmpeg exited ${code}: ${stderr}`));
-      resolve();
-    });
-  });
-
-  return outputPath;
-}
-
-function pickFirstAudioFile(dir) {
-  if (!dir || !fs.existsSync(dir)) return "";
-  const files = fs
-    .readdirSync(dir)
-    .filter((f) => [".wav", ".mp3"].includes(path.extname(f).toLowerCase()))
-    .sort();
-  return files.length ? path.join(dir, files[0]) : "";
-}
-
-async function resolveImitationRefPath(cfg) {
-  const q = cfg?.qwen3 || {};
-  const im = q?.imitation || {};
-  if (!im.enabled) return "";
-
-  let refPath = String(im.refPath || "").trim();
-
-  if (!refPath) {
-    const refDir = String(im.refDir || "").trim();
-    const refFile = String(im.refFile || "").trim();
-    if (refDir) {
-      refPath = refFile ? path.join(refDir, refFile) : pickFirstAudioFile(refDir);
-    }
-  }
-
-  if (!refPath) return "";
-
-  if (!fs.existsSync(refPath)) {
-    throw new Error(`Imitation ref audio not found: ${refPath}`);
-  }
-
-  const ext = path.extname(refPath).toLowerCase();
-  if (ext === ".wav") return refPath;
-
-  if (ext === ".mp3") {
-    ensureDir(QWEN_REF_CACHE_DIR);
-    const base = path.basename(refPath, ext);
-    const outWav = path.join(QWEN_REF_CACHE_DIR, `${base}.wav`);
-    const srcStat = fs.statSync(refPath);
-    const need = !fs.existsSync(outWav) || fs.statSync(outWav).mtimeMs < srcStat.mtimeMs;
-    if (need) {
-      await convertAudioToWav({ inputPath: refPath, outputPath: outWav, sampleRate: 24000 });
-    }
-    return outWav;
-  }
-
-  throw new Error(`Unsupported ref audio type: ${ext} (expected .wav or .mp3)`);
-}
-
-function ensureDir(p) {
-  try {
-    fs.mkdirSync(p, { recursive: true });
-  } catch (_) {}
-}
-
 function getVoiceConfig() {
-  const DEFAULTS = {
-    provider: "piper",
-    voice: "alba",
-    autoStartChatterbox: false,
-    chatterbox: {},
-    qwen3: {
-      mode: "default_female",
-      customDescription: "",
-      imitation: { enabled: false, voiceId: "", refPath: "" },
-      emotionOverride: "",
-      emotionLink: true,
-    },
+  const vc = readJsonSafe(VOICE_CONFIG_PATH, null);
+  if (vc && typeof vc === "object") return vc;
+
+  const tts = readJsonSafe(TTS_CONFIG_PATH, null);
+  if (tts && typeof tts === "object") return tts;
+
+  // Safe default: Qwen3 primary + Piper fallback
+  return {
+    provider: "qwen3",
+    voice: "ryan",
     fallbackProvider: "piper",
     fallbackVoice: "alba",
   };
-
-  const vc = readJsonSafe(VOICE_CONFIG_PATH, null);
-  const base =
-    vc && typeof vc === "object"
-      ? vc
-      : (() => {
-          const tts = readJsonSafe(TTS_CONFIG_PATH, null);
-          return tts && typeof tts === "object" ? tts : {};
-        })();
-
-  const merged = { ...DEFAULTS, ...(base || {}) };
-
-  // deep-merge qwen3
-  merged.qwen3 = { ...DEFAULTS.qwen3, ...(base?.qwen3 || {}) };
-  merged.qwen3.imitation = {
-    ...DEFAULTS.qwen3.imitation,
-    ...(base?.qwen3?.imitation || {}),
-  };
-
-  return merged;
 }
 
 function setVoiceConfig(next) {
   const cur = getVoiceConfig();
-  const patch = next && typeof next === "object" ? next : {};
-
-  const merged = {
-    ...cur,
-    ...patch,
-
-    qwen3: {
-      ...(cur.qwen3 || {}),
-      ...(patch.qwen3 || {}),
-      imitation: {
-        ...(cur.qwen3?.imitation || {}),
-        ...(patch.qwen3?.imitation || {}),
-      },
-    },
-  };
+  const merged = { ...cur, ...(next && typeof next === "object" ? next : {}) };
 
   merged.provider = normalizeProvider(merged.provider);
   merged.voice = normalizeVoice(merged.voice);
-
   merged.fallbackProvider = normalizeProvider(
-    merged.fallbackProvider || "piper",
+    merged.fallbackProvider || "piper"
   );
   merged.fallbackVoice = String(merged.fallbackVoice || "alba")
     .trim()
     .toLowerCase();
 
-// ensure imitation is enabled when switching to imitation mode
-if (merged.provider === "qwen3") {
-  merged.qwen3 = merged.qwen3 && typeof merged.qwen3 === "object" ? merged.qwen3 : {};
-  merged.qwen3.imitation =
-    merged.qwen3.imitation && typeof merged.qwen3.imitation === "object"
-      ? merged.qwen3.imitation
-      : {};
-  const isImitation = merged.voice === "imitation" || merged.qwen3.mode === "imitation";
-  if (isImitation) merged.qwen3.imitation.enabled = true; // ensure imitation is enabled
-}
-
-writeJsonSafe(VOICE_CONFIG_PATH, merged);
+  writeJsonSafe(VOICE_CONFIG_PATH, merged);
   return merged;
 }
 
 function listVoices() {
+  // Piper fallback voices we know Piper Hub expects.
   return [
-    // Qwen modes (requested)
-    { provider: "qwen3", voice: "default_female" },
-    { provider: "qwen3", voice: "custom" },
-    { provider: "qwen3", voice: "imitation" },
-
-    // Piper voices (from E:\AI\piper-tts\voices)
+    { provider: "qwen3", voice: "ryan" },
+    { provider: "qwen3", voice: "vivian" },
+    { provider: "qwen3", voice: "serena" },
     { provider: "piper", voice: "alba" },
     { provider: "piper", voice: "amy" },
     { provider: "piper", voice: "jarvis" },
@@ -265,24 +146,34 @@ function emotionToInstruct(emotion, intensity) {
 }
 
 function safeParseJsonBody(req) {
-  // If upstream middleware already parsed JSON, just use it.
-  if (req && req.body && typeof req.body === "object" && !Buffer.isBuffer(req.body)) {
+  // express.json() yields a plain object. express.raw() yields Buffer/Uint8Array.
+  if (
+    req &&
+    req.body &&
+    typeof req.body === "object" &&
+    !Buffer.isBuffer(req.body) &&
+    !(req.body instanceof Uint8Array)
+  ) {
     return req.body;
   }
 
-  // body may be UTF-16LE if coming from curl.exe on Windows
-  const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || "");
-  const asUtf8 = buf.toString("utf8").trim();
-  if (asUtf8.startsWith("{") || asUtf8.startsWith("[")) {
-    try {
-      return JSON.parse(asUtf8);
-    } catch {}
-  }
-  const asUtf16 = buf.toString("utf16le").trim();
+  const raw = req?.body;
+  if (!raw) return {};
+
+  const tryDecode = (enc) => {
+    const s = Buffer.from(raw)
+      .toString(enc)
+      .trim()
+      .replace(/^\uFEFF/, "");
+    return JSON.parse(s);
+  };
+
   try {
-    return JSON.parse(asUtf16);
-  } catch {}
-  return {};
+    return tryDecode("utf8");
+  } catch {
+    // PowerShell curl.exe can sometimes send UTF-16LE.
+    return tryDecode("utf16le");
+  }
 }
 
 function writeLen32Frame(res, buf) {
@@ -358,7 +249,7 @@ async function synthesizePiperWav({ text, voice }) {
     throw new Error(
       `Piper TTS fallback not available (PIPER_EXE missing): ${
         PIPER_EXE || "(null)"
-      }`,
+      }`
     );
   }
 
@@ -384,7 +275,7 @@ async function synthesizePiperWav({ text, voice }) {
     p.on("close", (code) => {
       if (code === 0) return resolve();
       reject(
-        new Error(`piper.exe exited ${code}: ${stderr || "unknown error"}`),
+        new Error(`piper.exe exited ${code}: ${stderr || "unknown error"}`)
       );
     });
 
@@ -409,53 +300,26 @@ async function synthesizeQwenWav({
   const baseUrl = getQwenBaseUrl(cfg);
   const url = `${baseUrl}/speak`;
 
-  const q = (cfg && typeof cfg === "object" ? cfg.qwen3 : null) || {};
-  const mode =
-    String(q.mode || "").trim() ||
-    // Back-compat: if UI sets voice directly to a mode
-    (["default_female", "custom", "imitation"].includes(
-      String(voice || "").trim(),
-    )
-      ? String(voice).trim()
-      : "");
+  const baseInstruct = String(instruct || emotionToInstruct(emotion, intensity));
 
-  // Emotion selection
-  const override = String(q.emotionOverride || "").trim();
-  const link = q.emotionLink !== false;
+  // Custom voice description is stored in a local file so you can edit it safely.
+  // This keeps UI simple and avoids losing it during HTML changes.
+  const customDesc = readTextSafe(QWEN_CUSTOM_DESC_PATH, "");
 
-  const emotionForInstruct = override ? override : link ? emotion : null;
-
-  // Build instruct text
-  const parts = [];
-  if (instruct) parts.push(String(instruct));
-  else if (emotionForInstruct)
-    parts.push(emotionToInstruct(emotionForInstruct, intensity));
-  else parts.push("Speak naturally and clearly.");
-
-  const desc = String(q.customDescription || "").trim();
-  if (desc) parts.push(`Voice style: ${desc}`);
-
-  const finalInstruct = parts.join(" ");
-
-  const imitationEnabled = !!q?.imitation?.enabled;
-  const refPath = imitationEnabled
-    ? String(q?.imitation?.refPath || "").trim()
-    : "";
-  const voiceId = imitationEnabled
-    ? String(q?.imitation?.voiceId || "").trim()
-    : "";
-
-  const body = JSON.stringify({
+  // For Qwen "custom" mode, send custom_description so the server can apply voice design/caching.
+  // For other voices, omit it.
+  const payload = {
     text: String(text || ""),
-    // If mode is set, send it; otherwise keep legacy voice value as-is.
-    voice: mode || String(voice || "ryan"),
+    voice: String(voice || "ryan"),
     language: "english",
-    instruct: finalInstruct,
+    instruct: baseInstruct,
+  };
 
-    // Plumbed for server support (next phase)
-    ref_audio: refPath || null,
-    voice_id: voiceId || null,
-  });
+  if (String(voice || "").toLowerCase() === "custom" && customDesc) {
+    payload.custom_description = customDesc;
+  }
+
+  const body = JSON.stringify(payload);
 
   const resp = await fetch(url, {
     method: "POST",
@@ -466,7 +330,7 @@ async function synthesizeQwenWav({
   if (!resp.ok) {
     const errText = await resp.text().catch(() => "");
     throw new Error(
-      `Qwen3 TTS HTTP ${resp.status}: ${errText || resp.statusText}`,
+      `Qwen3 TTS HTTP ${resp.status}: ${errText || resp.statusText}`
     );
   }
 
@@ -541,7 +405,7 @@ async function streamChunkedTtsAsFramedPcm({ text, emotion, intensity, res }) {
   res.setHeader("X-Audio-Format", "pcm_s16le");
   res.setHeader(
     "X-Audio-Sample-Rate",
-    String(Number(process.env.TTS_STREAM_SR || "24000")),
+    String(Number(process.env.TTS_STREAM_SR || "24000"))
   );
   res.setHeader("X-Audio-Channels", "1");
   res.setHeader("X-Audio-Framing", "len32le");
@@ -593,74 +457,6 @@ export function voiceRoutes() {
 
   r.get("/voice/voices", (_req, res) => res.json(listVoices()));
 
-  // ---- Qwen capabilities (proxy) ----
-  r.get("/voice/qwen/capabilities", async (_req, res) => {
-    try {
-      const cfg = getVoiceConfig();
-      const baseUrl = getQwenBaseUrl(cfg);
-      const url = `${baseUrl}/capabilities`;
-
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 1500);
-
-      const resp = await fetch(url, { signal: ctrl.signal }).finally(() =>
-        clearTimeout(t),
-      );
-
-      const j = await resp.json().catch(() => null);
-      if (!resp.ok) {
-        return res.status(502).json({
-          ok: false,
-          error: (j && (j.error || j.message)) || `HTTP ${resp.status}`,
-        });
-      }
-
-      res.json(j || { ok: true, imitation_supported: false });
-    } catch (e) {
-      res.status(502).json({ ok: false, error: String(e?.message || e) });
-    }
-  });
-
-  // ---- Qwen imitation reference upload (stores WAV and updates config refPath) ----
-  r.post(
-    "/voice/qwen/imitation/upload",
-    upload.single("audio"),
-    async (req, res) => {
-      try {
-        if (!req.file || !req.file.buffer) {
-          return res
-            .status(400)
-            .json({ ok: false, error: "Missing audio file." });
-        }
-
-        ensureDir(QWEN_REF_DIR);
-
-        const ext = ".wav";
-        const ts = Date.now();
-        const safeName = `qwen_ref_${ts}${ext}`;
-        const outPath = path.join(QWEN_REF_DIR, safeName);
-
-        fs.writeFileSync(outPath, req.file.buffer);
-
-        // Update voice_config.json with the new refPath + a simple voiceId
-        const cur = getVoiceConfig();
-        const next = setVoiceConfig({
-          qwen3: {
-            imitation: {
-              enabled: true,
-              refPath: outPath,
-              voiceId: `qwen_ref_${ts}`,
-            },
-          },
-        });
-
-        res.json({ ok: true, path: outPath, config: next });
-      } catch (e) {
-        res.status(500).json({ ok: false, error: String(e?.message || e) });
-      }
-    },
-  );
-
   // ---- Speak (returns WAV) ----
   r.post(
     "/voice/speak",
@@ -698,7 +494,7 @@ export function voiceRoutes() {
         console.log("[voice] /voice/speak error", String(e?.stack || e));
         res.status(500).json({ ok: false, error: String(e?.message || e) });
       }
-    },
+    }
   );
 
   // ---- Stream (framed PCM16LE) ----
@@ -728,7 +524,7 @@ export function voiceRoutes() {
           res.status(500).end();
         } catch {}
       }
-    },
+    }
   );
 
   return r;

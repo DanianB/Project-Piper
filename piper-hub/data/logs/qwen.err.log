@@ -8,12 +8,11 @@ SoX could not be found!
     If you do (or think that you should) have SoX, double-check your
     path variables.
     
-INFO:     Started server process [79392]
+INFO:     Started server process [29404]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:5005 (Press CTRL+C to quit)
 Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Fetching 4 files: 100%|##########| 4/4 [00:00<?, ?it/s]
-Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Fetching 4 files: 100%|##########| 4/4 [00:00<00:00, 3986.98it/s]
-Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
-Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.
+Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Fetching 4 files: 100%|##########| 4/4 [00:00<?, ?it/s]
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
 Setting `pad_token_id` to `eos_token_id`:2150 for open-end generation.

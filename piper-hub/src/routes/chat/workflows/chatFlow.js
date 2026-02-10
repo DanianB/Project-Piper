@@ -57,7 +57,7 @@ export default async function runChatFlow({ sid, message }) {
         ...convo,
         { role: "user", content: m },
       ],
-      { timeoutMs: 8000 }
+      { timeoutMs: Number(process.env.OLLAMA_CHAT_TIMEOUT_MS || process.env.OLLAMA_TIMEOUT_MS || 30000), numPredict: Number(process.env.OLLAMA_CHAT_NUM_PREDICT || 96) }
     );
 
     let text = safeText(out);

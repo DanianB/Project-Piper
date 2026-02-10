@@ -56,7 +56,7 @@ export async function triageNeedsPlanner({ message, lastIntent }) {
           content: JSON.stringify({ message: m, lastIntent }),
         },
       ],
-      { timeoutMs: 8000 }
+      { timeoutMs: Number(process.env.OLLAMA_PLANNER_TIMEOUT_MS || process.env.OLLAMA_TIMEOUT_MS || 60000), numPredict: Number(process.env.OLLAMA_PLANNER_NUM_PREDICT || 256) }
     );
 
     const j = extractFirstJsonObject(out) || {};

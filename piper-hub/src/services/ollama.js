@@ -26,11 +26,19 @@ const OLLAMA_BASE_URL = process.env.OLLAMA_URL || "http://localhost:11434";
 let cachedModelName = null;
 let lastTagsFetchAt = 0;
 
+
+function readIntEnv(name, fallback) {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function readTimeoutMs(fallbackMs) {
   const raw = process.env.OLLAMA_TIMEOUT_MS;
   if (!raw) return fallbackMs;
   const n = Number(raw);
-  return Number.isFinite(n) && n > 30000 ? n : fallbackMs;
+  return Number.isFinite(n) && n > 1000 ? n : fallbackMs;
 }
 
 async function fetchTags() {
@@ -62,7 +70,7 @@ async function pickInstalledModel(preferred) {
 
     if (!names.length) {
       throw new Error(
-        "Ollama has no installed models. Run `ollama list` and pull a model, e.g. `ollama pull llama3`.",
+        "Ollama has no installed models. Run `ollama list` and pull a model, e.g. `ollama pull llama3`."
       );
     }
 
@@ -100,6 +108,9 @@ export async function callOllama(messages, opts = {}) {
     model = process.env.OLLAMA_MODEL || null,
     format = null, // "json"
     temperature = 0.2,
+    // Optional speed controls
+    numPredict = readIntEnv("OLLAMA_NUM_PREDICT", null),
+    keepAlive = process.env.OLLAMA_KEEP_ALIVE || null,
   } = opts;
 
   if (!Array.isArray(messages)) {
@@ -120,7 +131,7 @@ export async function callOllama(messages, opts = {}) {
       model: modelName,
       messages,
       stream: false,
-      options: { temperature },
+      options: { temperature, num_predict: numPredict },
     };
     if (format === "json") body.format = "json";
 
@@ -147,7 +158,7 @@ export async function callOllama(messages, opts = {}) {
       throw new Error(
         `Ollama response missing message.content (got keys: ${
           data ? Object.keys(data).join(",") : "null"
-        })`,
+        })`
       );
     }
 
@@ -163,7 +174,7 @@ export async function callOllama(messages, opts = {}) {
       if (isAbortError(e)) {
         throw new Error(
           `Ollama request timed out after ${Math.round(timeoutMs / 1000)}s. ` +
-            `Increase  or use a faster model.`,
+            `Increase OLLAMA_TIMEOUT_MS or use a faster model.`
         );
       }
 
@@ -177,7 +188,7 @@ export async function callOllama(messages, opts = {}) {
 
         const fallback = await pickInstalledModel(preferred);
         console.warn(
-          `[ollama] model not found: "${e?.modelName}". Falling back to installed model: "${fallback}".`,
+          `[ollama] model not found: "${e?.modelName}". Falling back to installed model: "${fallback}".`
         );
         return await doCall(fallback);
       }

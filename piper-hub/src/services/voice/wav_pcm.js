@@ -10,6 +10,24 @@ function readUInt16LE(buf, off) {
   return buf.readUInt16LE(off);
 }
 
+
+function downmixInt16InterleavedToMono(data, channels) {
+  if (!data || channels <= 1) return data;
+  const totalSamples = Math.floor(data.length / 2);
+  const frames = Math.floor(totalSamples / channels);
+  const out = Buffer.alloc(frames * 2);
+  for (let i = 0; i < frames; i++) {
+    let acc = 0;
+    for (let ch = 0; ch < channels; ch++) {
+      acc += data.readInt16LE((i * channels + ch) * 2);
+    }
+    const v = Math.round(acc / channels);
+    out.writeInt16LE(Math.max(-32768, Math.min(32767, v)), i * 2);
+  }
+  return out;
+}
+
+
 export function wavToPcm16le(wavBytes) {
   const buf = Buffer.isBuffer(wavBytes) ? wavBytes : Buffer.from(wavBytes || []);
   if (buf.length < 44) {
@@ -58,24 +76,31 @@ export function wavToPcm16le(wavBytes) {
   // If it's already PCM16LE, return directly.
   // PCM (1) with 16 bits implies little-endian in RIFF WAV.
   if (fmt.audioFormat === 1 && fmt.bitsPerSample === 16) {
+    const mono = downmixInt16InterleavedToMono(data, fmt.channels);
     return {
-      pcmBytes: data,
+      pcmBytes: mono,
       sampleRate: fmt.sampleRate,
-      channels: fmt.channels,
+      channels: 1,
     };
   }
 
   // Best-effort: if it's 32-bit float, down-convert to 16-bit (clamp).
   if (fmt.audioFormat === 3 && fmt.bitsPerSample === 32) {
-    const floatCount = Math.floor(data.length / 4);
-    const out = Buffer.alloc(floatCount * 2);
-    for (let i = 0; i < floatCount; i++) {
-      const f = data.readFloatLE(i * 4);
+    const channels = fmt.channels || 1;
+    const totalFloats = Math.floor(data.length / 4);
+    const frames = Math.floor(totalFloats / channels);
+    const out = Buffer.alloc(frames * 2);
+    for (let i = 0; i < frames; i++) {
+      let acc = 0;
+      for (let ch = 0; ch < channels; ch++) {
+        acc += data.readFloatLE((i * channels + ch) * 4);
+      }
+      const f = acc / channels;
       const s = Math.max(-1, Math.min(1, f));
       const v = Math.round(s * 32767);
       out.writeInt16LE(v, i * 2);
     }
-    return { pcmBytes: out, sampleRate: fmt.sampleRate, channels: fmt.channels };
+    return { pcmBytes: out, sampleRate: fmt.sampleRate, channels: 1 };
   }
 
   // Otherwise, caller should convert via ffmpeg before calling this helper.

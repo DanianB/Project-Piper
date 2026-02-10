@@ -1,6 +1,23 @@
 [
   {
     "status": "done",
+    "createdAt": 1769854184240,
+    "updatedAt": 1769854184285,
+    "result": {
+      "ok": true
+    },
+    "id": "act_fab34c9984e1f19c1387ab30",
+    "type": "open_path",
+    "title": "Open folder: Worms",
+    "reason": "User asked to open the \"Worms\" folder on the Desktop.",
+    "payload": {
+      "path": "C:\\Users\\Danian\\Desktop\\Worms",
+      "kind": "folder"
+    },
+    "meta": {}
+  },
+  {
+    "status": "done",
     "createdAt": 1769744906916,
     "updatedAt": 1769744906942,
     "result": {
