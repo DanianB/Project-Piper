@@ -1,8 +1,15 @@
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
  * Running on http://127.0.0.1:5055
 Press CTRL+C to quit
-127.0.0.1 - - [13/Feb/2026 19:28:41] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [13/Feb/2026 19:29:52] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [13/Feb/2026 19:30:10] "POST /speak HTTP/1.1" 200 -
-127.0.0.1 - - [13/Feb/2026 19:30:31] "POST /speak HTTP/1.1" 200 -
-127.0.0.1 - - [13/Feb/2026 19:30:47] "POST /speak HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:45:50] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:45:56] "POST /speak HTTP/1.1" 503 -
+127.0.0.1 - - [13/Feb/2026 19:46:18] "POST /speak HTTP/1.1" 400 -
+127.0.0.1 - - [13/Feb/2026 19:50:43] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:44] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:45] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:46] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:48] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:49] "GET /health HTTP/1.1" 200 -
+127.0.0.1 - - [13/Feb/2026 19:50:50] "GET /health HTTP/1.1" 200 -
+C:\actions-runner\_work\pytorch\pytorch\builder\windows\pytorch\aten\src\ATen\native\cuda\TensorCompare.cu:110: block: [0,0,0], thread: [0,0,0] Assertion `input[0] != 0` failed.
+127.0.0.1 - - [13/Feb/2026 19:51:07] "POST /speak HTTP/1.1" 500 -

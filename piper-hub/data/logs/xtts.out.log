@@ -1,8 +1,9 @@
  * Serving Flask app 'xtts_server'
- * Debug mode: off
 [XTTS] Loading model...
+ * Debug mode: off
 [XTTS] model_dir:  E:\AI\piper_voice_curie
 [XTTS] model_path: E:\AI\piper_voice_curie\best_model.pth
 [XTTS] device:     cuda (cuda_available=True)
-[XTTS] fp16:       False
+[XTTS] fp16:       True
 [XTTS] Loaded OK
+[XTTS] CUDA device-side assert triggered; restart the XTTS process.
