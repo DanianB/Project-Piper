@@ -131,6 +131,51 @@ function getQwenBaseUrl(cfg) {
   ).replace(/\/$/, "");
 }
 
+
+function getXttsBaseUrl(cfg) {
+  return (
+    process.env.XTTS_URL ||
+    process.env.PIPER_XTTS_URL ||
+    cfg?.xtts?.baseUrl ||
+    cfg?.xtts?.base_url ||
+    "http://127.0.0.1:5055"
+  ).replace(/\/$/, "");
+}
+
+function pickXttsRef(cfg, emotion) {
+  // Prefer explicit config ref; otherwise map emotion -> a ref name; otherwise fall back to env/default.
+  const fromCfg = (cfg?.xtts?.defaultRef || cfg?.xtts?.default_ref || cfg?.speaker_wav || "").trim();
+  if (fromCfg) return fromCfg;
+
+  const e = String(emotion || cfg?.emotion || "neutral").trim().toLowerCase();
+
+  // Map common UI emotions to your trained ref file names
+  const map = {
+    neutral: "serious_neutral",
+    serious: "serious_neutral",
+    serious_neutral: "serious_neutral",
+    happy: "happy",
+    excited: "excited",
+    angry: "angry",
+    sad: "sad",
+    worried: "worried",
+    anxious: "anxious",
+    sarcastic: "sarcastic",
+    affectionate: "affectionate",
+    calm: "calm",
+    confident: "confident",
+  };
+
+  if (map[e]) return map[e];
+
+  const envDefault = (process.env.XTTS_DEFAULT_REF || "").trim();
+  if (envDefault) return envDefault;
+
+  // Last resort: use whatever emotion string we got (server will try to resolve it)
+  return e;
+}
+
+
 function emotionToInstruct(emotion, intensity) {
   const e = String(emotion || "neutral")
     .trim()
@@ -243,6 +288,33 @@ function resolvePiperVoicePath(name) {
 
   return full;
 }
+
+
+async function synthesizeXttsWav({ text, ref, language, baseUrl }) {
+  if (!baseUrl) baseUrl = getXttsBaseUrl(null);
+  const url = baseUrl.replace(/\/$/, "") + "/speak";
+
+  const payload = {
+    text,
+    ref: ref || undefined,
+    language: language || "en",
+  };
+
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!r.ok) {
+    const t = await r.text().catch(() => "");
+    throw new Error(`XTTS /speak failed: ${r.status} ${r.statusText} ${t}`);
+  }
+
+  const ab = await r.arrayBuffer();
+  return Buffer.from(ab);
+}
+
 
 async function synthesizePiperWav({ text, voice }) {
   if (!PIPER_EXE || !fs.existsSync(PIPER_EXE)) {
@@ -363,6 +435,17 @@ async function synthesizeWavBuffer({
   if (!finalText) throw new Error("Missing input text");
 
   // Only support qwen3 as primary for now (as requested).
+  if (provider === "xtts") {
+    const baseUrl = getXttsBaseUrl(cfg);
+    const ref = pickXttsRef(cfg, emotion);
+    return await synthesizeXttsWav({
+      text: finalText,
+      ref,
+      language: cfg?.language || "en",
+      baseUrl,
+    });
+  }
+
   if (provider !== "qwen3") {
     // If config is set to piper, just run piper.
     if (provider === "piper") {

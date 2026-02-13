@@ -78,15 +78,22 @@ app.post("/shutdown", (req, res) => {
   }, 150).unref();
 });
 
-// Build codebase index at startup (best-effort)
-try {
-  const result = buildCodebaseIndex({
-    rootDir: ROOT,
-    outFile: "data/index.json",
-  });
-  console.log("🧭 Codebase indexed:", result.counts);
-} catch (e) {
-  console.warn("⚠️ Codebase index failed:", e?.message || e);
+// Codebase indexing can be expensive on large repos. Run after startup and allow disabling.
+const disableIndex = process.env.PIPER_DISABLE_INDEX === "1";
+if (!disableIndex) {
+  setTimeout(() => {
+    try {
+      const result = buildCodebaseIndex({
+        rootDir: ROOT,
+        outFile: "data/index.json",
+      });
+      console.log("🧭 Codebase indexed:", result.counts);
+    } catch (e) {
+      console.warn("⚠️ Codebase index failed:", e?.message || e);
+    }
+  }, 50).unref();
+} else {
+  console.log("🧭 Codebase index disabled (PIPER_DISABLE_INDEX=1)");
 }
 
 server = app.listen(PORT, () =>

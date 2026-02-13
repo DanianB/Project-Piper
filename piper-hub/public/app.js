@@ -46,33 +46,10 @@ const openDetails = new Set(
 
 // Hard-coded voice choices (provider + voice)
 const VOICE_CHOICES = [
-  // ---- Qwen modes ----
-  {
-    id: "qwen_default_female",
-    label: "Qwen – Default Female",
-    provider: "qwen3",
-    voice: "vivian",
-    qwenMode: "default_female",
-  },
-  {
-    id: "qwen_custom",
-    label: "Qwen – Custom Voice",
-    provider: "qwen3",
-    voice: "custom",
-    qwenMode: "custom",
-  },
-  {
-    id: "qwen_imitation",
-    label: "Qwen – Imitation Voice",
-    provider: "qwen3",
-    voice: "imitation",
-    qwenMode: "imitation",
-  },
-
-  // ---- Piper voices ----
-  { id: "amy", label: "Amy", provider: "piper", voice: "amy" },
-  { id: "jarvis", label: "Jarvis", provider: "piper", voice: "jarvis" },
-  { id: "alba", label: "Alba", provider: "piper", voice: "alba" },
+  { id: "curie", label: "Curie (XTTS)", provider: "xtts" },
+  { id: "amy", label: "Amy (Piper)", provider: "piper" },
+  { id: "jarvis", label: "Jarvis (Piper)", provider: "piper" },
+  { id: "alba", label: "Alba (Piper)", provider: "piper" },
 ];
 
 function choiceById(id) {
@@ -98,7 +75,8 @@ async function api(path, body) {
 }
 
 async function fetchVoiceConfig() {
-  const r = await fetch("/voice/config", { cache: "no-store" });
+  let r = await fetch("/voice/config", { cache: "no-store" });
+  if (!r.ok) r = await fetch("/api/voice/config", { cache: "no-store" });
   const j = await r.json().catch(() => null);
   if (!r.ok) throw new Error("Failed to load voice config.");
 
@@ -126,7 +104,7 @@ async function applyVoice(choiceId) {
 
   const body =
     c.provider === "qwen3"
-      ? { provider: "qwen3", voice: c.voice, qwen3: { mode: c.qwenMode } }
+      ? { provider: "xtts", voice: c.voice, qwen3: { mode: c.qwenMode } }
       : { provider: c.provider, voice: c.voice };
 
   const out = await api("/voice/config", body);

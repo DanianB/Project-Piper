@@ -140,6 +140,18 @@ const VOICE_CONFIG_PATH = path.join(DATA_DIR, "voice_config.json");
 const DEFAULT_CFG = {
   provider: "piper",
   voice: "amy",
+
+  // XTTS (Curie)
+  emotion: "serious_neutral",
+  emotion_intensity: 0.8,
+  speaker_wav: "",
+  xtts: {
+    base_url: process.env.XTTS_BASE_URL || "http://127.0.0.1:5055",
+    model_dir: process.env.XTTS_MODEL_DIR || "E:\\AI\\piper_voice_curie",
+    refs_dir: process.env.XTTS_REFS_DIR || "E:\\AI\\piper_voice_curie\\refs",
+    default_ref: process.env.XTTS_DEFAULT_REF || "serious_neutral",
+    language: process.env.XTTS_LANGUAGE || "en",
+  },
   autoStartChatterbox: false,
   chatterbox: {
     cfg_weight: 0.35,
@@ -191,12 +203,31 @@ export function setVoiceConfig(patch = {}) {
     next.chatterbox = prev.chatterbox || DEFAULT_CFG.chatterbox;
   }
 
-  next.provider = next.provider === "chatterbox" ? "chatterbox" : "piper";
-  if (next.provider === "chatterbox") next.voice = next.voice || "default";
-  else {
+  if (patch && typeof patch === "object" && patch.xtts && typeof patch.xtts === "object") {
+    next.xtts = {
+      ...(prev.xtts || {}),
+      ...(patch.xtts || {}),
+    };
+  } else {
+    next.xtts = prev.xtts || DEFAULT_CFG.xtts;
+  }
+
+  // Provider normalization: allow xtts (Curie) while keeping backward compatibility.
+  const p = String(next.provider || "piper").toLowerCase();
+  next.provider = p === "xtts" ? "xtts" : (p === "chatterbox" ? "chatterbox" : "piper");
+
+  if (next.provider === "chatterbox") {
+    next.voice = next.voice || "default";
+  } else if (next.provider === "xtts") {
+    next.voice = next.voice || "curie";
+    next.emotion = String(next.emotion || DEFAULT_CFG.emotion);
+    next.emotion_intensity = Number.isFinite(Number(next.emotion_intensity))
+      ? Number(next.emotion_intensity)
+      : DEFAULT_CFG.emotion_intensity;
+    if (!next.xtts) next.xtts = DEFAULT_CFG.xtts;
+  } else {
     next.voice = next.voice || "amy";
-    if (!["amy", "jarvis", "alba"].includes(String(next.voice).toLowerCase()))
-      next.voice = "amy";
+    if (!["amy", "jarvis", "alba"].includes(String(next.voice).toLowerCase())) next.voice = "amy";
   }
 
   fs.writeFileSync(VOICE_CONFIG_PATH, JSON.stringify(next, null, 2), "utf8");

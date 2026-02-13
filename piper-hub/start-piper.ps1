@@ -1,7 +1,16 @@
-$env:QWEN3_DEFAULT_REF_AUDIO = "E:\AI\Voice\voice.mp3"
-
-# start-piper.ps1 — Piper Supervisor (Qwen3 + optional Chatterbox)
+# start-piper.ps1 — Piper Supervisor (XTTS Curie + Piper Hub)
 # PowerShell 5.1 compatible. ASCII-only.
+#
+# Env overrides:
+#   PIPER_XTTS_PYTHON       = full path to python.exe for XTTS venv
+#   XTTS_MODEL_DIR          = folder containing best_model.pth + config.json (+ vocab.json)
+#   XTTS_REFS_DIR           = folder containing reference .wav files (can be nested)
+#   XTTS_DEFAULT_REF        = default ref name/path (e.g., "serious_neutral")
+#   XTTS_PORT               = default 5055
+#   XTTS_FP16               = "1" or "0" (default 1)
+#   PIPER_DISABLE_XTTS      = "1" to skip starting XTTS
+#   PIPER_KILL_PORT_3000    = "1" kill anything on 3000 (default 1)
+#   PIPER_KILL_XTTS_PORT    = "1" kill anything on XTTS_PORT (default 1)
 
 $ErrorActionPreference = 'Continue'
 $PiperDir = Split-Path -Parent $PSCommandPath
@@ -23,19 +32,6 @@ function Wait-ForUrl([string]$url, [int]$timeoutSec) {
   return $null
 }
 
-# ---- Qwen venv python discovery ----
-$RepoQwenPython = Join-Path $PiperDir '.venv-qwen\Scripts\python.exe'
-$ParentQwenPython = Join-Path (Split-Path -Parent $PiperDir) '.venv-qwen\Scripts\python.exe'
-$RepoPython311 = Join-Path $PiperDir '.venv311\Scripts\python.exe'
-$ParentPython311 = Join-Path (Split-Path -Parent $PiperDir) '.venv311\Scripts\python.exe'
-
-if ($env:PIPER_QWEN_PYTHON -and (Test-Path $env:PIPER_QWEN_PYTHON)) { $QwenPython = $env:PIPER_QWEN_PYTHON }
-elseif (Test-Path $RepoQwenPython) { $QwenPython = $RepoQwenPython }
-elseif (Test-Path $ParentQwenPython) { $QwenPython = $ParentQwenPython }
-elseif (Test-Path $RepoPython311) { $QwenPython = $RepoPython311 }
-elseif (Test-Path $ParentPython311) { $QwenPython = $ParentPython311 }
-else { $QwenPython = $RepoQwenPython }
-
 # ---- Node ----
 $NodeExe = 'C:\Program Files\nodejs\node.exe'
 $EntryAbs = Join-Path $PiperDir 'src\server.js'
@@ -46,119 +42,120 @@ if (-not (Test-Path $NodeExe)) { PauseExit 1 ("ERROR: node.exe not found: {0}" -
 if (-not (Test-Path $EntryAbs)) { PauseExit 1 ("ERROR: Entry not found: {0}" -f $EntryAbs) }
 
 # ---- Ports: kill stale listeners (optional) ----
-if (-not $env:PIPER_KILL_QWEN_PORT) { $env:PIPER_KILL_QWEN_PORT = "1" }
 if (-not $env:PIPER_KILL_PORT_3000) { $env:PIPER_KILL_PORT_3000 = "1" }
-
-if ($env:PIPER_KILL_QWEN_PORT -eq "1") {
-  try {
-    Get-NetTCPConnection -LocalPort 5005 -ErrorAction SilentlyContinue | ForEach-Object {
-      if ($_.OwningProcess) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
-    }
-  }
-  catch {}
-}
+if (-not $env:PIPER_KILL_XTTS_PORT) { $env:PIPER_KILL_XTTS_PORT = "1" }
 
 if ($env:PIPER_KILL_PORT_3000 -eq "1") {
   try {
     Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object {
       if ($_.OwningProcess) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
     }
-  }
-  catch {}
+  } catch {}
 }
 
-# ---- Qwen3 TTS server ----
-$QwenEnabled = $true
-$QwenUrl = 'http://127.0.0.1:5005'
-$env:QWEN3_TTS_URL = $QwenUrl
-$QwenScript = Join-Path $PiperDir 'tools\qwen3_tts_server.py'
+# ---- XTTS server (optional) ----
+$XttsProc = $null
+$XttsPort = $env:XTTS_PORT
+if (-not $XttsPort -or $XttsPort.Trim() -eq "") { $XttsPort = "5055" }
+$XttsUrl = "http://127.0.0.1:$XttsPort"
+$env:XTTS_URL = $XttsUrl
 
-# Stability defaults (still CUDA)
-if (-not $env:QWEN3_DEVICE) { $env:QWEN3_DEVICE = "cuda" }
-if (-not $env:QWEN3_DTYPE) { $env:QWEN3_DTYPE = "float32" }
-if (-not $env:QWEN3_ATTN) { $env:QWEN3_ATTN = "eager" }
-if (-not $env:QWEN3_WARMUP) { $env:QWEN3_WARMUP = "0" }
-
-# Clear stale TLS env vars
-foreach ($v in @('SSL_CERT_FILE', 'REQUESTS_CA_BUNDLE', 'CURL_CA_BUNDLE')) {
-  $p = [Environment]::GetEnvironmentVariable($v)
-  if ($p -and -not (Test-Path $p)) { [Environment]::SetEnvironmentVariable($v, $null, 'Process') }
-}
-
-# OFF flag
-$OffFlagPath = Join-Path $PiperDir 'data\OFF.flag'
-if (Test-Path $OffFlagPath) { try { Remove-Item -Force $OffFlagPath } catch {} }
-
-# Start Qwen and log its output
-$QwenProc = $null
-
-function Stop-QwenIfRunning() {
+function Stop-XttsIfRunning() {
   try {
-    if ($QwenProc -and -not $QwenProc.HasExited) {
-      Stop-Process -Id $QwenProc.Id -Force -ErrorAction SilentlyContinue
+    if ($XttsProc -and -not $XttsProc.HasExited) {
+      Stop-Process -Id $XttsProc.Id -Force -ErrorAction SilentlyContinue
     }
-  }
-  catch {}
+  } catch {}
 }
 
-# Ensure Qwen is killed if this supervisor exits for any reason
 $global:__piper_cleaned = $false
 Register-EngineEvent PowerShell.Exiting -Action {
   if (-not $global:__piper_cleaned) {
     $global:__piper_cleaned = $true
-    try { Stop-QwenIfRunning } catch {}
+    try { Stop-XttsIfRunning } catch {}
   }
 } | Out-Null
 
-if ($QwenEnabled) {
-  if (-not (Test-Path $QwenPython)) { PauseExit 1 ("ERROR: Qwen python not found: {0}" -f $QwenPython) }
-  if (-not (Test-Path $QwenScript)) { PauseExit 1 ("ERROR: Qwen script not found: {0}" -f $QwenScript) }
+if ($env:PIPER_DISABLE_XTTS -ne "1") {
+  if ($env:PIPER_KILL_XTTS_PORT -eq "1") {
+    try {
+      Get-NetTCPConnection -LocalPort ([int]$XttsPort) -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.OwningProcess) { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+      }
+    } catch {}
+  }
+
+  $XttsPython = $env:PIPER_XTTS_PYTHON
+  if (-not $XttsPython -or $XttsPython.Trim() -eq "") {
+    # Default (your setup)
+    $XttsPython = "E:\AI\CurieXTTS\venv_xtts\Scripts\python.exe"
+  }
+  if (-not (Test-Path $XttsPython)) { PauseExit 1 ("ERROR: XTTS python not found: {0}" -f $XttsPython) }
+
+  $XttsModelDir = $env:XTTS_MODEL_DIR
+  if (-not $XttsModelDir -or $XttsModelDir.Trim() -eq "") { $XttsModelDir = "E:\AI\piper_voice_curie" }
+  $XttsRefsDir = $env:XTTS_REFS_DIR
+  if (-not $XttsRefsDir -or $XttsRefsDir.Trim() -eq "") { $XttsRefsDir = Join-Path $XttsModelDir "refs" }
+
+  $env:XTTS_MODEL_DIR = $XttsModelDir
+  $env:XTTS_REFS_DIR  = $XttsRefsDir
+
+  if (-not $env:XTTS_FP16) { $env:XTTS_FP16 = "1" }
+
+  # Choose a safe default ref if you have one (matches your training ref names)
+  if (-not $env:XTTS_DEFAULT_REF -or $env:XTTS_DEFAULT_REF.Trim() -eq "") {
+    $env:XTTS_DEFAULT_REF = "serious_neutral"
+  }
 
   $LogDir = Join-Path $PiperDir 'data\logs'
   if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Force -Path $LogDir | Out-Null }
-  $QwenOut = Join-Path $LogDir 'qwen.out.log'
-  $QwenErr = Join-Path $LogDir 'qwen.err.log'
+  $XttsOut = Join-Path $LogDir 'xtts.out.log'
+  $XttsErr = Join-Path $LogDir 'xtts.err.log'
 
-  Write-Host ("Starting Qwen3 TTS via: {0}" -f $QwenPython)
-  Write-Host ("Logging: {0} and {1}" -f $QwenOut, $QwenErr)
+  $XttsScript = Join-Path $PiperDir 'tools\xtts_server.py'
+  if (-not (Test-Path $XttsScript)) { PauseExit 1 ("ERROR: xtts_server.py not found: {0}" -f $XttsScript) }
 
-  # NOTE: -NoNewWindow cannot be used with -WindowStyle. Keep Hidden.
-  $QwenProc = Start-Process `
-    -FilePath $QwenPython `
-    -ArgumentList @("$QwenScript") `
+  Write-Host ("Starting XTTS via: {0}" -f $XttsPython)
+  Write-Host ("XTTS URL: {0}" -f $XttsUrl)
+  Write-Host ("Model: {0}" -f $XttsModelDir)
+  Write-Host ("Refs:  {0}" -f $XttsRefsDir)
+  Write-Host ("Logging: {0} and {1}" -f $XttsOut, $XttsErr)
+
+  $XttsProc = Start-Process `
+    -FilePath $XttsPython `
+    -ArgumentList @("$XttsScript") `
     -WorkingDirectory $PiperDir `
     -PassThru `
     -WindowStyle Hidden `
-    -RedirectStandardOutput $QwenOut `
-    -RedirectStandardError $QwenErr
+    -RedirectStandardOutput $XttsOut `
+    -RedirectStandardError $XttsErr
 
-  Start-Sleep -Milliseconds 500
-  if ($QwenProc.HasExited) {
-    Write-Host "WARNING: Qwen exited immediately. See logs:"
-    Write-Host ("  {0}" -f $QwenErr)
-  }
-  else {
-    $health = Wait-ForUrl ($QwenUrl + '/health') 60
-    if ($null -ne $health) {
-      Write-Host ("Qwen health: device={0} dtype={1} loaded={2}" -f $health.device, $health.dtype, $health.model_loaded)
-    }
-    else {
-      Write-Host "WARNING: Qwen did not become healthy in time. TTS may fail. Check logs:"
-      Write-Host ("  {0}" -f $QwenErr)
+  Start-Sleep -Milliseconds 600
+  if ($XttsProc.HasExited) {
+    Write-Host "WARNING: XTTS exited immediately. See logs:"
+    Write-Host ("  {0}" -f $XttsErr)
+  } else {
+    $health = Wait-ForUrl ($XttsUrl + '/health') 90
+    if ($null -ne $health -and $health.ready -eq $true) {
+      Write-Host ("XTTS health: device={0} ready={1}" -f $health.device, $health.ready)
+    } else {
+      Write-Host "WARNING: XTTS did not become healthy in time. Check logs:"
+      Write-Host ("  {0}" -f $XttsErr)
     }
   }
 
   Write-Host ''
 }
 
-# Chatterbox disabled by default
-$env:CHATTERBOX_AUTOSTART = 'false'
+# OFF flag
+$OffFlagPath = Join-Path $PiperDir 'data\OFF.flag'
+if (Test-Path $OffFlagPath) { try { Remove-Item -Force $OffFlagPath } catch {} }
 
 # Supervisor loop
 while ($true) {
   if (Test-Path $OffFlagPath) {
     Write-Host 'OFF flag present. Supervisor stopping.'
-    Stop-QwenIfRunning
+    Stop-XttsIfRunning
     exit 0
   }
 
@@ -173,7 +170,7 @@ while ($true) {
 
   if ($code -eq $OffExitCode) {
     Write-Host 'OFF requested (exit 99). Supervisor stopping.'
-    Stop-QwenIfRunning
+    Stop-XttsIfRunning
     exit 0
   }
 

@@ -70,3 +70,31 @@ export const TMP_CHATTERBOX_WAV = path.join(TMP_DIR, "chatterbox_out.wav");
 /* ---------- Backward-compat aliases ---------- */
 export const PIPER_MODEL = PIPER_VOICE;
 export const PIPER_VOICE_PATH = PIPER_VOICE;
+
+
+// Aggregate export for convenience (used by some modules)
+export const PATHS = {
+  ROOT,
+  DATA_DIR,
+  TMP_DIR,
+  PUBLIC_DIR,
+  PIPER_EXE,
+  PIPER_VOICE,
+  CHATTERBOX_SERVER_PY,
+  CHATTERBOX_PROMPT_DIR,
+  CHATTERBOX_PROMPT_WAV,
+  FFMPEG_EXE,
+  WHISPER_EXE,
+  WHISPER_MODEL,
+  WHISPER_THREADS,
+  VOICE_CONFIG_PATH,
+  OFF_FLAG_PATH,
+  ACTIONS_FILE,
+  APPS_FILE,
+  RUNLOG_FILE,
+  TMP_PIPER_TEXT,
+  TMP_PIPER_WAV,
+  TMP_CHATTERBOX_WAV,
+  PIPER_MODEL,
+  PIPER_VOICE_PATH
+};

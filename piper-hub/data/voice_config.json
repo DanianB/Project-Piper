@@ -1,20 +1,13 @@
 {
-  "provider": "qwen3",
-  "voice": "custom",
-  "autoStartChatterbox": false,
-  "chatterbox": {
-    "cfg_weight": 0.35,
-    "exaggeration": 0.5,
-    "temperature": 0.8,
-    "repetition_penalty": 1.2,
-    "min_p": 0.05,
-    "top_p": 1,
-    "max_new_tokens_mode": "estimate",
-    "max_new_tokens_min": 140,
-    "max_new_tokens_max": 550
-  },
-  "qwen3": {
-    "mode": "custom"
+  "provider": "xtts",
+  "voice": "curie",
+  "speaker_wav": "",
+  "emotion": "serious_neutral",
+  "emotion_intensity": 0.8,
+  "xtts": {
+    "base_url": "http://127.0.0.1:5055",
+    "model_dir": "E:\\AI\\piper_voice_curie",
+    "refs_dir": "E:\\AI\\piper_voice_curie\\refs"
   },
   "fallbackProvider": "piper",
   "fallbackVoice": "alba"
