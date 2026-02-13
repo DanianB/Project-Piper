@@ -6,3 +6,5 @@ backups/
 tmp/
 CurieXTTS/
 piper_voice_curie/
+/piper-hub/data/logs
+
